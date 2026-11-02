@@ -30,6 +30,7 @@ from .emit_common import LH_EM, js_round, text_lines
 from .figures import pyramid_layer_geometry, render_curve, render_pyramid
 from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
 from .legend import render_legend_item
+from .cloud import layout_cloud_band, render_cloud
 from .gantt import layout_gantt, render_gantt
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .timeline import layout_timeline, render_timeline
@@ -213,6 +214,18 @@ class _Gantt:
 
 
 @dataclass
+class _Cloud:
+    x: float
+    y: float
+    w: float
+    boxes: dict
+    max_node_w: float | None = None
+    assumptions: list[dict] | None = None
+    conflict_label: str | None = None
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -358,6 +371,24 @@ class Diagram:
         byte-identical to Node (golden-tested live); only label text widths use this port's
         approximation."""
         self._elements.append(_Gantt(x=x, y=y, w=width, rows=rows, from_=from_, to=to, today=today, today_label=today_label, extend_to_today=extend_to_today))
+
+    def cloud(
+        self,
+        boxes: dict,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        max_node_w: float | None = None,
+        assumptions: list[dict] | None = None,
+        conflict_label: str | None = None,
+    ) -> None:
+        """lib/dsl/diagrams.ts's cloud(): TOC's evaporating cloud / 対立解消図. `boxes`:
+        {a,b,c,d,d2} each a str or {text, id?, tone?}. The layout formula (layout_cloud_band —
+        closed-form 3-column/2-row geometry, chip placement, zigzag conflict arrow) IS
+        byte-identical to Node (golden-tested live); only text widths use this port's
+        approximation."""
+        self._elements.append(_Cloud(x=x, y=y, w=width, boxes=boxes, max_node_w=max_node_w, assumptions=assumptions, conflict_label=conflict_label))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
@@ -564,6 +595,9 @@ class Diagram:
         if isinstance(el, _Gantt):
             laid = layout_gantt(rows=el.rows, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, from_=el.from_, to=el.to, today=el.today, today_label=el.today_label, extend_to_today=el.extend_to_today)
             return render_gantt(laid, day=el.day)
+        if isinstance(el, _Cloud):
+            laid = layout_cloud_band(boxes=el.boxes, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, max_node_w=el.max_node_w, assumptions=el.assumptions, conflict_label=el.conflict_label)
+            return render_cloud(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

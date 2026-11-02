@@ -30,6 +30,8 @@ import {renderPeople, renderDots} from '../../lib/emit-boxes.ts';
 import {layoutTimeline} from '../../lib/timeline.ts';
 import {renderTimeline, renderGantt} from '../../lib/emit-figures.ts';
 import {layoutGantt} from '../../lib/gantt.ts';
+import {layoutCloudBand} from '../../lib/toc.ts';
+import {renderCloud} from '../../lib/emit-figures.ts';
 
 // Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
 // atoms.py/wrap.py: tests the ALGORITHM (icon grid geometry, dot pile packing), not real
@@ -140,6 +142,13 @@ function handle(req: Req): unknown {
     }
     case 'renderGantt':
       return renderGantt(req.band as never, (req.day ?? 1) as never);
+    case 'layoutCloudBand': {
+      const band = {a: req.a, b: req.b, c: req.c, d: req.d, d2: req.d2, maxNodeW: req.maxNodeW, assumptions: req.assumptions, conflictLabel: req.conflictLabel, id: undefined, reveal: undefined, until: undefined} as never;
+      const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: false};
+      return layoutCloudBand(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, env);
+    }
+    case 'renderCloud':
+      return renderCloud(req.band as never, (req.day ?? 1) as never, tones);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

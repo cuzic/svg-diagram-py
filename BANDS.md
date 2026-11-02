@@ -24,7 +24,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 
 | band | 状態 | 備考 |
 |---|---|---|
-| cloud | ⬜ | 計画済み(3列2行の閉形式) |
+| cloud | ✅ | layoutCloudBand/renderCloudともexport済み、live golden test。**Tier 1完了** |
 | pyramid | ✅ | 台形スタック、幾何はNode実機キャプチャとバイト同一を確認 |
 | curve | ✅ | 点列配置もNode実機キャプチャとバイト同一を確認 |
 | timeline | ✅ | layoutTimeline/renderTimelineともexport済み、live golden test。数値軸版(layoutNumeric)は見送り |

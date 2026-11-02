@@ -47,6 +47,8 @@ import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
 import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot, clustermap} from '../../lib/dsl/charts-stats.ts';
+import {quadrantBand, layoutQuadrant} from '../../lib/quadrant.ts';
+import {renderQuadrant} from '../../lib/emit-figures.ts';
 import {plane} from '../../lib/dsl/figures.ts';
 import {lines, burndown, burnup, strategyCanvas} from '../../lib/dsl/charts.ts';
 import {layoutPlane} from '../../lib/plane.ts';
@@ -302,6 +304,12 @@ function handle(req: Req): unknown {
     }
     case 'renderPlane':
       return renderPlane(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutQuadrant': {
+      const band = quadrantBand(req.opts as never);
+      return layoutQuadrant(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
+    }
+    case 'renderQuadrant':
+      return renderQuadrant(req.band as never, (req.day ?? 1) as never, tones);
     case 'layoutLines': {
       let band: never;
       if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;

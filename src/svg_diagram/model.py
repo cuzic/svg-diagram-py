@@ -63,6 +63,7 @@ from .regplot import reg_band
 from .clustermap import cluster_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
+from .quadrant import layout_quadrant, quadrant_band, render_quadrant
 from .harvey import harvey_band
 from .stacked import mekko_band, stacked_bars_band
 from .tornado import tornado_band
@@ -346,6 +347,19 @@ class _Chart:
 class _Plane:
     """plane() is a standalone band type ("plane"), not part of the "chart" family — its own
     layout_plane()/render_plane() pair (lib/plane.ts/lib/emit-figures.ts's renderPlane())."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Quadrant:
+    """quadrant() is a standalone band type ("quadrant"), not part of the "chart" family —
+    its own layout_quadrant()/render_quadrant() pair (lib/quadrant.ts/lib/emit-figures.ts's
+    renderQuadrant())."""
 
     x: float
     y: float
@@ -1189,6 +1203,24 @@ class Diagram:
         band = cluster_band(rows, cols, values, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
+    def quadrant(self, opts: dict, *, x: float, y: float, width: float) -> None:
+        """lib/dsl/figures.ts's quadrant(): a classification matrix (2x2, 3x3 or any N x M
+        cells) — items placed in a cell or at a coordinate, optional bubble sizes (area
+        proportional to value), movement arrows, free-shaped regions, and the named presets
+        of management frameworks ('bcg' | 'ge' | 'ansoff' | 'nineBox' | 'impactEffort' |
+        'risk' | 'stakeholder' | 'positioning' | 'eisenhower'). Unlike most other band
+        methods, `opts` is passed through as Node's own nested shape (not exploded into
+        keyword arguments, same reasoning as plane()): {preset?, x?: {title, low?, high?,
+        reversed?}, y?: {...}, grid?: [cols, rows], cells?: [[{title?, note?, tone?}, ...]],
+        items?: [{id?, label, cell?: [col, row] | at?: [x, y], size?, tone?, group?}],
+        arrows?: [{from, to, label?, dashed?}], sizeTitle?, sizeUnit?, groups?, crosshair?,
+        regions?: [{title, note?, tone?, points, at?}], height?, width?, allowEmpty?, id?,
+        reveal?, until?}. The layout formula (including the item-placement collision search
+        and the row-growth retry loop) IS byte-identical to Node (golden-tested live); only
+        text widths use this port's approximation."""
+        band = quadrant_band(opts)
+        self._elements.append(_Quadrant(x=x, y=y, w=width, band=band))
+
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's plane(): a coordinate plane — axes with ticks, points, guide
         lines, dimension lines and labels, all in the plane's own units. Unlike the other
@@ -1479,6 +1511,9 @@ class Diagram:
         if isinstance(el, _Plane):
             laid = layout_plane(el.band, el.x, el.y, el.w, approx_width_of, ROLES)
             return render_plane(laid, day=el.day)
+        if isinstance(el, _Quadrant):
+            laid = layout_quadrant(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
+            return render_quadrant(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

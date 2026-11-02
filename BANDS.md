@@ -102,7 +102,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 |---|---|---|
 | math | ⛔ | MathJaxによるTeX組版、重い依存。stdlib-onlyの方針と衝突 |
 | image | ⛔ | ファイルI/O・画像埋め込み、優先度低 |
-| quadrant | ⬜(保留) | 760行、plane()系とも絡む。Tier 2相当に見えるが規模的にTier 3寄り |
+| quadrant | ✅ | 再調査の結果、plane()/layered-routeへの依存は無く(atoms/wrap/layout_utilのみ)、「保留」の判断時点では未確認だった。lib/quadrant.tsの`quadrantBand`/`layoutQuadrant`(758行)+lib/emit-figures.tsの`renderQuadrant`(~45行)を`quadrant.py`にフル移植: 9プリセット(bcg/ge/ansoff/nineBox/impactEffort/risk/stakeholder/positioning/eisenhower)・アイテム配置の衝突回避探索(オフセット格子+行の拡張リトライ)・バブルサイズ凡例・移動矢印・自由形状リージョン・8方向ラベル配置。live golden test一発通過(19件: プリセット・カスタム軸・crosshair+regions・group>4のhollowマーカー・行拡張リトライ経路含む)。chart系とのピア依存は無く、独立モジュール |
 
 ## 非busy diagram種別(DSLレベルのエイリアス、band自体は上に含む)
 

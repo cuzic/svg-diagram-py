@@ -36,6 +36,7 @@ import {layoutTree, layoutBalanced, layoutLayered, breakCycles} from '../../lib/
 import {routeClear} from '../../lib/orthogonal-route.ts';
 import {simplify as polySimplify, bendsOf, totalLength, crossingsOf, crossingsWith, scoreOf, runsTogether} from '../../lib/polyline-metrics.ts';
 import {moveApart} from '../../lib/route-apart.ts';
+import {headCrossings, searchRoute} from '../../lib/route-search.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
@@ -227,6 +228,10 @@ function handle(req: Req): unknown {
       const rects = new Map(Object.entries(req.rects as Record<string, unknown>));
       return Object.fromEntries(moveApart({routes, edges, rects} as never));
     }
+    case 'headCrossings':
+      return headCrossings(req.paths as never);
+    case 'searchRoute':
+      return searchRoute(req.start as never, req.end as never, req.boxes as never, req.others as never, req.bounds as never, (req.opts ?? {}) as never) ?? null;
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
     case 'layoutBrace':

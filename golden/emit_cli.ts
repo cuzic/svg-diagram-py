@@ -36,8 +36,8 @@ import {layoutTree, layoutBalanced} from '../../lib/graph-layout.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
-import {layoutTable} from '../../lib/seq-table.ts';
-import {renderTable} from '../../lib/emit-tables.ts';
+import {layoutTable, layoutSequence} from '../../lib/seq-table.ts';
+import {renderTable, renderSequence} from '../../lib/emit-tables.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -203,6 +203,12 @@ function handle(req: Req): unknown {
     }
     case 'renderTable':
       return renderTable(req.band as never, (req.day ?? 1) as never, tones, roles);
+    case 'layoutSequence': {
+      const band = {type: 'sequence', actors: req.actors, steps: req.steps, numbered: req.numbered, id: undefined, reveal: undefined, until: undefined} as never;
+      return layoutSequence(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
+    }
+    case 'renderSequence':
+      return renderSequence(req.band as never, (req.day ?? 1) as never, tones, roles);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

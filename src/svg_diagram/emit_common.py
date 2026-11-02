@@ -128,6 +128,15 @@ def arrow_path(
     return f"{path}\n  " + "\n  ".join(heads)
 
 
+def stroke_line(d: str, color: str, line: str | None, arrow: str | None, width: float = 2) -> str:
+    """lib/emit-common.ts:176-181 strokeLine()."""
+    from .tokens import PALETTE
+
+    if line == "double":
+        return f'<path d="{d}" fill="none" stroke="{color}" stroke-width="6"/>\n  <path d="{d}" fill="none" stroke="{PALETTE["bg"]}" stroke-width="2"{arrow_markers(arrow)}/>'
+    return f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{js_num(width)}"{line_attrs(line)}{arrow_markers(arrow)}/>'
+
+
 def text_lines(
     lines: list[str],
     *,

@@ -34,6 +34,7 @@ from .cloud import layout_cloud_band, render_cloud
 from .gantt import layout_gantt, render_gantt
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .timeline import layout_timeline, render_timeline
+from .sequence import layout_sequence, render_sequence
 from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
@@ -261,6 +262,17 @@ class _Table:
 
 
 @dataclass
+class _Sequence:
+    x: float
+    y: float
+    w: float
+    actors: list[dict]
+    steps: list[dict]
+    numbered: bool = True
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -473,6 +485,14 @@ class Diagram:
         layout formula (layout_table) IS byte-identical to Node (golden-tested live); only text
         widths use this port's approximation. Icon cells are not supported."""
         self._elements.append(_Table(x=x, y=y, w=width, columns=columns, rows=rows, width=table_width, title=title, dense=dense, header=header, row_header=row_header, header_h=header_h, cell_h=cell_h, row_curve=row_curve))
+
+    def sequence(self, actors: list[dict], steps: list[dict], *, x: float, y: float, width: float, numbered: bool = True) -> None:
+        """lib/dsl's sequence(): a UML-style sequence diagram. `actors`: [{id, label, tone?}].
+        `steps`: each {from,to,label,line?,arrow?,tone?} (msg) | {self,label,...} | {note,over}
+        | {divider}. The layout formula (layout_sequence) IS byte-identical to Node (golden-
+        tested live); only text widths use this port's approximation. Actor icons not
+        supported."""
+        self._elements.append(_Sequence(x=x, y=y, w=width, actors=actors, steps=steps, numbered=numbered))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
@@ -688,6 +708,9 @@ class Diagram:
         if isinstance(el, _Table):
             laid = layout_table(columns=el.columns, rows=el.rows, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, width=el.width, title=el.title, dense=el.dense, header=el.header, row_header=el.row_header, header_h=el.header_h, cell_h=el.cell_h, row_curve=el.row_curve)
             return render_table(laid, day=el.day, roles=ROLES)
+        if isinstance(el, _Sequence):
+            laid = layout_sequence(actors=el.actors, steps=el.steps, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, numbered=el.numbered)
+            return render_sequence(laid, day=el.day, roles=ROLES)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

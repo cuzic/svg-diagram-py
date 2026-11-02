@@ -45,6 +45,9 @@ import {renderWordArt} from '../../lib/emit-wordart.ts';
 import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
+import {heatmap} from '../../lib/dsl/charts.ts';
+import {layoutChart} from '../../lib/charts.ts';
+import {renderChart} from '../../lib/charts-emit.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -242,6 +245,14 @@ function handle(req: Req): unknown {
     }
     case 'renderBars':
       return renderBars(req.band as never, (req.day ?? 1) as never);
+    case 'layoutChart': {
+      let band: never;
+      if (req.chartKind === 'heatmap') band = heatmap(req.rows as never, req.cols as never, req.values as never, (req.opts ?? {}) as never) as never;
+      else throw new Error(`unknown chart kind: ${req.chartKind}`);
+      return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
+    }
+    case 'renderChart':
+      return renderChart(req.band as never, (req.day ?? 1) as never, emojiSpan);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

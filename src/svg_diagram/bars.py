@@ -17,6 +17,8 @@ import math
 
 from .atoms import text_width
 from .charts_base import inset_or_need
+from .charts_base import overlaps as _hit_rect
+from .charts_base import seg_hits_rect
 from .emit_common import emoji_span, js_num, js_round
 from .tokens import PALETTE, color_of
 
@@ -150,31 +152,6 @@ def _segment_of(d: dict, band: dict, labels: str) -> str:
 
 def _series(d: dict) -> str:
     return d.get("tone") or SERIES[d.get("series") or "a"]
-
-
-def _hit_rect(a: dict, b: dict) -> bool:
-    return min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"]) > 0.5 and min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"]) > 0.5
-
-
-def seg_hits_rect(sg: dict, r: dict) -> bool:
-    """lib/bars.ts:137-146 segHitsRect() (Liang-Barsky)."""
-    t0, t1 = 0.0, 1.0
-    dx, dy = sg["x2"] - sg["x1"], sg["y2"] - sg["y1"]
-    for p, q in ((-dx, sg["x1"] - r["x"]), (dx, r["x"] + r["w"] - sg["x1"]), (-dy, sg["y1"] - r["y"]), (dy, r["y"] + r["h"] - sg["y1"])):
-        if p == 0:
-            if q < 0:
-                return False
-            continue
-        t = q / p
-        if p < 0:
-            if t > t1:
-                return False
-            t0 = max(t0, t)
-        else:
-            if t < t0:
-                return False
-            t1 = min(t1, t)
-    return t0 <= t1
 
 
 def cumulative_of(data: list[dict]) -> list[float]:

@@ -49,6 +49,8 @@ from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
 from .wordart import layout_word_art, render_word_art, word_art_band
 from .bars import bars_band, layout_bars, render_bars
+from .charts import layout_chart, render_chart
+from .heatmap import heatmap_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -304,6 +306,18 @@ class _WordArt:
 
 @dataclass
 class _Bars:
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Chart:
+    """Generic wrapper for every chart kind (heatmap, and whatever is ported next) — they all
+    share one layout_chart()/render_chart() dispatcher (lib/charts.ts/lib/charts-emit.ts)."""
+
     x: float
     y: float
     w: float
@@ -648,6 +662,44 @@ class Diagram:
         )
         self._elements.append(_Bars(x=x, y=y, w=width, band=band))
 
+    def heatmap(
+        self,
+        rows: list[str],
+        cols: list[str],
+        values: list[list[float | None]],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        decimals: int | None = None,
+        min: float | None = None,
+        max: float | None = None,
+        levels: int | None = None,
+        row_header: bool | None = None,
+        corner: str | None = None,
+        scale: bool | None = None,
+        cell_h: float | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's heatmap(): a table of numbers shaded by size (a cohort table, a
+        retention table). `values[i][j]` may be `None` for an empty cell. The layout formula
+        IS byte-identical to Node (golden-tested live); only text widths use this port's
+        approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("unit", unit), ("decimals", decimals), ("min", min), ("max", max), ("levels", levels),
+            ("rowHeader", row_header), ("corner", corner), ("scale", scale), ("cellH", cell_h),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = heatmap_band(rows, cols, values, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
         self._elements.append(_Status(x=x, y=y, width=width, text=text, status=status, height=height, size=size))
@@ -874,6 +926,9 @@ class Diagram:
         if isinstance(el, _Bars):
             laid = layout_bars(el.band, el.x, el.y, el.w, approx_width_of, ROLES)
             return render_bars(laid, day=el.day)
+        if isinstance(el, _Chart):
+            laid = layout_chart(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
+            return render_chart(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

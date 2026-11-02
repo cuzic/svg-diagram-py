@@ -34,6 +34,16 @@ from .cloud import layout_cloud_band, render_cloud
 from .gantt import layout_gantt, render_gantt
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .timeline import layout_timeline, render_timeline
+from .flow_shapes import (
+    chevron_band,
+    concentric_band,
+    cycle_band,
+    funnel_band,
+    layout_flow_shape,
+    render_flow_shape,
+    value_chain_band,
+    venn_band,
+)
 from .sequence import layout_sequence, render_sequence
 from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
@@ -273,6 +283,15 @@ class _Sequence:
 
 
 @dataclass
+class _FlowShape:
+    x: float
+    y: float
+    cw: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -494,6 +513,38 @@ class Diagram:
         supported."""
         self._elements.append(_Sequence(x=x, y=y, w=width, actors=actors, steps=steps, numbered=numbered))
 
+    def chevron(self, steps: list[dict], *, x: float, y: float, width: float, direction: str | None = None, first: str | None = None, gap: float | None = None, current: int | None = None) -> None:
+        """lib/flow-shapes.ts's chevron(): process arrows. `steps`: [{label, sub?, id?, tone?}].
+        The layout formula IS byte-identical to Node (golden-tested live). loopBack arrows not
+        supported."""
+        band = chevron_band(steps, direction=direction, first=first, gap=gap, current=current)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
+    def funnel(self, stages: list[dict], *, x: float, y: float, width: float, scale: str | None = None, show_rate: bool = False) -> None:
+        """lib/flow-shapes.ts's funnel(): narrowing stages. `stages`: [{label, value?, id?, tone?}]."""
+        band = funnel_band(stages, scale=scale, show_rate=show_rate)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
+    def cycle(self, steps: list[dict], *, x: float, y: float, width: float, direction: str | None = None, centre: str | None = None) -> None:
+        """lib/flow-shapes.ts's cycle(): a closed loop of 3-8 nodes. `steps`: [{label, sub?, id?, tone?}]."""
+        band = cycle_band(steps, direction=direction, centre=centre)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
+    def venn(self, sets: list[dict], *, x: float, y: float, width: float, overlaps: list[dict] | None = None, centre: str | None = None, universe: str | bool | None = None) -> None:
+        """lib/flow-shapes.ts's venn(): 2 or 3 sets. `sets`: [{name, label?, id?, tone?}]."""
+        band = venn_band(sets, overlaps=overlaps, centre=centre, universe=universe)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
+    def concentric(self, rings: list[dict], *, x: float, y: float, width: float, order: str | None = None, labels: str | None = None, centre: str | None = None) -> None:
+        """lib/flow-shapes.ts's concentric(): nested rings. `rings`: [{label, description?, id?, tone?}]."""
+        band = concentric_band(rings, order=order, labels=labels, centre=centre)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
+    def value_chain(self, *, primary: list[dict], x: float, y: float, width: float, support: list[dict] | None = None, margin: str | bool | None = None, titles: tuple | bool | None = None) -> None:
+        """lib/flow-shapes.ts's valueChain(): Porter's value chain."""
+        band = value_chain_band(support=support, primary=primary, margin=margin, titles=titles)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
         self._elements.append(_Status(x=x, y=y, width=width, text=text, status=status, height=height, size=size))
@@ -711,6 +762,9 @@ class Diagram:
         if isinstance(el, _Sequence):
             laid = layout_sequence(actors=el.actors, steps=el.steps, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, numbered=el.numbered)
             return render_sequence(laid, day=el.day, roles=ROLES)
+        if isinstance(el, _FlowShape):
+            laid = layout_flow_shape(el.band, el.x, el.y, el.cw, approx_width_of, ROLES, "phrase")
+            return render_flow_shape(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

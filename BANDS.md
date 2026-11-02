@@ -40,7 +40,8 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | table | ✅ | layoutTable/renderTableともexport済み、live golden test。アイコン付きセルは対象外 |
 | sequence | ✅ | layoutSequence/renderSequenceともexport済み、live golden test(msg/self/note/divider全種別)。アクターアイコンは対象外 |
 | wireframe / screens | ⬜ | 独自のflexレイアウトエンジン(844行) |
-| chevron / funnel / cycle / venn / concentric / emblem / valueChain | ⬜ | renderFlowShape共通(522行)、形状ごとに閉形式幾何のはずだが未調査。次の着手候補 |
+| chevron / funnel / cycle / venn / concentric / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(6形状全て) |
+| emblem | ⬜ | lib/emblem-shapes.ts(~13形状の輪郭幾何+反復サイズ探索)が別途必要、見送り |
 | wordart | ⬜ | layoutWordArt(128行)、閉形式の可能性高い |
 
 ## 重要な発見: states/classes は Tier 3 相当(layeredAttempt依存)

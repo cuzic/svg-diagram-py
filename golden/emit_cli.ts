@@ -38,6 +38,8 @@ import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
 import {layoutTable, layoutSequence} from '../../lib/seq-table.ts';
 import {renderTable, renderSequence} from '../../lib/emit-tables.ts';
+import {chevronBand, funnelBand, cycleBand, vennBand, concentricBand, valueChainBand, layoutFlowShape} from '../../lib/flow-shapes.ts';
+import {renderFlowShape} from '../../lib/emit-figures.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -209,6 +211,20 @@ function handle(req: Req): unknown {
     }
     case 'renderSequence':
       return renderSequence(req.band as never, (req.day ?? 1) as never, tones, roles);
+    case 'layoutFlowShape': {
+      let band: never;
+      const o = req.opts ?? {};
+      if (req.shape === 'chevron') band = chevronBand(req.items as never, o) as never;
+      else if (req.shape === 'funnel') band = funnelBand(req.items as never, o) as never;
+      else if (req.shape === 'cycle') band = cycleBand(req.items as never, o) as never;
+      else if (req.shape === 'venn') band = vennBand(req.items as never, o) as never;
+      else if (req.shape === 'concentric') band = concentricBand(req.items as never, o) as never;
+      else if (req.shape === 'valueChain') band = valueChainBand(req.items as never, o) as never; // req.items = {support?, primary} for this one shape
+      else throw new Error(`unknown flow shape: ${req.shape}`);
+      return layoutFlowShape(band, req.x as number, req.y as number, req.cw as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
+    }
+    case 'renderFlowShape':
+      return renderFlowShape(req.band as never, (req.day ?? 1) as never, tones);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

@@ -53,6 +53,7 @@ from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
 from .sankey import sankey_band
+from .treemap import treemap_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -763,6 +764,35 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = radar_band(axes, series, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def treemap(
+        self,
+        tree,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        percent: bool | None = None,
+        strict: bool | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's treemap(): a tree of values as nested rectangles (squarified),
+        area proportional to value. `tree`: one node or a list of root nodes, each
+        {label, value | children: [...], id?, tone?}. The layout formula IS byte-identical to
+        Node (golden-tested live); only text widths use this port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("unit", unit), ("percent", percent), ("strict", strict),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = treemap_band(tree, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

@@ -30,7 +30,8 @@ import {renderPeople, renderDots} from '../../lib/emit-boxes.ts';
 import {layoutTimeline} from '../../lib/timeline.ts';
 import {renderTimeline, renderGantt} from '../../lib/emit-figures.ts';
 import {layoutGantt} from '../../lib/gantt.ts';
-import {layoutCloudBand} from '../../lib/toc.ts';
+import {layoutCloudBand, layoutCauseBand, layoutCauseBandOnce} from '../../lib/toc.ts';
+import {reachCounts, coreDrivers} from '../../lib/toc-analysis.ts';
 import {renderCloud} from '../../lib/emit-figures.ts';
 import {layoutTree, layoutBalanced, layoutLayered, breakCycles} from '../../lib/graph-layout.ts';
 import {routeClear} from '../../lib/orthogonal-route.ts';
@@ -54,13 +55,13 @@ import {renderWordArt} from '../../lib/emit-wordart.ts';
 import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
-import {bowtie, faultTree, bpmn, classDiagram, stateDiagram, flowchart} from '../../lib/dsl/diagrams.ts';
+import {bowtie, faultTree, bpmn, classDiagram, stateDiagram, flowchart, causeTree} from '../../lib/dsl/diagrams.ts';
 import {layoutBowtie} from '../../lib/bowtie.ts';
 import {renderBowtie} from '../../lib/emit-bowtie.ts';
 import {layoutFta} from '../../lib/fta.ts';
 import {renderFta} from '../../lib/emit-fta.ts';
 import {layoutBpmn} from '../../lib/bpmn.ts';
-import {renderBpmn, renderClasses, renderStates} from '../../lib/emit-figures.ts';
+import {renderBpmn, renderClasses, renderStates, renderCause} from '../../lib/emit-figures.ts';
 import {layoutClassesBand} from '../../lib/classes.ts';
 import {layoutStatesBand} from '../../lib/states.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
@@ -447,6 +448,24 @@ function handle(req: Req): unknown {
     }
     case 'renderFta':
       return renderFta(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutCauseBand': {
+      const band = causeTree(req.nodes as never, req.links as never, (req.opts ?? {}) as never);
+      const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: (req.keepWords ?? false) as boolean, space: (req.space ?? 1) as number};
+      return layoutCauseBand(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, env, req.heightBudget as number | undefined, (req.canvasBound ?? false) as boolean);
+    }
+    case 'renderCause':
+      return renderCause(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutCauseBandOnce': {
+      const band = causeTree(req.nodes as never, req.links as never, (req.opts ?? {}) as never);
+      const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: (req.keepWords ?? false) as boolean, space: (req.space ?? 1) as number};
+      return layoutCauseBandOnce(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, env, req.heightBudget as number | undefined, (req.canvasBound ?? false) as boolean, req.anotherOrder as string[] | undefined, (req.plainRoutes ?? false) as boolean, (req.noDetour ?? false) as boolean);
+    }
+    case 'reachCounts':
+      return mapToObj(reachCounts(req.nodes as never, req.links as never));
+    case 'coreDrivers': {
+      const counts = new Map(Object.entries(req.counts as Record<string, number>));
+      return coreDrivers(counts);
+    }
     case 'layoutBpmn': {
       const band = bpmn(req.lanes as never, req.nodes as never, req.flows as never, (req.opts ?? {}) as never);
       const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: false, space: (req.space ?? 1) as number};

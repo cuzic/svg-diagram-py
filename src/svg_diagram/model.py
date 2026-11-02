@@ -55,6 +55,7 @@ from .fta import fta_band, layout_fta, render_fta
 from .bpmn import bpmn_band, layout_bpmn, render_bpmn
 from .classes import classes_band, layout_classes_band, render_classes
 from .states import flowchart_band, layout_states_band, render_states, states_band
+from .toc import cause_band, layout_cause_band, render_cause
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
@@ -429,6 +430,18 @@ class _States:
     """stateDiagram()/flowchart() are a standalone band type ("states"), not part of the
     "chart" family — their own layout_states_band()/render_states() pair
     (lib/states.ts/lib/emit-figures.ts)."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Cause:
+    """causeTree() is a standalone band type ("cause"), not part of the "chart" family — its
+    own layout_cause_band()/render_cause() pair (lib/toc.ts/lib/emit-figures.ts)."""
 
     x: float
     y: float
@@ -1382,6 +1395,28 @@ class Diagram:
         band = states_band(states, transitions, dir=dir, initial=initial, max_node_w=max_node_w, returns=returns, straighten=straighten, id=id)
         self._elements.append(_States(x=x, y=y, w=width, band=band))
 
+    def cause_tree(
+        self, nodes: list[dict], links: list[dict], *, x: float, y: float, width: float, dir: str | None = None,
+        max_node_w: float | str | None = None, core_driver: bool | None = None, role_tags: bool | dict | None = None,
+        hop: bool | str | None = None, tree: str | None = None, layer: str | None = None, counts: bool | None = None,
+        core_driver_label: str | None = None, returns: str | None = None, straighten: bool | None = None,
+        fold: bool | None = None, id: str | None = None,
+    ) -> None:
+        """lib/dsl/diagrams.ts's causeTree(): entities and cause -> effect arrows that place
+        themselves in layers, causes at the bottom and effects at the top by default. Current
+        / Future Reality Tree, Prerequisite Tree and Transition Tree are all this figure: an
+        arrow across an AND arc means "together", separate arrows mean "either". `nodes`:
+        [{id, label, sub?, role?, tone?, core?, foldsInto?}]. `links`: [{from, to, line?,
+        kind?, back?}] (`from` is an array for an AND). pdpc()/relationDiagram()/
+        whyWhyTree()/transitionUnits() and the `mirrors`-tracking are NOT supported (see
+        toc.py's module docstring)."""
+        band = cause_band(
+            nodes, links, dir=dir, max_node_w=max_node_w, core_driver=core_driver, role_tags=role_tags, hop=hop,
+            tree=tree, layer=layer, counts=counts, core_driver_label=core_driver_label, returns=returns,
+            straighten=straighten, fold=fold, id=id,
+        )
+        self._elements.append(_Cause(x=x, y=y, w=width, band=band))
+
     def flowchart(
         self, nodes: list[dict], edges: list[dict], *, x: float, y: float, width: float, dir: str | None = None,
         max_node_w: float | None = None, returns: str | None = None, straighten: bool | None = None, id: str | None = None,
@@ -1704,6 +1739,9 @@ class Diagram:
         if isinstance(el, _States):
             laid = layout_states_band(el.band, el.x, el.y, el.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
             return render_states(laid, day=el.day)
+        if isinstance(el, _Cause):
+            laid = layout_cause_band(el.band, el.x, el.y, el.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
+            return render_cause(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

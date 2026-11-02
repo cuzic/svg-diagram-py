@@ -32,6 +32,20 @@ import {renderTimeline, renderGantt} from '../../lib/emit-figures.ts';
 import {layoutGantt} from '../../lib/gantt.ts';
 import {layoutCloudBand} from '../../lib/toc.ts';
 import {renderCloud} from '../../lib/emit-figures.ts';
+import {layoutTree, layoutBalanced} from '../../lib/graph-layout.ts';
+import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
+import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
+import {renderTree} from '../../lib/emit-figures.ts';
+
+// Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
+// serializes as `{}` (silently empty!) — convert to a plain object before returning so the
+// CLI's JSON response actually carries the node positions.
+function mapToObj<K extends string, V>(m: Map<K, V>): Record<string, V> {
+  return Object.fromEntries(m);
+}
+function treeLayoutToPlain(t: {nodes: Map<string, unknown>; edges: unknown; w: number; h: number; braces?: unknown}) {
+  return {nodes: mapToObj(t.nodes), edges: t.edges, w: t.w, h: t.h, ...(t.braces ? {braces: t.braces} : {})};
+}
 
 // Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
 // atoms.py/wrap.py: tests the ALGORITHM (icon grid geometry, dot pile packing), not real
@@ -149,6 +163,34 @@ function handle(req: Req): unknown {
     }
     case 'renderCloud':
       return renderCloud(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutTree':
+      return treeLayoutToPlain(layoutTree(req.root as never, {dir: req.dir, gap: req.gap, levelGap: req.levelGap}));
+    case 'layoutBalanced':
+      return treeLayoutToPlain(layoutBalanced(req.root as never, {gap: req.gap, levelGap: req.levelGap, sides: req.sides}));
+    case 'layoutHanging':
+      return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
+    case 'layoutBrace':
+      return treeLayoutToPlain(layoutBrace(req.root as never, {gap: req.gap}));
+    case 'layoutFishbone':
+      return treeLayoutToPlain(layoutFishbone(req.root as never, {gap: req.gap}));
+    case 'layoutTimelineMap':
+      return treeLayoutToPlain(layoutTimelineMap(req.root as never, {gap: req.gap}));
+    case 'mirror': {
+      const l = req.layout as {nodes: Record<string, unknown>; edges: unknown; w: number; h: number; braces?: unknown};
+      const layout = {...l, nodes: new Map(Object.entries(l.nodes))};
+      return treeLayoutToPlain(mirror(layout as never, req.axis as never));
+    }
+    case 'measureNode':
+      return measureNode(req.label as string, req.sub as string | undefined, req.maxW as number, peopleWidthOf, roles, (req.mode ?? 'phrase') as never, (req.floor ?? false) as boolean, {keepWordsCap: req.keepWordsCap, keepWords: req.keepWords});
+    case 'nodeRuns':
+      return nodeRuns(req.r as never, req.l as never, roles);
+    case 'layoutTreeBand': {
+      const band = {type: 'tree', root: req.root, dir: req.dir, maxNodeW: req.maxNodeW, balanced: req.balanced, layout: req.layoutMode, sides: req.sides, edges: req.edgesOpt, id: undefined, reveal: undefined, until: undefined} as never;
+      const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: false};
+      return layoutTreeBand(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, env);
+    }
+    case 'renderTree':
+      return renderTree(req.band as never, (req.day ?? 1) as never, tones);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

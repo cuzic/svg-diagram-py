@@ -194,6 +194,18 @@ def render_banner(*, x: float, y: float, w: float, h: float, lines: list[str], s
     return f"{rect}\n  {text}" if text else rect
 
 
+def render_status(*, x: float, y: float, w: float, h: float, text_y: float, text: str, status: str, size: float = 14) -> str:
+    """lib/emit-boxes.ts:262-266 renderStatus(): diagram({status}) — one dashed-outline pill,
+    an accessible unit. `text_y` is Node's layout-computed `band.textY`, taken here as a plain
+    parameter (same split as render_step_badge's title_baseline_y) so this primitive stays
+    byte-golden-testable; model.py decides its value with a new, simplified formula."""
+    pill = pill_svg(
+        x=snap4(x), y=snap4(y), w=snap4(w), h=h, fill=PALETTE["bg"], stroke=PALETTE["muted"], sw=1.5, dash="4 3",
+        cx=x + w / 2, baseline=text_y, raw_y=y, text=PALETTE["text"], size=size, label_html=emoji_span(text),
+    )
+    return f'<g role="img" aria-label="{escape_attr(text)}" data-status="{status}">\n  {pill}\n  </g>'
+
+
 def render_raw(*, x: float, y: float, w: float, h: float, day: int | str, draw: Callable[[dict], str]) -> str:
     """lib/emit-boxes.ts:268-276 renderRaw(): hands the caller a rect + a tone->hex color lookup, and
     draws exactly what it returns — the escape hatch for a shape this port has no primitive for."""

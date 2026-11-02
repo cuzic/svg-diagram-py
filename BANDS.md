@@ -18,15 +18,15 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | row | ✅ | 幅配分はNode.jsとバイト同一(純粋算術) |
 | grid | ✅ | 同上 |
 | raw | ✅ | |
-| status | ⬜ | pill_svgは移植済みなので小さい |
+| status | ✅ | |
 
 ## Tier 1 — 閉形式(auto-layout不要、着手中)
 
 | band | 状態 | 備考 |
 |---|---|---|
 | cloud | ⬜ | 計画済み(3列2行の閉形式) |
-| pyramid | ⬜ | 台形スタック、閉形式 |
-| curve | ⬜ | 点列は呼び出し側が与える、閉形式 |
+| pyramid | ✅ | 台形スタック、幾何はNode実機キャプチャとバイト同一を確認 |
+| curve | ✅ | 点列配置もNode実機キャプチャとバイト同一を確認 |
 | timeline | ⬜ | 要調査 |
 | gantt | ⬜ | 日付→x座標、閉形式の可能性高 |
 | people | ⬜ | アイコン配置、閉形式 |

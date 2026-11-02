@@ -25,11 +25,13 @@ from typing import Callable, Literal
 
 from .approx_width import approx_width_of
 from .emit import emit_svg
-from .emit_boxes import render_banner, render_box_rect, render_caption, render_connect, render_group_rect, render_raw, render_step_badge, render_stamp, render_tag
-from .emit_common import text_lines
+from .emit_boxes import render_banner, render_box_rect, render_caption, render_connect, render_group_rect, render_raw, render_status, render_step_badge, render_stamp, render_tag
+from .emit_common import LH_EM, js_round, text_lines
+from .figures import pyramid_layer_geometry, render_curve, render_pyramid
 from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
 from .legend import render_legend_item
-from .tokens import ROLES, run_color_of, text_color_of
+from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
+from .wrap import wrap_text
 
 Tone = Literal["plain", "accent", "danger", "muted", "new", "changed", "removed", "solid", "solid-danger"]
 ArrowStyle = Literal["start", "end", "both", "none"]
@@ -116,6 +118,41 @@ class _Raw:
     draw: Callable[[dict], str]
 
 
+@dataclass
+class _Pyramid:
+    x: float
+    y: float
+    layers: list[str]
+    width: float | None = None
+    layer_height: float = 76
+    apex_ratio: float = 0.3
+    day: int | str = 1
+
+
+@dataclass
+class _Curve:
+    x: float
+    y: float
+    width: float
+    height: float
+    points: list[dict]
+    y_top_label: str | None = None
+    y_bottom_label: str | None = None
+    x_label: str | None = None
+    day: int | str = 1
+
+
+@dataclass
+class _Status:
+    x: float
+    y: float
+    width: float
+    text: str
+    status: str
+    height: float = 24
+    size: float = 14
+
+
 def _edge_point(box: Box, side: str) -> dict:
     cx, cy = box.x + box.width / 2, box.y + box.height / 2
     return {
@@ -194,6 +231,26 @@ class Diagram:
     def legend(self, items: list[dict]) -> None:
         """Each item: `{x, y, label, kind, ...}` — see legend.render_legend_item()."""
         self._elements.append(_Legend(items=items))
+
+    def pyramid(self, layers: list[str], *, x: float, y: float, width: float | None = None, layer_height: float = 76, apex_ratio: float = 0.3) -> None:
+        """lib/dsl/figures.ts's pyramid(): layers bottom-to-top, >= 2. The per-layer geometry
+        (layout_pyramid's formula in figures.py) IS byte-identical to Node — it's pure closed-
+        form arithmetic — but the text WRAPPING uses this port's approximate width function."""
+        if len(layers) < 2:
+            raise ValueError("pyramid(layers) needs at least 2 layers, bottom to top")
+        self._elements.append(_Pyramid(x=x, y=y, layers=layers, width=width, layer_height=layer_height, apex_ratio=apex_ratio))
+
+    def curve(self, points: list[dict], *, x: float, y: float, width: float, height: float, y_top_label: str | None = None, y_bottom_label: str | None = None, x_label: str | None = None) -> None:
+        """lib/dsl/figures.ts's curve(): an axis + connected-dot trend line. Each point:
+        `{y: 0..1, emphasis?, dropLine?}`, evenly spaced left-to-right. The point-placement
+        formula (figures.curve_points) IS byte-identical to Node (pure closed-form arithmetic)."""
+        if len(points) < 2:
+            raise ValueError("curve(points) needs at least 2 points")
+        self._elements.append(_Curve(x=x, y=y, width=width, height=height, points=points, y_top_label=y_top_label, y_bottom_label=y_bottom_label, x_label=x_label))
+
+    def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
+        """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
+        self._elements.append(_Status(x=x, y=y, width=width, text=text, status=status, height=height, size=size))
 
     # ---- arrow()/connect() ------------------------------------------------------------
 
@@ -324,7 +381,42 @@ class Diagram:
             return "\n  ".join(render_legend_item(note_size=ROLES["note"], **item) for item in el.items)
         if isinstance(el, _Raw):
             return render_raw(x=el.x, y=el.y, w=el.w, h=el.h, day=1, draw=el.draw)
+        if isinstance(el, _Pyramid):
+            return self._render_pyramid(el)
+        if isinstance(el, _Curve):
+            from .figures import curve_points
+
+            axis_label_w, axis_bottom_gap, top_pad, right_pad = 44, 28, 14, 8
+            axis_x = el.x + axis_label_w
+            axis_right = el.x + el.width - right_pad
+            axis_top = el.y + top_pad
+            axis_bottom = el.y + el.height - axis_bottom_gap
+            points = curve_points(raw_points=el.points, axis_x=axis_x, axis_right=axis_right, axis_top=axis_top, axis_bottom=axis_bottom)
+            return render_curve(axis_x=axis_x, axis_right=axis_right, axis_top=axis_top, axis_bottom=axis_bottom, points=points, day=el.day, y_top_label=el.y_top_label, y_bottom_label=el.y_bottom_label, x_label=el.x_label)
+        if isinstance(el, _Status):
+            text_y = el.y + el.height / 2 + el.size * 0.38
+            return render_status(x=el.x, y=el.y, w=el.width, h=el.height, text_y=text_y, text=el.text, status=el.status, size=el.size)
         raise TypeError(f"unknown element type {type(el)!r}")
+
+    def _render_pyramid(self, el: _Pyramid) -> str:
+        n = len(el.layers)
+        base_width = el.width if el.width is not None else self.width
+        total_h = n * el.layer_height
+        cx = el.x + base_width / 2
+        day = el.day
+        laid_layers = []
+        for i in range(n):
+            geom = pyramid_layer_geometry(n=n, i=i, base_width=base_width, apex_ratio=el.apex_ratio, layer_height=el.layer_height, cx=cx, stack_bottom_y=el.y + total_h)
+            bg_lum = blend_luminance(PALETTE["bg"], PALETTE[day]["accent"], geom["opacity"])
+            text_color = best_text_color(bg_lum)
+            top_w = geom["topW"]
+            wrap_width = max(40, top_w - 24)
+            lines = wrap_text(el.layers[i], max_width=wrap_width, atom_width=lambda a: approx_width_of(a, ROLES["title"], 700), mode="phrase")
+            mid_y = (geom["topY"] + geom["bottomY"]) / 2
+            line_gap = ROLES["title"] * LH_EM
+            text_ys = [js_round(mid_y + (li - (len(lines) - 1) / 2) * line_gap + ROLES["title"] * 0.35) for li in range(len(lines))]
+            laid_layers.append({"points": geom["points"], "opacity": geom["opacity"], "textColor": text_color, "lines": lines, "textYs": text_ys, "cx": cx})
+        return render_pyramid(laid_layers, day=day, title_size=ROLES["title"])
 
     def _route(self, a: Arrow) -> list[dict]:
         source, target = self._box_by_id(a.source), self._box_by_id(a.target)

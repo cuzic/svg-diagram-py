@@ -1,0 +1,15 @@
+{
+  "_comment": "Captured live from the real Node.js pipeline: diagram({theme:'blue'}).add(pyramid(['Top','Middle','Bottom layer here'])) run through layoutDiagram()+emitSvg(). layoutPyramid() itself is not exported, so this fixture (not a live subprocess call) is how pyramid_layer_geometry()/render_pyramid() are golden-tested — see tests/test_pyramid.py.",
+  "_capturedFrom": "lib/layout-handlers.ts (layoutPyramid) + lib/emit-figures.ts (renderPyramid)",
+  "_capturedAt": "2026-11-02",
+  "input": {"theme": "blue", "layers": ["Top", "Middle", "Bottom layer here"], "layerHeight": 76, "apexRatio": 0.3},
+  "laidOutBand": {
+    "x": 210, "y": 20, "w": 520, "h": 228, "day": "blue",
+    "layers": [
+      {"points": [[210, 248], [730, 248], [669.3333333333334, 172], [270.66666666666663, 172]], "opacity": 0.65, "textColor": "#22201b", "lines": ["Top"], "textYs": [215], "cx": 470},
+      {"points": [[270.66666666666663, 172], [669.3333333333334, 172], [608.6666666666667, 96], [331.3333333333333, 96]], "opacity": 0.8, "textColor": "#ffffff", "lines": ["Middle"], "textYs": [139], "cx": 470},
+      {"points": [[331.3333333333333, 96], [608.6666666666667, 96], [548, 20], [392, 20]], "opacity": 1, "textColor": "#ffffff", "lines": ["Bottom layer here"], "textYs": [63], "cx": 470}
+    ]
+  },
+  "renderedBody": "<polygon points=\"210,248 730,248 669,172 271,172\" fill=\"#1d5fa8\" fill-opacity=\"0.65\" stroke=\"#1d5fa8\" stroke-width=\"2.5\"/>\n  <text x=\"470\" y=\"215\" text-anchor=\"middle\" font-size=\"15\" font-weight=\"700\" fill=\"#22201b\">Top</text>\n\n  <polygon points=\"271,172 669,172 609,96 331,96\" fill=\"#1d5fa8\" fill-opacity=\"0.8\" stroke=\"#1d5fa8\" stroke-width=\"2.5\"/>\n  <text x=\"470\" y=\"139\" text-anchor=\"middle\" font-size=\"15\" font-weight=\"700\" fill=\"#ffffff\">Middle</text>\n\n  <polygon points=\"331,96 609,96 548,20 392,20\" fill=\"#1d5fa8\" fill-opacity=\"1\" stroke=\"#1d5fa8\" stroke-width=\"2.5\"/>\n  <text x=\"470\" y=\"63\" text-anchor=\"middle\" font-size=\"15\" font-weight=\"700\" fill=\"#ffffff\">Bottom layer here</text>"
+}

@@ -16,7 +16,7 @@
 //   out: {"ok": true, "result": "<rect .../>"}
 
 import {createInterface} from 'node:readline';
-import {renderBoxRect, renderConnect, renderStamp, renderTag, renderStepBadge, renderRaw, renderLegend} from '../../lib/emit-boxes.ts';
+import {renderBoxRect, renderConnect, renderStamp, renderTag, renderStepBadge, renderRaw, renderLegend, renderStatus} from '../../lib/emit-boxes.ts';
 import {escapeXml, escapeAttr, snap4, textLines, emojiSpan, arrowPath} from '../../lib/emit-common.ts';
 import {toneEnv, runColorOf} from '../../lib/tokens.ts';
 import {emitSvg} from '../../lib/emit.ts';
@@ -105,6 +105,8 @@ function handle(req: Req): unknown {
       return arrowPath(req.points as never, req.color as string, req.line as never, (req.width ?? 2) as number, (req.headAt ?? 'end') as never, (req.end ?? 'arrow') as never);
     case 'renderLegend':
       return renderLegend({items: req.items as never} as never, (req.day ?? 1) as never, tones, roles);
+    case 'renderStatus':
+      return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':
       return renderRaw({x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number, draw: (ctx: {color: (t: string) => string}) => `<circle cx="50" cy="50" r="10" fill="${ctx.color(req.tone as string)}"/>`} as never, (req.day ?? 1) as never);
     case 'emojiSpan':

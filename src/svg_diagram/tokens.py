@@ -134,3 +134,25 @@ def wcag_ratio(a: str, b: str) -> float:
     """lib/tokens.ts:372-375 wcagRatio()."""
     la, lb = relative_luminance(a), relative_luminance(b)
     return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+# lib/tokens.ts:326 SHADES
+SHADES: list[float] = [1.0, 0.8, 0.65, 0.5, 0.35, 0.15]
+
+
+def luminance(hex_color: str) -> float:
+    """lib/tokens.ts:339-344 luminance() — ITU-R BT.601 perceptual-ish luminance."""
+    r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def blend_luminance(base_hex: str, overlay_hex: str, alpha: float) -> float:
+    """lib/tokens.ts:351-353 blendLuminance()."""
+    return luminance(base_hex) * (1 - alpha) + luminance(overlay_hex) * alpha
+
+
+def best_text_color(bg_luminance: float, paint=lambda h: h) -> str:
+    """lib/tokens.ts:358-363 bestTextColor()."""
+    white_delta = abs(luminance(paint("#ffffff")) - bg_luminance)
+    text_delta = abs(luminance(paint(PALETTE["text"])) - bg_luminance)
+    return "#ffffff" if white_delta >= text_delta else PALETTE["text"]

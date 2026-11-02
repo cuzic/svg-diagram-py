@@ -1,0 +1,20 @@
+{
+  "_comment": "Captured live from the real Node.js pipeline (layoutCurve()/renderCurve() aren't exported — see tests/test_curve.py).",
+  "_capturedFrom": "lib/layout-handlers.ts (layoutCurve) + lib/emit-figures.ts (renderCurve)",
+  "_capturedAt": "2026-11-02",
+  "input": {
+    "theme": "blue",
+    "rawPoints": [{"y": 0.9, "emphasis": "accent"}, {"y": 0.6}, {"y": 0.3, "dropLine": true}, {"y": 0.1, "emphasis": "danger"}],
+    "yTopLabel": "高", "yBottomLabel": "低", "xLabel": "時間"
+  },
+  "laidOutBand": {
+    "axisX": 64, "axisRight": 912, "axisTop": 34, "axisBottom": 212,
+    "points": [
+      {"x": 64, "y": 51.79999999999998, "emphasis": "accent", "dropLine": false},
+      {"x": 346.6666666666667, "y": 105.2, "dropLine": false},
+      {"x": 629.3333333333334, "y": 158.6, "dropLine": true},
+      {"x": 912, "y": 194.2, "emphasis": "danger", "dropLine": false}
+    ]
+  },
+  "renderedBody": "<path d=\"M64,34 L64,212 L912,212\" fill=\"none\" stroke=\"#22201b\" stroke-width=\"2\"/>\n  <path d=\"M64,52 L347,105 L629,159 L912,194\" fill=\"none\" stroke=\"#22201b\" stroke-width=\"3\"/>\n  <circle cx=\"64\" cy=\"52\" r=\"6\" fill=\"#1d5fa8\"/>\n  <circle cx=\"348\" cy=\"104\" r=\"5\" fill=\"#6f6659\"/>\n  <path d=\"M629,159 L629,212\" fill=\"none\" stroke=\"#6f6659\" stroke-width=\"2\" stroke-dasharray=\"6,4\"/>\n  <circle cx=\"628\" cy=\"160\" r=\"5\" fill=\"#6f6659\"/>\n  <circle cx=\"912\" cy=\"196\" r=\"8\" fill=\"#b91c1c\"/>\n  <text x=\"56\" y=\"38\" text-anchor=\"end\" font-size=\"14\" fill=\"#6f6659\">高</text>\n  <text x=\"56\" y=\"212\" text-anchor=\"end\" font-size=\"14\" fill=\"#6f6659\">低</text>\n  <text x=\"64\" y=\"236\" font-size=\"14\" fill=\"#6f6659\">時間</text>"
+}

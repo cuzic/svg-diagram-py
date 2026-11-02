@@ -44,43 +44,23 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | chevron / funnel / cycle / venn / concentric / emblem / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(7形状全て)。emblemは再調査の結果、lib/emblem-shapes.ts(157行、13形状の輪郭幾何)がlib/flow-shapes.tsのlayoutEmblem()から直接呼ばれるだけの小さな依存で、既存のflow_shapes.py基盤(Texts/anchor/render_flow_shapeのpath+fill分岐)にそのまま乗ることが判明、「別途必要」は見積もり過大だった。`emblem_shapes.py`にemblemOutline/emblemHeight/emblemMaxHeightをフル移植(emblemClearance/flatOutlineは非公開のテスト専用ヘルパーのため対象外)、flow_shapes.pyにemblem_band()/_layout_emblem()を追加。live golden test一発通過(13形状全網羅・sub折返し・tone・gap/minSize・複数行ラップ・エラー経路)。render_flow_shape()の`n()`がPython組込みroundを使っていて.5の境界で不一致になる既存バグ(round1化し忘れ)をこのテストで検出・修正 |
 | wordart | ✅ | layoutWordArt/renderWordArtともexport済み、live golden test(horizontal/vertical/arc、全プリセット・gradient/plate/flip/rotate)。grapheme分割はIntl.Segmenter未再現(コードポイント単位の近似、approx_width.pyと同方針)、uid/gradient idはNode非再現(1枚のSVG内で一意なら十分、golden比較から除外) |
 
-## 重要な発見: states/classes は Tier 3 相当(layeredAttempt依存)
+## layered routing エンジン(layeredAttempt)は移植完了——states/classes/cause/pert/causalLoop/dependencyNetwork自体はまだ未着手
 
-調査の結果、`states`(flowchartを含む)と`classes`(UML)は`lib/layered-route.ts`の
-`layeredAttempt`(layered graph routing — 交差削減・直交ルーティング・診断用
-ラベル配置探索)に依存していることが判明した。これは`cause()`が使う
-`lib/graph-layout.ts`の`layoutLayered`と同系統の重いエンジンで、cause()の
-ために後回しにした「交差削減・hop経路探索」と同規模の投資が必要。
-したがって states/classes は Tier 2 ではなく **Tier 3 に格上げし、
-bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて移植する
-別計画で扱うのが合理的**(エンジン自体は一度移植すれば5 band種別
-(states/flowchart/classes/bpmn/fta/cause)に効く)。
-
-## Tier 3 — 専用図種(大規模、layered routing エンジン共有)
-
-| band | 状態 | 備考 |
-|---|---|---|
-| states(flowchartを含む) | ⬜ | layeredAttempt依存。Tier2から格上げ |
-| classes (UML) | ⬜ | layeredAttempt依存。Tier2から格上げ |
-| cause(CRT/FRT) | ⬜ | 最大規模。別計画で起票予定(交差削減・hop経路探索含む) |
-
-**再調査の結果、`layeredAttempt`(lib/layered-route.ts、606行)自体がさらに3つの未移植モジュールに依存することが判明し、投資規模の見積もりは606行ではなく約930行に上方修正**: `lib/polyline-metrics.ts`(82行、bendsOf/crossingsOf/crossingsWith/scoreOf/runsTogether/simplify——経路の折れ・交差を数える純粋関数)、`lib/route-search.ts`(140行、headCrossings/searchRoute)、`lib/route-apart.ts`(102行、moveApart——並走する長い矢印を引き離す)。このうちpolyline-metrics.ts・route-apart.ts・route-search.tsの3つは全て移植済み(✅、下記参照)。残るはlayered-route.ts本体(606行)のみだが、全文を読んだ結果、**これは本移植で今まで扱ってきたどのモジュールよりも桁違いに密度が高い**と判明した: `routeOnce`という1つの関数だけで約380行あり、ADR 0016のD3/D8〜D14という8個以上の個別最適化(ポートの段差・レーンの分配・外側レーンの旋回・直線化・detour探索・AND矢印の共有・並走の回避)が1つの関数内で順に相互作用する。しかもNode側がexportしているのは`routeLayered`/`corridorLoad`/`layoutWithLanes`/`layeredAttempt`の4つだけで、`routeOnce`/`elbows`/`alongEach`は非export(モジュール内部専用)——つまりこの巨大な1関数を書き上げて初めてgolden testが通せる状態になり、途中の段階的検証ができない。他の全モジュール(layoutLayered・routeClear・polyline-metrics・route-apart・route-search)は実装の途中でも個々の分岐を小さく試せたが、ここは質的に違う。**独立したサブプランとして、十分な時間と段階的な実機比較(Node実機を都度キャプチャして内部ヘルパーの出力も手動で突き合わせる等)を確保した上で着手するのが適切**(当初のプラン文書「Phase H」の推奨と一致)。本セッションではここで一区切りとする。
-
-**bpmnはTier 3から外して移植済み(✅、下記参照)。** `layoutLayered`/`routeClear`という2つのアルゴリズム的前提を先行して切り出した上で、`lib/bpmn.ts`本体(313行、ノード計測・レーン/列配置・フロー経路探索・チップ/ゲートウェイラベル配置)もフル移植した。states/classes/cause/pert/causalLoop/dependencyNetworkは依然未着手: これらは`lib/layered-route.ts`の`layeredAttempt`(606行、layoutLayeredをラップしてlevelGapの再試行+hop経路探索を行う、未移植)経由でしか使わないため、bpmnの完了がこれらを直接解放するわけではない。
-
-| band | 状態 | 備考 |
-|---|---|---|
-| bpmn | ✅ | 再調査の結果、Tier 3格上げは一部誤りと判明: `lib/bpmn.ts`は`layered-route.ts`の`layeredAttempt`ではなく`lib/graph-layout.ts`の`layoutLayered`(既に移植済み)と`lib/orthogonal-route.ts`の`routeClear`(グリッド上のDijkstra探索、同じく先行移植済み)に直接依存するだけで、hop経路探索の再試行ラッパー自体は要らない。それでも本体(313行、ノードの計測・`layoutLayered`による列割当・レーンごとの行の高さ・フロー経路の試行リスト(直進/ゲートウェイ頂点/チャンネル経由/最終手段の`routeClear`探索)・条件チップの衝突回避配置・ゲートウェイラベルの空き場所探索)は大きかった。`icon`/`iconTone`(タスク上のアイコン)はicon registry自体が未移植のため対象外(box()のrenderBoxIcon・sankey()のノードアイコンと同じ理由)。`fit:'shrink'`の段階的縮小カスケードも含めてフル移植。live golden test 20件一発通過(2レーン直線・1レーンの戻り辺+ANDゲートウェイ+message flow(dashed)・自己ループ+ORゲートウェイ+戻り辺・fit:shrinkでの縮小・エラー経路7種)。`narrowTexts`/`narrowField`(fit:shrink時の「縮まりすぎた」診断、states()と共有予定)は`tree_text.py`に追加 |
-| polyline-metrics | ✅ | `lib/polyline-metrics.ts`(82行、simplify/bendsOf/totalLength/crossingsOf/crossingsWith/scoreOf/runsTogether——折れ・交差・並走の判定を数える純粋関数、依存なし)を`polyline_metrics.py`にフル移植。live golden test 41件一発通過。layered-route.ts(未移植)の候補経路スコアリングで使われるほか、check/lint側のedge-bends/edge-crossingsルール(本移植の対象外)でも共有される |
-| route-apart | ✅ | `lib/route-apart.ts`(102行、moveApart——並走して1本の線に見えてしまう長い矢印の内側の一辺を少しずつ横に動かし、交差・折れ・箱の貫通・図の外に出ることを増やさない移動だけを採用するADR 0016 D14)を`route_apart.py`にフル移植。依存は先行移植済みのpolyline_metrics.pyのみ。live golden test 4件一発通過(並走2本が実際に引き離される経路・self/outerで動かせない経路・遠く離れていて動かせない経路・3本並走)。layered-route.tsのroutingパイプラインの最終段で使われる(layered-route.ts本体はまだ未移植) |
-| route-search | ✅ | `lib/route-search.ts`(140行、headCrossings/searchRoute——箱の脇を通る格子の上でのA*探索。コストは長さ+曲がり+他の矢印との交差+相乗り+矢じり付近の交差)を`route_search.py`にフル移植。依存は他の未移植モジュールに一切無く自己完結(手書きの二分ヒープをpush/pop含めて忠実に移植——タイブレークの挙動をPythonのheapqに委ねず再現するため)。live golden test 11件一発通過(直進・障害物による迂回・他経路とのalong/cross費用・狭い通路・矢じり付近のhead費用・到達不能でNone・margin/stub/tail変更・極小budgetでの打ち切り)。layered-route.ts本体が長い矢印の最終手段ルーティングに使う(layered-route.ts本体はまだ未移植) |
+調査の結果、`states`(flowchartを含む)・`classes`(UML)・`cause`(CRT/FRT)・`pert`/`causalLoop`/`dependencyNetwork`(`semnet-common.ts`経由)は全て`lib/layered-route.ts`の
+`layeredAttempt`(layered graph routing — 交差削減・直交ルーティング・AND矢印のレーン共有・並走回避・detour探索)に依存していると判明し、一度は「規模が大きすぎるため独立したサブプランとして十分な時間を確保してから着手する」と判断していた。
+ユーザーの指示により専用のPlanフェーズ(Plan agentによる独立レビュー込み)を経て、`lib/layered-route.ts`本体(606行)を含むエンジン全体のフル移植が完了した(✅、下記参照)。
+**これでエンジン自体は6つのband種別(states/flowchart/classes/bpmn/pert/causalLoop/dependencyNetwork、causeを含めれば7)に効く状態になったが、各bandの呼び出しコード(ノード計測・配色・ラベル配置等)自体はまだ1つも移植していない** — bpmn()は例外で、エンジンの一部(layoutLayered+routeClear)だけで足りたため既に完了済み(Tier 3から独立に解消)。states/classes/cause/pert/causalLoop/dependencyNetworkの実装着手は別の投資として残る。
 
 | 関数 | 状態 | 備考 |
 |---|---|---|
-| layoutLayered / breakCycles | ✅ | `lib/graph-layout.ts`の`layoutLayered`(257行、サイクル除去・longest-path layering・tighten/ALAP・層folding・barycenter交差削減・座標割当=relax/Brandes-Köpf)と`breakCycles`(DFSベースのサイクル検出、declared back edgeの妥当性検証含む)を`graph_layout.py`にフル移植。live golden test 34件一発通過(分岐・交差削減(transpose含む)・自己ループ・層skipダミー・2成分分離・tighten/ALAP・fold・outer lane(all/declared×near/low)・coord relax/bk・エラー経路5種)。**states/classes/bpmn/cause/pert/causalLoop/dependencyNetwork共有の最大の再利用可能基盤を先行切り出し**——bpmn()はこれだけで動かせた(下記参照)が、states/classes/cause/pert/causalLoop/dependencyNetworkは`layeredAttempt`ラッパー(hop経路探索・levelGap再試行)経由でしか使わないため、これだけではまだ動かせない |
-| routeClear | ✅ | `lib/orthogonal-route.ts`(97行、グリッド上のDijkstra探索による直交ルーティング——箱の膨張境界+ヒント線でグリッドを作り、曲がり/交差/他の経路への相乗りにコストを課す)を`orthogonal_route.py`にフル移植。bpmn()専用(他で使われていない)が、純粋な幾何アルゴリズムで自己完結。live golden test 10件一発通過(直線・縦横検出・障害物による迂回・margin/stub変更・xs/ys hint・他経路とのRIDE/CROSS・到達不能でNone・複数回の曲がり)。これとlayoutLayeredでbpmn()本体(313行)も移植できた(下記参照) |
+| layoutLayered / breakCycles | ✅ | `lib/graph-layout.ts`の`layoutLayered`(257行、サイクル除去・longest-path layering・tighten/ALAP・層folding・barycenter交差削減・座標割当=relax/Brandes-Köpf)と`breakCycles`(DFSベースのサイクル検出、declared back edgeの妥当性検証含む)を`graph_layout.py`にフル移植。live golden test 34件一発通過 |
+| routeClear | ✅ | `lib/orthogonal-route.ts`(97行、グリッド上のDijkstra探索による直交ルーティング)を`orthogonal_route.py`にフル移植。live golden test 10件一発通過。これとlayoutLayeredでbpmn()本体(313行)も移植できた |
+| polyline-metrics | ✅ | `lib/polyline-metrics.ts`(82行、simplify/bendsOf/totalLength/crossingsOf/crossingsWith/scoreOf/runsTogether——折れ・交差・並走の判定を数える純粋関数、依存なし)を`polyline_metrics.py`にフル移植。live golden test 41件一発通過。check/lint側のedge-bends/edge-crossingsルール(本移植の対象外)でも共有される |
+| route-apart | ✅ | `lib/route-apart.ts`(102行、moveApart——並走して1本の線に見えてしまう長い矢印を引き離すADR 0016 D14)を`route_apart.py`にフル移植。live golden test 4件一発通過 |
+| route-search | ✅ | `lib/route-search.ts`(140行、headCrossings/searchRoute——箱の脇を通る格子上でのA*探索)を`route_search.py`にフル移植。手書きの二分ヒープをpush/pop含めて忠実に移植(タイブレークの挙動をPythonのheapqに委ねず再現)。live golden test 11件一発通過 |
+| **layered-route(layeredAttempt本体)** | ✅ | `lib/layered-route.ts`(606行)を`layered_route.py`にフル移植。事前にPlan agentへ独立レビューを依頼し(ファイル全文の検証・フェーズ分割・翻訳の落とし穴の洗い出し・git blameによるADR系譜の確認)、承認済みプランに沿って実装。**フェーズ0**: `py/golden/emit_cli.ts`にdispatch caseを新設(従来0件)。place/groupOf/round(+layeredAttemptのみlooseOf)というコールバック引数はJSON越しに渡せないため、両サイドが同じ仕様(affine変換/`{edgeIndex:groupIndex}`/ノードid配列)から同じクロージャを組み立てる方式で解決(looseOfは唯一の実呼び出し元`toc.ts`のcause()専用のため対象外、`layeredAttempt`自身の既定`loose:[]`が実際に使う経路)。**フェーズ1**: `STUB`/`LANE`・`stubOf`/`laneStepOf`/`gapFor`/`elbows`/`corridorLoad`/`layoutWithLanes`(全てexport済みの小さな純粋関数)。`space=0.75`(`density:'compact'`)でJSの`Math.round`(半数+∞側)とPythonの組込み`round`(銀行丸め)が実際に分岐する値を明示的にテスト。**フェーズ2**: 非exportの`routeOnce`(約380行、ADR 0016のD3/D7/D11〜D14という8個以上の最適化パスが相互作用)を、exportされている`routeLayered`経由でのみブラックボックスとしてgolden test。Node側の1関数をPython側ではADR/パスごとに名前付きヘルパーに分解(翻訳の保守性のため、忠実性には影響しない)。line 152の非全順序なソート比較関数は`functools.cmp_to_key`で2引数のまま移植(タプルキーへの分解を避けた)。mutate-and-restoreの境界(D3の`align()`/`undo()`、spread再試行のロールバック)に非golden自己整合性assertionを追加。D3直線化・AND矢印のレーン共有・outer lane+laneHeads・detour探索が実際に発火する配置を手で確認した上でテスト(live golden test 18件)。**フェーズ3**: `layeredAttempt`本体(plain/BK候補の選択・D11共有・D12/D13 aside・D14 apart・far/near/low+laneHeadsの再試行)。4つの実呼び出し元(classes/states/toc(cause)/semnet-common)のオプション組み合わせを再現(live golden test 13件)。`cand.loose.length > plain.loose.length`の分岐(`looseOf`注入が無いと到達不能、toc.ts専用のため本スコープ外)は既知のギャップとして明示し、比較ロジック単体への非golden Pythonテストで代替。全フェーズでNode実機との一発またはテスト側の不備修正で通過(実装側のバグはゼロ、テストフィクスチャ側のnull/undefined取り扱いの不備を2件自己検出・修正) |
 
-**bowtie・fta は Tier 3 から外して移植済み(✅、下記参照)——当初の一括 Tier 3 分類は過大評価だった。bpmn は再調査したが今回は過大評価ではなく確定(上記参照)。states/classes/causeは`layeredAttempt`そのものに依存するため同様にTier 3確定。**
+**bowtie・fta・bpmn は Tier 3 から外して移植済み(✅)——当初の一括 Tier 3 分類は過大評価だった。states/classes/cause/pert/causalLoop/dependencyNetwork自体はエンジンが揃った今も未着手。**
 
 | band | 状態 | 備考 |
 |---|---|---|
@@ -106,7 +86,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | harvey | ✅ | layoutHarvey/renderChartともexport済み、live golden test(null未評価セル・corner・highlight列の枠・凡例の4分割円)。live golden test一発通過 |
 | bubble | ✅ | layoutBubble/renderChartともexport済み、live golden test(軸の自動拡張ループ・バブル内/外ラベル配置・サイズ凡例・閾値線)。自動拡張ループを含めてlive golden test一発通過 |
 | combo | ✅ | layoutCombo/renderChartともexport済み、live golden test(bar+line混在・左右2軸の目盛り間隔合わせ探索・stack・凡例の行折返し・anchors)。Canvas基盤の上のchart系はこれで一通り完了(bubble/butterfly/combo/harvey/heatmap/radar/sankey/stackedBars/mekko/tornado/treemap/waterfall) |
-| pert / causalLoop / dependencyNetwork | ⬜(Tier 3相当) | 調査の結果、3つとも`semnet-common.ts`の`networkCanvas()`経由で`lib/layered-route.ts`(606行、交差削減+直交ルーティングの`layeredAttempt`)に依存することが判明。これは states/classes が依存する**同じ**layered routingエンジン(「重要な発見」節参照)。したがってchart系の軽量bandではなく、Tier 3の「layered routingエンジン」をまとめて移植する別計画でこそ扱うべき(一度移植すれば states/classes/bpmn/fta/cause と合わせて8 band種別に効く)。causalLoopはさらに`semnet-ring.ts`(83行、ring配置)+`semnet-interventions.ts`(79行)にも依存。本セッションでは見送り |
+| pert / causalLoop / dependencyNetwork | ⬜ | 調査の結果、3つとも`semnet-common.ts`の`networkCanvas()`経由で`lib/layered-route.ts`の`layeredAttempt`に依存することが判明。**エンジン自体(layered_route.py)は移植完了**(「layered routing エンジン」節参照)だが、`networkCanvas()`自身の呼び出しコード(ノード計測・配色・ラベル配置)はまだ未移植。causalLoopはさらに`semnet-ring.ts`(83行、ring配置)+`semnet-interventions.ts`(79行)にも依存。states/classes/causeと合わせて、エンジンの上に乗る呼び出しコードが別の投資として残る |
 | catplot(boxplot/violinplot/stripplot/swarmplot/pointplot/barplot) | ✅ | lib/stats.ts(統計計算、純粋関数)を`stats.py`としてフル移植(quantile/boxStats/errorBar/kde/swarmOffsets/polyFit/kde2d/averageLinkage/dendrogramOrder/lowessFit、live golden test 27件)。lib/charts-cat.tsの`layoutCat`/`catBand`を`catplot.py`に移植、Canvas基盤の上に乗る。live golden test一発通過(7つのDSL関数すべて、kindの重ね合わせ・hue・dir h/v含む) |
 | displot(histplot/kdeplot/ecdfplot/rugplot) | ✅ | lib/charts-dist.tsの`layoutDist`/`distBand`を`distplot.py`に移植(lib/qc.tsの`histogramBins`/`exact`は必要な分だけ`distplot.py`内に再実装、qc.ts自体は移植せず)。live golden test一発通過(5つのDSL関数すべて、kindの重ね合わせ・複数グループ・bins/bw/element: step含む) |
 | multiplot(hist2d/jointplot/kde2d/pairplot) | ✅ | lib/charts-multi.tsの`layoutMulti`/`multiBand`を`multiplot.py`に移植(4分岐: kde2dの等高線=marching squares、hist2dのグリッド、jointplotの散布図+周辺ヒストグラム、pairplotの散布図行列)。distplot.pyの`_histogram_bins`を再利用。live golden test一発通過(kde2d/kde2d名前衝突のCLI側バグのみ修正) |

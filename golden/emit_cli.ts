@@ -270,9 +270,22 @@ function handle(req: Req): unknown {
       const round = buildRound(req.round as never);
       const routes = routeLayered(
         lay, place, (req.portStep ?? 14) as number, groupOf, round, (req.straighten ?? true) as boolean, (req.laneShare ?? false) as boolean,
-        (req.aside ?? false) as boolean, (req.detour ?? false) as boolean, req.lonePorts as boolean | undefined, (req.space ?? 1) as number, (req.laneHeads ?? false) as boolean,
+        (req.aside ?? false) as boolean, (req.detour ?? false) as boolean, (req.lonePorts ?? undefined) as boolean | undefined, (req.space ?? 1) as number, (req.laneHeads ?? false) as boolean,
       );
       return mapToObj(routes);
+    }
+    case 'layeredAttempt': {
+      const place = buildPlace((req.place ?? {}) as never);
+      const groupOf = buildGroupOf(req.groupOf as never);
+      const round = buildRound(req.round as never);
+      const attemptOpts = {
+        portStep: (req.portStep ?? undefined) as number | undefined, groupOf, transpose: (req.transpose ?? undefined) as boolean | undefined, maxAcross: (req.maxAcross ?? undefined) as number | undefined,
+        place: (_size: {w: number; h: number}) => place, round, straighten: (req.straighten ?? undefined) as boolean | undefined, tighten: (req.tighten ?? undefined) as boolean | undefined,
+        space: (req.space ?? undefined) as number | undefined, detour: (req.detour ?? undefined) as boolean | undefined, apart: (req.apart ?? undefined) as boolean | undefined, aside: (req.aside ?? undefined) as boolean | undefined,
+        returns: (req.returns ?? undefined) as 'all' | 'declared' | undefined,
+      };
+      const a = layeredAttempt(req.nodes as never, req.edges as never, (req.layoutOpts ?? {}) as never, attemptOpts as never);
+      return {routes: mapToObj(a.routes), score: a.score, size: a.size, fits: a.fits, loose: a.loose, asided: a.asided ?? null};
     }
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));

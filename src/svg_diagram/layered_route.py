@@ -22,6 +22,7 @@ from functools import cmp_to_key
 from .emit_common import js_round
 from .graph_layout import layout_layered
 from .polyline_metrics import bends_of, crossings_of, crossings_with, runs_together, score_of, simplify
+from .route_apart import move_apart
 from .route_search import head_crossings, search_route
 
 STUB = 18
@@ -805,3 +806,222 @@ def _route_once(
                 turn_at.pop(i, None)
 
     return {i: [place(p) for p in pts] for i, pts in routes.items()}
+
+
+def _better(a: dict, b: dict) -> bool:
+    """lib/layered-route.ts:606 better(): (crossings, bends) in lexicographic order, strictly
+    better only."""
+    return a["crossings"] < b["crossings"] or (a["crossings"] == b["crossings"] and a["bends"] < b["bends"])
+
+
+def _piercings(a: dict, place: Callable[[dict], dict]) -> int:
+    """lib/layered-route.ts:487-502 piercings(): how many arrows run through the inside of a
+    box that is not one of their two ends (the boxes and routes are in the placed figure)."""
+    rects: dict[str, dict] = {}
+    for node_id, n in a["lay"]["nodes"].items():
+        p, q = place({"x": n["x"], "y": n["y"]}), place({"x": n["x"] + n["w"], "y": n["y"] + n["h"]})
+        rects[node_id] = {"x0": min(p["x"], q["x"]) + 1, "x1": max(p["x"], q["x"]) - 1, "y0": min(p["y"], q["y"]) + 1, "y1": max(p["y"], q["y"]) - 1}
+    count = 0
+    for i, pts in a["routes"].items():
+        e = a["lay"]["edges"][i]
+        for node_id, r in rects.items():
+            if node_id == e["from"] or node_id == e["to"]:
+                continue
+            for k in range(1, len(pts)):
+                p, q = pts[k - 1], pts[k]
+                if min(p["x"], q["x"]) < r["x1"] and max(p["x"], q["x"]) > r["x0"] and min(p["y"], q["y"]) < r["y1"] and max(p["y"], q["y"]) > r["y0"]:
+                    count += 1
+                    break
+    return count
+
+
+def layered_attempt(nodes: list[dict], edges: list[dict], layout_opts: dict, o: dict) -> dict:
+    """lib/layered-route.ts:512-603 layeredAttempt(): one layered layout with its routes,
+    score, size and undrawable groups — the unit the callers (causeTree, stateDiagram,
+    classDiagram, the semantic networks; none wired to this port yet, see BANDS.md's Tier 3
+    note) build a figure from. Two candidates are laid out: the plain one (centre each layer,
+    relax toward the neighbours) and a straightened one (Brandes-Köpf coordinates, crossing-
+    minimal order, optionally tightened layers). The straightened one is dropped when it
+    leaves an AND undrawable that the plain one drew, runs an arrow through a box the plain
+    one did not, or does not fit a width the plain one fits. Of what is left it replaces the
+    plain one only if (crossings, bends) is strictly better in the lexicographic order, or if
+    the plain one does not fit the width and it does. Nothing else moves a figure.
+
+    `o` (AttemptOpts, see the TS interface for full field docs): portStep/groupOf/transpose/
+    maxAcross/place(required)/round/looseOf/straighten/tighten/space/detour/apart/aside/
+    returns.
+
+    `optsOf` (Node's `WeakMap<Attempt, {...}>`, keyed by object identity) is an `id(attempt)`-
+    keyed dict here — safe because every `Attempt` dict this function builds (`plain`/`cand`/
+    `far`/`c`/`made`/etc.) is held by a local variable for the whole of its lookup lifetime
+    inside this one call, so CPython can never recycle its `id()` in between (the same
+    invariant `treemap.py`'s `id(n)`-keyed `weight` dict relies on).
+    """
+    lane_heads = False
+    opts_of: dict[int, dict] = {}
+    o_group_of: Callable[[int], int | None] | None = o.get("groupOf")
+    o_place: Callable[[dict], Callable[[dict], dict]] = o["place"]
+    o_loose_of = o.get("looseOf")
+    space = o.get("space", 1)
+
+    def build(opts: dict, lane_share: bool = False, aside_flag: bool = False, near: str = "far") -> dict:
+        if o.get("returns"):
+            outer_spec = {"which": o["returns"], "gap": stub_of(space), "step": lane_step_of(space)}
+            if near != "far":
+                outer_spec["side"] = near
+            full_opts = {**opts, "outer": outer_spec}
+        else:
+            full_opts = opts
+        lay = layout_with_lanes(nodes, edges, full_opts, 0, space)
+        size = {"w": lay["h"] if o.get("transpose") else lay["w"], "h": lay["w"] if o.get("transpose") else lay["h"]}
+        group_of_wrapped = (lambda i, _g=o_group_of: _g(lay["edges"][i]["index"])) if o_group_of else None
+        # the search for a way around the boxes only in the straightened candidate (it competes with the plain one on bends); a lone port is straightened in both
+        detour_flag = o.get("detour") is True and opts.get("coord") == "bk"
+        lone_ports = o.get("detour") is True
+        routes = route_layered(
+            lay, o_place(size), o.get("portStep", 14), group_of_wrapped, o.get("round"),
+            o.get("straighten") is not False, lane_share, aside_flag, detour_flag, lone_ports, space, lane_heads,
+        )
+        made = {
+            "lay": lay,
+            "routes": routes,
+            "score": score_of(list(routes.values())),
+            "size": size,
+            "fits": o.get("maxAcross") is None or size["w"] <= o["maxAcross"],
+            "loose": o_loose_of(routes, lay) if o_loose_of else [],
+        }
+        opts_of[id(made)] = {"opts": opts, "laneShare": lane_share, "near": near}
+        return made
+
+    # ADR 0016 D11: arrows into a grouped head that run side by side. A candidate that shares the gap's lanes between the long and the
+    # direct arrows replaces the figure only when it has strictly fewer of them and is no worse in (crossings, bends), loose groups,
+    # piercings and width: a figure with none is never touched.
+    def parallels(a: dict) -> int:
+        group_of = o_group_of
+        assert group_of is not None
+        heads: set[str] = set()
+        for e in a["lay"]["edges"]:
+            if not e.get("self") and group_of(e["index"]) is not None:
+                heads.add(e["to"])
+        segs = []
+        for i, pts in a["routes"].items():
+            e = a["lay"]["edges"][i]
+            if e["to"] in heads:
+                segs.append({"to": e["to"], "s": [{"p": pts[m], "q": pts[m + 1]} for m in range(len(pts) - 1)]})
+        n = 0
+        for x in range(len(segs)):
+            sx = segs[x]
+            for sy in segs[x + 1 :]:
+                if sx["to"] == sy["to"] and any(runs_together(p, q) for p in sx["s"] for q in sy["s"]):
+                    n += 1
+        return n
+
+    def worse(a: dict, b: dict) -> bool:
+        if len(b["loose"]) > len(a["loose"]):
+            return True
+        if a["fits"] and not b["fits"]:
+            return True
+        if _better(a["score"], b["score"]):
+            return True
+        return _piercings(b, o_place(b["size"])) > _piercings(a, o_place(a["size"]))
+
+    # the AND-bound arrows that cross each other
+    def and_crossings(a: dict) -> int:
+        group_of = o_group_of
+        assert group_of is not None
+        heads: set[str] = set()
+        for e in a["lay"]["edges"]:
+            if not e.get("self") and group_of(e["index"]) is not None:
+                heads.add(e["to"])
+        return crossings_of([pts for i, pts in a["routes"].items() if a["lay"]["edges"][i]["to"] in heads])
+
+    # ADR 0016 D12: what is chosen then gets its remaining side-by-side runs moved aside, once; kept only when nothing else gets worse
+    def aside_pass(a: dict) -> dict:
+        before = parallels(a)
+        if not before:
+            return a
+        conf = opts_of[id(a)]
+        b = build(conf["opts"], conf["laneShare"], True, conf["near"])
+        if parallels(b) >= before or worse(a, b) or and_crossings(b) > and_crossings(a):
+            return a
+        b["asided"] = True
+        return b
+
+    def sharing(a: dict) -> dict:
+        if not o_group_of:
+            return a
+        before = parallels(a)
+        if not before:
+            return a
+        conf = opts_of[id(a)]
+        b = build(conf["opts"], True, False, conf["near"])
+        chosen = a if (parallels(b) >= before or worse(a, b)) else b
+        return chosen if o.get("aside") is False else aside_pass(chosen)
+
+    # ADR 0016 D14: what is chosen gets the runs of arrows with no end in common that lie along each other moved apart, once; kept only
+    # when nothing else gets worse
+    def apart_of(a: dict) -> dict:
+        if not o.get("apart"):
+            return a
+        place = o_place(a["size"])
+        rects: dict[str, dict] = {}
+        for node_id, n in a["lay"]["nodes"].items():
+            p, q = place({"x": n["x"], "y": n["y"]}), place({"x": n["x"] + n["w"], "y": n["y"] + n["h"]})
+            rects[node_id] = {"x0": min(p["x"], q["x"]) + 1, "x1": max(p["x"], q["x"]) - 1, "y0": min(p["y"], q["y"]) + 1, "y1": max(p["y"], q["y"]) - 1}
+        move_edges = {i: {"from": e["from"], "to": e["to"], "self": e.get("self"), "outer": e.get("outer")} for i, e in enumerate(a["lay"]["edges"])}
+        routes = move_apart(a["routes"], move_edges, rects)
+        if all(routes[i] is a["routes"][i] for i in routes):
+            return a
+        b = {**a, "routes": routes, "score": score_of(list(routes.values())), "loose": o_loose_of(routes, a["lay"]) if o_loose_of else []}
+        opts_of[id(b)] = opts_of[id(a)]
+        if worse(a, b) or (o_group_of is not None and (and_crossings(b) > and_crossings(a) or parallels(b) > parallels(a))):
+            return a
+        # the search of the orders is entered on the first figure's crossings (toc.ts): a move that takes the last crossing away would skip it where it ran
+        if a["score"]["crossings"] > 0 and b["score"]["crossings"] == 0:
+            return a
+        # an AND crossing it took away is judged like D12/D13's: toc.ts decides whether to search the orders on the figure without these moves
+        if o_group_of is not None and and_crossings(b) < and_crossings(a):
+            b["asided"] = True
+        return b
+
+    def pick0(near: str) -> dict:
+        plain = build(layout_opts, False, False, near)
+        if o.get("straighten") is False or not any(e["from"] != e["to"] for e in edges):
+            return sharing(plain)
+        cand_opts = {**layout_opts, "coord": "bk", "transpose": True}
+        if o.get("tighten"):
+            cand_opts["tighten"] = True
+        cand = build(cand_opts, False, False, near)
+        if len(cand["loose"]) > len(plain["loose"]):
+            return sharing(plain)
+        if _piercings(cand, o_place(cand["size"])) > _piercings(plain, o_place(plain["size"])):
+            return sharing(plain)
+        if not plain["fits"]:
+            return sharing(cand if (cand["fits"] or (cand["size"]["w"] < plain["size"]["w"] and _better(cand["score"], plain["score"]))) else plain)
+        if not cand["fits"]:
+            return sharing(plain)
+        return sharing(cand if _better(cand["score"], plain["score"]) else plain)
+
+    def pick(near: str) -> dict:
+        return apart_of(pick0(near))
+
+    # a return's lane goes to the side its ends are nearer to, only when that is strictly better in (crossings, bends) and nothing else
+    # gets worse (the far side is the way it always was)
+    far = pick("far")
+    if not o.get("returns") or o.get("straighten") is False or not any(e.get("outer") for e in far["lay"]["edges"]):
+        return far
+    # not bigger than the far one: the width and the height are the caller's budget (a taller figure may not fit the canvas), and lanes
+    # on both sides take more room than on one
+    result = far
+    for side in ("near", "low"):
+        c = pick(side)
+        if any(e.get("outer") for e in c["lay"]["edges"]) and c["lay"]["w"] <= far["lay"]["w"] + 0.01 and c["lay"]["h"] <= far["lay"]["h"] + 0.01 and not worse(result, c) and _better(c["score"], result["score"]):
+            result = c
+    # a return that enters its head's face instead of its right side, only when that takes crossings away (fewer bends alone moves
+    # nothing) and nothing else gets worse
+    lane_heads = True
+    c = pick(opts_of[id(result)]["near"])
+    lane_heads = False
+    if any(e.get("outer") for e in c["lay"]["edges"]) and c["lay"]["w"] <= result["lay"]["w"] + 0.01 and c["lay"]["h"] <= result["lay"]["h"] + 0.01 and not worse(result, c) and c["score"]["crossings"] < result["score"]["crossings"]:
+        return c
+    return result

@@ -30,6 +30,7 @@ from .emit_common import LH_EM, js_round, text_lines
 from .figures import pyramid_layer_geometry, render_curve, render_pyramid
 from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
 from .legend import render_legend_item
+from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -143,6 +144,44 @@ class _Curve:
 
 
 @dataclass
+class _People:
+    x: float
+    y: float
+    cw: float
+    cols: int
+    size: float
+    gap: float
+    total: int
+    count: int
+    count2: int = 0
+    align: str | None = None
+    side: dict | None = None
+    tone: Tone | None = None
+    tone2: Tone | None = None
+    rest: Tone | None = "muted"
+    alt: str = ""
+    day: int | str = 1
+
+
+@dataclass
+class _Dots:
+    x: float
+    y: float
+    cw: float
+    r: float
+    dots: list[dict]
+    zones: list[dict]
+    min_val: float
+    max_val: float
+    width: float | None = None
+    low_label: str | None = None
+    high_label: str | None = None
+    height: float | None = None
+    alt: str = ""
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -251,6 +290,51 @@ class Diagram:
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
         self._elements.append(_Status(x=x, y=y, width=width, text=text, status=status, height=height, size=size))
+
+    def people(
+        self,
+        *,
+        total: int,
+        count: int,
+        count2: int = 0,
+        x: float,
+        y: float,
+        width: float,
+        cols: int,
+        size: float = 24,
+        gap: float = 4,
+        align: str | None = None,
+        side: dict | None = None,
+        tone: Tone | None = "accent",
+        tone2: Tone | None = "danger",
+        rest: Tone | None = "muted",
+        alt: str = "",
+    ) -> None:
+        """lib/people.ts's people(): a grid of person icons, the emphasized ones filled. The
+        layout formula (layout_people) IS byte-identical to Node (golden-tested live); only the
+        `side` label's text width uses this port's approximation."""
+        self._elements.append(_People(x=x, y=y, cw=width, cols=cols, size=size, gap=gap, total=total, count=count, count2=count2, align=align, side=side, tone=tone, tone2=tone2, rest=rest, alt=alt))
+
+    def dots(
+        self,
+        dots: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        min: float = 0,
+        max: float = 100,
+        r: float = 5,
+        zones: list[dict] | None = None,
+        low_label: str | None = None,
+        high_label: str | None = None,
+        height: float | None = None,
+        alt: str = "",
+    ) -> None:
+        """lib/people.ts's dots(): a lane with piled dots. `dots`: [{at, tone?}]. The pile-
+        packing/zone formula (layout_dots) IS byte-identical to Node (golden-tested live); only
+        label text widths use this port's approximation."""
+        self._elements.append(_Dots(x=x, y=y, cw=width, r=r, dots=dots, zones=zones or [], min_val=min, max_val=max, width=width, low_label=low_label, high_label=high_label, height=height, alt=alt))
 
     # ---- arrow()/connect() ------------------------------------------------------------
 
@@ -396,6 +480,12 @@ class Diagram:
         if isinstance(el, _Status):
             text_y = el.y + el.height / 2 + el.size * 0.38
             return render_status(x=el.x, y=el.y, w=el.width, h=el.height, text_y=text_y, text=el.text, status=el.status, size=el.size)
+        if isinstance(el, _People):
+            laid = layout_people(cols=el.cols, size=el.size, gap=el.gap, total=el.total, count=el.count, count2=el.count2, x=el.x, y=el.y, cw=el.cw, width_of=approx_width_of, align=el.align, side=el.side, roles=ROLES)
+            return render_people(x=laid["x"], y=laid["y"], size=laid["size"], icons=laid["icons"], texts=laid["texts"], tone=el.tone, tone2=el.tone2, rest=el.rest, alt=el.alt, day=el.day)
+        if isinstance(el, _Dots):
+            laid = layout_dots(r=el.r, dots=el.dots, zones=el.zones, min_val=el.min_val, max_val=el.max_val, x=el.x, y=el.y, cw=el.cw, width_of=approx_width_of, width=el.width, low_label=el.low_label, high_label=el.high_label, height=el.height, roles=ROLES)
+            return render_dots(axis=laid["axis"], zones=laid["zones"], dots=laid["dots"], texts=laid["texts"], r=el.r, alt=el.alt, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

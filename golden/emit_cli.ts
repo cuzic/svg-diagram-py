@@ -25,6 +25,14 @@ import {wrapText} from '../../lib/wrap.ts';
 import type {WrapMode} from '../../lib/wrap.ts';
 import {badgeSvg, pillSvg} from '../../lib/badge.ts';
 import {gridColumns, rowChildGeometry, gridChildGeometry, colSlots} from '../../lib/layout-util.ts';
+import {layoutPeople, layoutDots} from '../../lib/people.ts';
+import {renderPeople, renderDots} from '../../lib/emit-boxes.ts';
+
+// Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
+// atoms.py/wrap.py: tests the ALGORITHM (icon grid geometry, dot pile packing), not real
+// pixel text widths (those depend on each side's `size`/`label` text, measured here with a
+// trivial stand-in so both sides agree without needing HarfBuzz).
+const peopleWidthOf = (atom: string): number => [...atom].length * 8;
 
 // Phase A's wrap/atoms golden tests inject the SAME trivial width function on both sides
 // (codepoint count, ignoring size/weight/font) — see py/src/svg_diagram/wrap.py's module
@@ -105,6 +113,18 @@ function handle(req: Req): unknown {
       return arrowPath(req.points as never, req.color as string, req.line as never, (req.width ?? 2) as number, (req.headAt ?? 'end') as never, (req.end ?? 'arrow') as never);
     case 'renderLegend':
       return renderLegend({items: req.items as never} as never, (req.day ?? 1) as never, tones, roles);
+    case 'layoutPeople': {
+      const band = {cols: req.cols, size: req.size, gap: req.gap, side: req.side, total: req.total, count: req.count, count2: req.count2 ?? 0, align: req.align, tone: req.tone, tone2: req.tone2, rest: req.rest, alt: req.alt, id: undefined} as never;
+      return layoutPeople(band, req.x as number, req.y as number, req.cw as number, peopleWidthOf, (req.day ?? 1) as never, roles);
+    }
+    case 'layoutDots': {
+      const band = {width: req.width, r: req.r, dots: req.dots, zones: req.zones, min: req.min, max: req.max, lowLabel: req.lowLabel, highLabel: req.highLabel, height: req.height, alt: req.alt, id: undefined} as never;
+      return layoutDots(band, req.x as number, req.y as number, req.cw as number, peopleWidthOf, (req.day ?? 1) as never, roles);
+    }
+    case 'renderPeople':
+      return renderPeople({x: req.x, y: req.y, size: req.size, icons: req.icons, texts: req.texts, tone: req.tone, tone2: req.tone2, rest: req.rest, alt: req.alt} as never, (req.day ?? 1) as never, tones);
+    case 'renderDots':
+      return renderDots({axis: req.axis, zones: req.zones, dots: req.dots, texts: req.texts, r: req.r, alt: req.alt} as never, (req.day ?? 1) as never, tones);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

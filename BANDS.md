@@ -29,8 +29,8 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | curve | ✅ | 点列配置もNode実機キャプチャとバイト同一を確認 |
 | timeline | ⬜ | 要調査 |
 | gantt | ⬜ | 日付→x座標、閉形式の可能性高 |
-| people | ⬜ | アイコン配置、閉形式 |
-| dots | ⬜ | 同上 |
+| people | ✅ | layoutPeople/layoutDotsはexport済みなのでlive golden test、閉形式 |
+| dots | ✅ | 同上 |
 
 ## Tier 2 — 中規模(auto-layoutあり、または複数分岐)
 

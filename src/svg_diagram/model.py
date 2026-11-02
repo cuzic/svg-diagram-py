@@ -68,6 +68,7 @@ from .multiplot import multi_band
 from .regplot import reg_band
 from .clustermap import cluster_band
 from .semnet import dependency_band, pert_band
+from .semnet_causal import causal_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .quadrant import layout_quadrant, quadrant_band, render_quadrant
@@ -1283,9 +1284,21 @@ class Diagram:
     ) -> None:
         """lib/semnet.ts's pert(): a PERT/CPM network — tasks (boxes) and their dependency
         arrows, laid out in layers, with the critical path highlighted. `tasks`:
-        [{id, label, duration, predecessors?}]. `direction`: 'LR'(default)/'TB'.
-        causalLoop() is NOT supported by this port (see semnet.py's module docstring)."""
+        [{id, label, duration, predecessors?}]. `direction`: 'LR'(default)/'TB'."""
         band = pert_band(tasks, direction=direction, unit=unit, compact=compact, straighten=straighten, id=id)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def causal_loop(
+        self, nodes: list[dict], links: list[dict], *, x: float, y: float, width: float, direction: str | None = None,
+        interventions: list[dict] | None = None, layout: str | None = None, straighten: bool | None = None, id: str | None = None,
+        height: float | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's causalLoop(): a causal loop diagram — nodes, polarity-signed
+        links, the R/B loops they form, and interventions acting on them from outside.
+        `nodes`: [{id, label}]. `links`: [{from, to, polarity, label?, delay?}]. `layout`:
+        'layered'(default)/'ring' (a ring needs the graph to be exactly one loop of 2-8
+        nodes). `interventions`: [{id, label, to, polarity, delay?}]."""
+        band = causal_band(nodes, links, direction=direction, interventions=interventions, layout=layout, straighten=straighten, id=id, height=height)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def dependency_network(

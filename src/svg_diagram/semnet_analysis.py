@@ -1,7 +1,5 @@
-"""Scoped port of lib/semnet-analysis.ts — only analyze_critical_path() (pert()'s CPM
-analysis), which pert.py needs. analyzeCausalLoops() (causalLoop()'s cycle detection) is NOT
-ported: causalLoop() itself is out of this port's scope (it also needs lib/semnet-ring.ts
-and lib/semnet-interventions.ts, not yet ported).
+"""1:1 port of lib/semnet-analysis.ts: analyze_critical_path() (pert()'s CPM analysis) and
+analyze_causal_loops() (causalLoop()'s directed-simple-cycle enumeration).
 
 Pure: no layout, fonts or SVG.
 
@@ -101,3 +99,45 @@ def analyze_critical_path(input_: list[dict]) -> dict:
         candidates = sorted((e for e in critical_edges if e["from"] == current), key=lambda e: order[e["to"]])
         current = candidates[0]["to"] if candidates else None
     return {"tasks": tasks, "duration": duration, "criticalPath": critical_path, "criticalEdges": critical_edges}
+
+
+def analyze_causal_loops(nodes: list[str], links: list[dict]) -> list[dict]:
+    """lib/semnet-analysis.ts:63-85 analyzeCausalLoops(): all directed simple cycles, once
+    each, ordered by node input order. A direct self-loop (from==to) counts too (a
+    single-node "cycle"); causalLoop()'s ring layout filters those out itself."""
+    index: dict[str, int] = {}
+    for i, node_id in enumerate(nodes):
+        if not node_id or node_id in index:
+            _semnet_error("causalLoop", f'node ids must be non-empty and unique (got "{node_id}")')
+        index[node_id] = i
+    out: dict[str, list[dict]] = {node_id: [] for node_id in nodes}
+    for i, e in enumerate(links):
+        if e["from"] not in index or e["to"] not in index:
+            _semnet_error("causalLoop", f"link {e['from']} -> {e['to']} names unknown node")
+        if e["polarity"] not in ("+", "-", "same", "opposite"):
+            _semnet_error("causalLoop", f"link {e['from']} -> {e['to']} has invalid polarity \"{e['polarity']}\"")
+        out[e["from"]].append({"to": e["to"], "edge": i})
+
+    cycles: list[dict] = []
+    for si, start in enumerate(nodes):
+        path = [start]
+        edges: list[int] = []
+        seen = {start}
+
+        def visit(at: str) -> None:
+            for e in out[at]:
+                if e["to"] == start:
+                    link_indexes = [*edges, e["edge"]]
+                    negative_links = sum(1 for idx in link_indexes if links[idx]["polarity"] in ("-", "opposite"))
+                    cycles.append({"nodes": list(path), "linkIndexes": link_indexes, "negativeLinks": negative_links, "kind": "B" if negative_links % 2 else "R"})
+                elif e["to"] not in seen and index[e["to"]] >= si:
+                    seen.add(e["to"])
+                    path.append(e["to"])
+                    edges.append(e["edge"])
+                    visit(e["to"])
+                    edges.pop()
+                    path.pop()
+                    seen.discard(e["to"])
+
+        visit(start)
+    return cycles

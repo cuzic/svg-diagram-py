@@ -1,10 +1,10 @@
-"""Scoped port of lib/semnet.ts and lib/semnet-dsl.ts — pert() and dependencyNetwork() only.
-causalLoop() (lib/semnet-causal.ts + lib/semnet-ring.ts + lib/semnet-interventions.ts) is
-NOT ported yet — see BANDS.md's Tier 3 note. `semnet_texts()`'s `kind == 'causal'` branch
-raises NotImplementedError accordingly.
+"""Port of lib/semnet.ts and lib/semnet-dsl.ts — pert() and dependencyNetwork(). causalLoop()
+itself (lib/semnet-causal.ts + lib/semnet-ring.ts + lib/semnet-interventions.ts) lives in
+semnet_causal.py; `semnet_texts()`'s `kind == 'causal'` branch delegates to its `causal_texts()`,
+mirroring lib/semnet.ts's own `causalTexts` re-export from semnet-causal.ts.
 
 Dispatched through charts.py's layout_chart()/render_chart() (the shared "chart" band
-machinery every chart kind already goes through), with `kind` 'pert'/'dependency'.
+machinery every chart kind already goes through), with `kind` 'pert'/'dependency'/'causal'.
 
 Golden master: lib/semnet.ts + lib/semnet-dsl.ts (Node.js, svg-diagram).
 """
@@ -16,6 +16,7 @@ import math
 from .atoms import text_width
 from .charts_base import check_ids, check_text, common_chart_opts, fail, finite_num, num_text
 from .semnet_analysis import analyze_critical_path
+from .semnet_causal import causal_texts
 from .semnet_common import arrow, direction, head_box, network_canvas, node_box, path_of, place_edge_label, straighten_of, validate_nodes
 
 __all__ = [
@@ -93,7 +94,7 @@ def semnet_texts(kind: str, spec: dict) -> list[tuple[str, int]]:
                 out.append((f"期間 {num_text(t['duration'])}{s['unit']} ・ 余裕 {num_text(t['slack'])}", 700 if t["critical"] else 400))
         return out
     if kind == "causal":
-        raise NotImplementedError("semnet_texts(): 'causal' is not supported by this port yet (causalLoop() is out of scope)")
+        return causal_texts(spec)
     s = spec
     kinds = list(dict.fromkeys(n["kind"] for n in s["nodes"] if n.get("kind")))
     types = list(dict.fromkeys(e["type"] for e in s["edges"]))

@@ -64,7 +64,10 @@ import {renderBpmn, renderClasses, renderStates} from '../../lib/emit-figures.ts
 import {layoutClassesBand} from '../../lib/classes.ts';
 import {layoutStatesBand} from '../../lib/states.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
-import {pertBand, dependencyBand} from '../../lib/semnet-dsl.ts';
+import {pertBand, dependencyBand, causalBand} from '../../lib/semnet-dsl.ts';
+import {analyzeCausalLoops} from '../../lib/semnet-analysis.ts';
+import {checkRing} from '../../lib/semnet-ring.ts';
+import {bandInset, ringSide} from '../../lib/semnet-interventions.ts';
 import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot, clustermap} from '../../lib/dsl/charts-stats.ts';
 import {quadrantBand, layoutQuadrant} from '../../lib/quadrant.ts';
 import {renderQuadrant} from '../../lib/emit-figures.ts';
@@ -410,6 +413,7 @@ function handle(req: Req): unknown {
       else if (req.chartKind === 'clustermap') band = clustermap(req.rows as never, req.cols as never, req.values as never, (req.opts ?? {}) as never) as never;
       else if (req.chartKind === 'pert') band = pertBand(req.tasks as never, (req.opts ?? {}) as never) as never;
       else if (req.chartKind === 'dependency') band = dependencyBand(req.nodes as never, req.edges as never, (req.opts ?? {}) as never) as never;
+      else if (req.chartKind === 'causal') band = causalBand(req.nodes as never, req.links as never, (req.opts ?? {}) as never) as never;
       else throw new Error(`unknown chart kind: ${req.chartKind}`);
       return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
     }
@@ -478,6 +482,15 @@ function handle(req: Req): unknown {
       return statesWords(req.flavor as never);
     case 'statesProblems':
       return statesProblems(req.band as never);
+    case 'analyzeCausalLoops':
+      return analyzeCausalLoops(req.nodes as never, req.links as never);
+    case 'checkRing':
+      checkRing(req.nodes as never, req.links as never, req.loops as never, req.direction as never);
+      return null;
+    case 'bandInset':
+      return bandInset(req.side as never, req.items as never, req.attempt as number);
+    case 'ringSide':
+      return ringSide(req.loopNodes as never, req.to as never);
     case 'layoutLines': {
       let band: never;
       if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;

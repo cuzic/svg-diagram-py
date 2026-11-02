@@ -34,6 +34,7 @@ from .cloud import layout_cloud_band, render_cloud
 from .gantt import layout_gantt, render_gantt
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .timeline import layout_timeline, render_timeline
+from .tree import layout_tree_band, render_tree
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -226,6 +227,21 @@ class _Cloud:
 
 
 @dataclass
+class _Tree:
+    x: float
+    y: float
+    w: float
+    root: dict
+    dir_opt: str | None = None
+    max_node_w: float | None = None
+    balanced: bool = False
+    layout_mode: str | None = None
+    sides: dict | None = None
+    edges_opt: str | bool | None = None
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -389,6 +405,32 @@ class Diagram:
         byte-identical to Node (golden-tested live); only text widths use this port's
         approximation."""
         self._elements.append(_Cloud(x=x, y=y, w=width, boxes=boxes, max_node_w=max_node_w, assumptions=assumptions, conflict_label=conflict_label))
+
+    def tree(self, root: dict, *, x: float, y: float, width: float, dir: str | None = None, max_node_w: float | None = None) -> None:
+        """lib/dsl/diagrams.ts's tree(): an org chart / hierarchy. `root`: {label, sub?, id?,
+        tone?, children?}. The layout formula (layout_tree_band — tidy-tree centering, width x
+        direction search) IS byte-identical to Node (golden-tested live); only text widths use
+        this port's approximation. (Band-node children, `tree({band: ...})`, are not
+        supported.)"""
+        self._elements.append(_Tree(x=x, y=y, w=width, root=root, dir_opt=dir, max_node_w=max_node_w))
+
+    def mindmap(
+        self,
+        root: dict,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        layout: str | None = None,
+        sides: dict[str, str] | None = None,
+        edges: str | bool | None = None,
+        max_node_w: float | None = None,
+    ) -> None:
+        """lib/dsl/diagrams.ts's mindmap(): the same TreeBand as tree(), with `balanced: True`
+        and layout/sides/edges flags (lib/dsl/diagrams.ts:473-483). `layout`: 'radial'
+        (default) | 'right' | 'left' | 'down' | 'up' | 'org' | 'list' | 'brace' | 'fishbone' |
+        'timeline'. The layout formula IS byte-identical to Node (golden-tested live)."""
+        self._elements.append(_Tree(x=x, y=y, w=width, root=root, balanced=True, layout_mode=layout, sides=sides, edges_opt=edges, max_node_w=max_node_w))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
@@ -598,6 +640,9 @@ class Diagram:
         if isinstance(el, _Cloud):
             laid = layout_cloud_band(boxes=el.boxes, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, max_node_w=el.max_node_w, assumptions=el.assumptions, conflict_label=el.conflict_label)
             return render_cloud(laid, day=el.day)
+        if isinstance(el, _Tree):
+            laid = layout_tree_band(el.root, el.x, el.y, el.w, approx_width_of, ROLES, dir_opt=el.dir_opt, max_node_w=el.max_node_w, balanced=el.balanced, layout_mode=el.layout_mode, sides=el.sides, edges_opt=el.edges_opt)
+            return render_tree(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

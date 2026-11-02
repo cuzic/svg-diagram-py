@@ -36,7 +36,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 
 | band | 状態 | 備考 |
 |---|---|---|
-| mindmap / tree | 🟡 | 下位の純粋レイアウト関数(layoutTree/layoutBalanced/layoutHanging/layoutBrace/layoutFishbone/layoutTimelineMap/mirror)は全てexport済みでlive golden test済み(graph_layout.py/map_layouts.py)。残りはlayoutTreeBandのオーケストレーション(fitLayoutの幅/方向探索含む)とrenderTree |
+| mindmap / tree | ✅ | layoutTreeBand/renderTreeともexport済み、live golden test(fitLayoutの幅×方向探索も忠実に移植、org/list/brace/fishbone/timeline/radial/sides/curve全層対応)。band-node(tree({band}))は対象外 |
 | table | ⬜ | |
 | sequence | ⬜ | ライフライン、メッセージ順で座標決定(閉形式の可能性) |
 | wireframe / screens | ⬜ | 独自のflexレイアウトエンジン(844行) |

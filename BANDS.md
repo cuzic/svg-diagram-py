@@ -90,7 +90,8 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | catplot(boxplot/violinplot/stripplot/swarmplot/pointplot/barplot) | ✅ | lib/stats.ts(統計計算、純粋関数)を`stats.py`としてフル移植(quantile/boxStats/errorBar/kde/swarmOffsets/polyFit/kde2d/averageLinkage/dendrogramOrder/lowessFit、live golden test 27件)。lib/charts-cat.tsの`layoutCat`/`catBand`を`catplot.py`に移植、Canvas基盤の上に乗る。live golden test一発通過(7つのDSL関数すべて、kindの重ね合わせ・hue・dir h/v含む) |
 | displot(histplot/kdeplot/ecdfplot/rugplot) | ✅ | lib/charts-dist.tsの`layoutDist`/`distBand`を`distplot.py`に移植(lib/qc.tsの`histogramBins`/`exact`は必要な分だけ`distplot.py`内に再実装、qc.ts自体は移植せず)。live golden test一発通過(5つのDSL関数すべて、kindの重ね合わせ・複数グループ・bins/bw/element: step含む) |
 | multiplot(hist2d/jointplot/kde2d/pairplot) | ✅ | lib/charts-multi.tsの`layoutMulti`/`multiBand`を`multiplot.py`に移植(4分岐: kde2dの等高線=marching squares、hist2dのグリッド、jointplotの散布図+周辺ヒストグラム、pairplotの散布図行列)。distplot.pyの`_histogram_bins`を再利用。live golden test一発通過(kde2d/kde2d名前衝突のCLI側バグのみ修正) |
-| regplot/residplot / clustermap | ⬜ | 次に着手。残りはlib/charts-reg.ts(148行)+lib/charts-cluster.ts(102行)。stats.pyの基盤(polyFit/averageLinkage/dendrogramOrder)は完了済み |
+| regplot / residplot | ✅ | lib/charts-reg.tsの`layoutReg`/`regBand`を`regplot.py`に移植(polyFit/lowessFitの曲線+信頼区間帯、group別のtone/dash)。live golden test一発通過(order 1-3・stats・lowess・group・residplot全パターン) |
+| clustermap | ⬜ | 次に着手。残りはlib/charts-cluster.ts(102行)のみ。stats.pyの基盤(averageLinkage/dendrogramOrder)は完了済み |
 | facet | ⬜ | lib/dsl/charts-stats.tsのfacet()はrow()/group()の組み合わせのみ(既に移植済み)、低リスク・小規模 |
 
 ## Tier 5 — 見送り候補

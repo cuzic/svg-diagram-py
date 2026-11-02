@@ -59,6 +59,7 @@ from .combo import combo_band
 from .catplot import cat_band
 from .distplot import dist_band
 from .multiplot import multi_band
+from .regplot import reg_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .harvey import harvey_band
@@ -1184,6 +1185,23 @@ class Diagram:
         histogram on the diagonal. `data`: {varName: [...], ...}. `opts` adds `corner?`
         (lower triangle + diagonal only) and `groups?` on top of hist2d()'s own opts."""
         band = multi_band("pairplot", "pair", data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def regplot(self, data: dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn regplot()/lmplot(): the points, the least-squares line (`order: 2 | 3` for
+        a curve) and its 95% confidence band, one fit per group. `data`: {x: [...], y: [...],
+        group?: [...]} (up to 4 groups). `opts` is Node's own nested RegOpts, passed through
+        as-is (xLabel?, yLabel?, order?, band?, stats?, lowess?, frac?, groups?, xRange?,
+        yRange?, id?, width?, height?, labelRole?). The fit math (lib/stats.ts's polyFit/
+        lowessFit) and the layout formula ARE byte-identical to Node (golden-tested live);
+        only text widths use this port's approximation."""
+        band = reg_band("regplot", False, data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def residplot(self, data: dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn residplot(): the residuals around the same fit, with the zero line. See
+        regplot() for `data`/`opts`."""
+        band = reg_band("residplot", True, data, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:

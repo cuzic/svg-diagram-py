@@ -39,7 +39,8 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | mindmap / tree | ✅ | layoutTreeBand/renderTreeともexport済み、live golden test(fitLayoutの幅×方向探索も忠実に移植、org/list/brace/fishbone/timeline/radial/sides/curve全層対応)。band-node(tree({band}))は対象外 |
 | table | ✅ | layoutTable/renderTableともexport済み、live golden test。アイコン付きセルは対象外 |
 | sequence | ✅ | layoutSequence/renderSequenceともexport済み、live golden test(msg/self/note/divider全種別)。アクターアイコンは対象外 |
-| wireframe / screens | ⬜(保留) | lib/wireframe.ts(844行)+lib/wireframe-parts.ts(444行、installPartsによるノード種別拡張)の専用flexエンジン。他bandと共有されない一枚岩の大規模実装で、規模・構造ともTier 3(layered routing)に近い。したがってTier 2から外し、着手するなら別計画として起票するのが合理的(本セッションでは見送り、chart系を先に進める) |
+| wireframe / screens | ⬜(保留) | lib/wireframe.ts(844行)+lib/wireframe-parts.ts(444行、installPartsによるノード種別拡張)の専用flexエンジン。他bandと共有されない一枚岩の大規模実装で、規模・構造ともTier 3(layered routing)に近い。したがってTier 2から外し、着手するなら別計画として起票するのが合理的(本セッションでは見送り、chart系を先に進める)。**再調査(emblem/quadrant/bowtieの「過大評価」パターンを疑って確認)でも同じ結論**: renderPrims(描画側)はlib/emit-tables.tsの30行程度で小さいが、レイアウト側のlayoutWireframe/layoutScreensはwf.col/row/card/btn/input/select/chip/tabs/appbar/seek/kv/stat/list/table/alert/map/video/heat/pointcloud/chart/image/dialog/toast+installPartsの拡張ノードという巨大な語彙を持つ専用flexエンジンで、過大評価ではなく正しくTier 3級。見送り継続 |
+| swimlane | ⬜(見つかった抜け、未着手) | BANDS.mdにこれまで未掲載だった抜け(ADR 0048、サービスブループリント用)。lib/layout-handlers.tsの`layoutSwimlane`(非export、~60行)は`ctx.placeBoxLike`(テキスト自動折返し+高さ自動計算を行うNode側`LayoutCtx`カーソル型レイアウト基盤——row()/grid()等が共有する)に依存する。本移植の`box()`/`row()`/`grid()`はこの基盤を意図的に持たず、`height`を呼び出し側が明示する絶対座標APIなので、facet()と同じ「アーキテクチャ不一致」(新しい合成アーキテクチャが必要)に該当し、サイズの問題ではない。また`layoutSwimlane`は非exportのためlive golden testも不可(Node実機キャプチャ方式が必要)。対象外相当、着手するなら別途アーキテクチャ検討が前提 |
 | chevron / funnel / cycle / venn / concentric / emblem / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(7形状全て)。emblemは再調査の結果、lib/emblem-shapes.ts(157行、13形状の輪郭幾何)がlib/flow-shapes.tsのlayoutEmblem()から直接呼ばれるだけの小さな依存で、既存のflow_shapes.py基盤(Texts/anchor/render_flow_shapeのpath+fill分岐)にそのまま乗ることが判明、「別途必要」は見積もり過大だった。`emblem_shapes.py`にemblemOutline/emblemHeight/emblemMaxHeightをフル移植(emblemClearance/flatOutlineは非公開のテスト専用ヘルパーのため対象外)、flow_shapes.pyにemblem_band()/_layout_emblem()を追加。live golden test一発通過(13形状全網羅・sub折返し・tone・gap/minSize・複数行ラップ・エラー経路)。render_flow_shape()の`n()`がPython組込みroundを使っていて.5の境界で不一致になる既存バグ(round1化し忘れ)をこのテストで検出・修正 |
 | wordart | ✅ | layoutWordArt/renderWordArtともexport済み、live golden test(horizontal/vertical/arc、全プリセット・gradient/plate/flip/rotate)。grapheme分割はIntl.Segmenter未再現(コードポイント単位の近似、approx_width.pyと同方針)、uid/gradient idはNode非再現(1枚のSVG内で一意なら十分、golden比較から除外) |
 
@@ -61,10 +62,15 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 |---|---|---|
 | states(flowchartを含む) | ⬜ | layeredAttempt依存。Tier2から格上げ |
 | classes (UML) | ⬜ | layeredAttempt依存。Tier2から格上げ |
-| bowtie | ⬜ | |
-| fta | ⬜ | Fault Tree Analysis |
 | bpmn | ⬜ | レーン+フロー、大規模 |
 | cause(CRT/FRT) | ⬜ | 最大規模。別計画で起票予定(交差削減・hop経路探索含む) |
+
+**bowtie は Tier 3 から外して移植済み(✅、下記参照)、fta は再調査の結果 layered routing 非依存と判明(下記参照、未移植)——どちらも当初の一括 Tier 3 分類は過大評価だった。**
+
+| band | 状態 | 備考 |
+|---|---|---|
+| bowtie | ✅ | 再調査の結果、Tier 3格上げは誤り(layeredAttempt/layered-route.ts への依存は無い)と判明。lib/bowtie.ts(142行)の`layoutBowtie`は固定レイアウト(「the flow runs left to right everywhere」、tree/layered layout不使用)で、依存は`lib/tree.ts`のmeasureNode/nodeRuns(mindmap/tree移植時にtree_text.pyへ既に移植済み)と`lib/fit-width.ts`のfitLayout(幅ナローイングのカスケードのみ——bowtie()は方向探索もfoldingも使わないため、使われる範囲だけをスコープして`bowtie.py`内にローカルport、tree.pyの同種スコープノートを参照)。`bowtie_band`/`layout_bowtie`/`render_bowtie`をフル移植、live golden test一発通過(hazardの有無・maxNodeW数値/'auto'/既定ナローイング・barrier複数行・fitLayoutが失敗する経路含む17件) |
+| fta | ⬜(再調査: Tier 3対象外と判明、未着手) | lib/fta.ts(313行)の依存を確認した結果、`lib/layered-route.ts`のlayeredAttemptは使っていない——使うのは`lib/graph-layout.ts`の`layoutTree`(tidy-tree、mindmap/tree移植時に`graph_layout.py`へ既に移植済み)と`lib/fit-width.ts`のfitLayout(bowtieと同じ、方向探索も使う点はbowtieと異なるため要再移植)、および`lib/fta-analysis.ts`(149行、ftaVar/minimalCutSets/singlePoints/topProbabilityという論理解析の純粋関数、未移植)。したがってTier 3(layered routing)ではなくTier 2相当——次の自己選択ゴールの筆頭候補 |
 
 ## Tier 4 — chart系(種類が多い、使用頻度の高いものを優先)
 

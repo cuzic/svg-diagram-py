@@ -50,6 +50,7 @@ from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
 from .wordart import layout_word_art, render_word_art, word_art_band
 from .bars import bars_band, layout_bars, render_bars
+from .bowtie import bowtie_band, layout_bowtie, render_bowtie
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
@@ -361,6 +362,18 @@ class _Quadrant:
     """quadrant() is a standalone band type ("quadrant"), not part of the "chart" family —
     its own layout_quadrant()/render_quadrant() pair (lib/quadrant.ts/lib/emit-figures.ts's
     renderQuadrant())."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Bowtie:
+    """bowtie() is a standalone band type ("bowtie"), not part of the "chart" family —
+    its own layout_bowtie()/render_bowtie() pair (lib/bowtie.ts/lib/emit-bowtie.ts)."""
 
     x: float
     y: float
@@ -1228,6 +1241,17 @@ class Diagram:
         band = quadrant_band(opts)
         self._elements.append(_Quadrant(x=x, y=y, w=width, band=band))
 
+    def bowtie(self, input: dict, *, x: float, y: float, width: float, max_node_w: float | str | None = None, id: str | None = None) -> None:
+        """lib/dsl/diagrams.ts's bowtie(): a bow-tie diagram — threats on the left, each
+        through its preventive barriers, into the top event (under its hazard) in the
+        middle; out through the mitigating barriers to the consequences on the right.
+        `input`: {hazard?, top, threats: [{label, barriers?}, ...], consequences: [{label,
+        barriers?}, ...]}. `max_node_w`: the widest a box grows (default 200, narrowed to
+        160/130/110 if the figure does not fit the width); 'auto' does the same; a number is
+        never narrowed."""
+        band = bowtie_band(input, max_node_w=max_node_w, id=id)
+        self._elements.append(_Bowtie(x=x, y=y, w=width, band=band))
+
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's plane(): a coordinate plane — axes with ticks, points, guide
         lines, dimension lines and labels, all in the plane's own units. Unlike the other
@@ -1521,6 +1545,9 @@ class Diagram:
         if isinstance(el, _Quadrant):
             laid = layout_quadrant(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
             return render_quadrant(laid, day=el.day)
+        if isinstance(el, _Bowtie):
+            laid = layout_bowtie(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
+            return render_bowtie(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

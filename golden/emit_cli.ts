@@ -46,7 +46,7 @@ import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
-import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot} from '../../lib/dsl/charts-stats.ts';
+import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot, clustermap} from '../../lib/dsl/charts-stats.ts';
 import {plane} from '../../lib/dsl/figures.ts';
 import {lines, burndown, burnup, strategyCanvas} from '../../lib/dsl/charts.ts';
 import {layoutPlane} from '../../lib/plane.ts';
@@ -290,6 +290,7 @@ function handle(req: Req): unknown {
         if (!fn) throw new Error(`unknown regFn: ${req.regFn}`);
         band = fn(req.data as never, (req.opts ?? {}) as never);
       }
+      else if (req.chartKind === 'clustermap') band = clustermap(req.rows as never, req.cols as never, req.values as never, (req.opts ?? {}) as never) as never;
       else throw new Error(`unknown chart kind: ${req.chartKind}`);
       return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
     }

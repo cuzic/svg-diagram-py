@@ -60,6 +60,7 @@ from .catplot import cat_band
 from .distplot import dist_band
 from .multiplot import multi_band
 from .regplot import reg_band
+from .clustermap import cluster_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .harvey import harvey_band
@@ -1202,6 +1203,18 @@ class Diagram:
         """seaborn residplot(): the residuals around the same fit, with the zero line. See
         regplot() for `data`/`opts`."""
         band = reg_band("residplot", True, data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def clustermap(self, rows: list[str], cols: list[str], values: list[list[float]], *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn clustermap(): a heatmap whose rows and columns are put in the order of a
+        hierarchical clustering (average linkage), with the two dendrograms beside it.
+        `opts` is Node's own nested ClusterOpts, passed through as-is (unit?, rows?, cols?
+        (cluster each axis, default true for both), scale? ('row' | 'col', scale before
+        clustering/shading), values? (write the numbers, default true), id?, width?,
+        height?, labelRole?). The clustering math (lib/stats.ts's averageLinkage/
+        dendrogramOrder, deterministic) and the layout formula ARE byte-identical to Node
+        (golden-tested live); only text widths use this port's approximation."""
+        band = cluster_band(rows, cols, values, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:

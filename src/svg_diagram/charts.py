@@ -20,6 +20,7 @@ from .combo import layout_combo
 from .distplot import layout_dist
 from .multiplot import layout_multi
 from .regplot import layout_reg
+from .clustermap import layout_cluster
 from .charts_base import size_of
 from .emit_common import emoji_span, js_num, js_round
 from .harvey import layout_harvey
@@ -71,6 +72,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_multi(band["spec"], g)
     elif kind == "regplot":
         part = layout_reg(band["spec"], g)
+    elif kind == "clustermap":
+        part = layout_cluster(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

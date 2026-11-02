@@ -22,6 +22,7 @@ from .multiplot import layout_multi
 from .regplot import layout_reg
 from .clustermap import layout_cluster
 from .charts_base import size_of
+from .semnet import layout_dependency, layout_pert
 from .emit_common import emoji_span, js_num, js_round
 from .harvey import layout_harvey
 from .heatmap import layout_heatmap
@@ -74,6 +75,10 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_reg(band["spec"], g)
     elif kind == "clustermap":
         part = layout_cluster(band["spec"], g)
+    elif kind == "pert":
+        part = layout_pert(band["spec"], g)
+    elif kind == "dependency":
+        part = layout_dependency(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

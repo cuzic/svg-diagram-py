@@ -67,6 +67,7 @@ from .distplot import dist_band
 from .multiplot import multi_band
 from .regplot import reg_band
 from .clustermap import cluster_band
+from .semnet import dependency_band, pert_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .quadrant import layout_quadrant, quadrant_band, render_quadrant
@@ -1274,6 +1275,27 @@ class Diagram:
         dendrogramOrder, deterministic) and the layout formula ARE byte-identical to Node
         (golden-tested live); only text widths use this port's approximation."""
         band = cluster_band(rows, cols, values, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def pert(
+        self, tasks: list[dict], *, x: float, y: float, width: float, direction: str | None = None, unit: str | None = None,
+        compact: bool | None = None, straighten: bool | None = None, id: str | None = None,
+    ) -> None:
+        """lib/semnet.ts's pert(): a PERT/CPM network — tasks (boxes) and their dependency
+        arrows, laid out in layers, with the critical path highlighted. `tasks`:
+        [{id, label, duration, predecessors?}]. `direction`: 'LR'(default)/'TB'.
+        causalLoop() is NOT supported by this port (see semnet.py's module docstring)."""
+        band = pert_band(tasks, direction=direction, unit=unit, compact=compact, straighten=straighten, id=id)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def dependency_network(
+        self, nodes: list[dict], edges: list[dict], *, x: float, y: float, width: float, direction: str | None = None,
+        node_kinds: dict | None = None, edge_types: dict | None = None, straighten: bool | None = None, id: str | None = None,
+    ) -> None:
+        """lib/semnet.ts's dependencyNetwork(): nodes and typed edges (depends/uses/blocks/
+        relates/custom), laid out in layers, with a legend for node kinds and edge types.
+        `nodes`: [{id, label, kind?}]. `edges`: [{from, to, type, weight?, label?}]."""
+        band = dependency_band(nodes, edges, direction=direction, node_kinds=node_kinds, edge_types=edge_types, straighten=straighten, id=id)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def quadrant(self, opts: dict, *, x: float, y: float, width: float) -> None:

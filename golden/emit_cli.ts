@@ -64,6 +64,7 @@ import {renderBpmn, renderClasses, renderStates} from '../../lib/emit-figures.ts
 import {layoutClassesBand} from '../../lib/classes.ts';
 import {layoutStatesBand} from '../../lib/states.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
+import {pertBand, dependencyBand} from '../../lib/semnet-dsl.ts';
 import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot, clustermap} from '../../lib/dsl/charts-stats.ts';
 import {quadrantBand, layoutQuadrant} from '../../lib/quadrant.ts';
 import {renderQuadrant} from '../../lib/emit-figures.ts';
@@ -407,6 +408,8 @@ function handle(req: Req): unknown {
         band = fn(req.data as never, (req.opts ?? {}) as never);
       }
       else if (req.chartKind === 'clustermap') band = clustermap(req.rows as never, req.cols as never, req.values as never, (req.opts ?? {}) as never) as never;
+      else if (req.chartKind === 'pert') band = pertBand(req.tasks as never, (req.opts ?? {}) as never) as never;
+      else if (req.chartKind === 'dependency') band = dependencyBand(req.nodes as never, req.edges as never, (req.opts ?? {}) as never) as never;
       else throw new Error(`unknown chart kind: ${req.chartKind}`);
       return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
     }

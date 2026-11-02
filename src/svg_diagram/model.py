@@ -57,6 +57,7 @@ from .butterfly import butterfly_band
 from .bubble import bubble_band
 from .combo import combo_band
 from .catplot import cat_band
+from .distplot import dist_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .harvey import harvey_band
@@ -1116,6 +1117,42 @@ class Diagram:
         """seaborn barplot(): the mean of each group as a bar from 0, with its error bar.
         See catplot() for `data`/`opts` (kind is fixed to 'bar')."""
         band = cat_band("barplot", data, opts, kind="bar")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def displot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """lib/dsl/charts-stats.ts's displot(): seaborn's distribution plots from raw values —
+        histplot/kdeplot/ecdfplot/rugplot, one or several layers (`opts.kind`). `data`: a
+        list of numbers, a list of {label, values} groups (up to 4), or {label: values, ...}.
+        `opts` is Node's own nested DistOpts, passed through as-is (kind?, label?, unit?,
+        stat?, bins?, binWidth?, element?, bw?, xRange?, yRange?, id?, width?, height?,
+        labelRole?). The bins/KDE/ECDF math (lib/stats.ts, lib/qc.ts) and the layout formula
+        ARE byte-identical to Node (golden-tested live); only text widths use this port's
+        approximation."""
+        band = dist_band("displot", data, opts, "hist")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def histplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn histplot(): round class widths shared by the groups. See displot() for
+        `data`/`opts` (kind is fixed to 'hist')."""
+        band = dist_band("histplot", data, opts, "hist")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def kdeplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn kdeplot(): a Gaussian KDE with Scott's bandwidth, filled under the curve.
+        See displot() for `data`/`opts` (kind is fixed to 'kde')."""
+        band = dist_band("kdeplot", data, opts, "kde")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def ecdfplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn ecdfplot(): the share of values at or below x, as a step line. See
+        displot() for `data`/`opts` (kind is fixed to 'ecdf')."""
+        band = dist_band("ecdfplot", data, opts, "ecdf")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def rugplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn rugplot(): a tick for every value. See displot() for `data`/`opts` (kind
+        is fixed to 'rug')."""
+        band = dist_band("rugplot", data, opts, "rug")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:

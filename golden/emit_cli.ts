@@ -82,6 +82,22 @@ function treeLayoutToPlain(t: {nodes: Map<string, unknown>; edges: unknown; w: n
 function layeredLayoutToPlain(t: {nodes: Map<string, unknown>; edges: unknown; layers: Map<string, number>; w: number; h: number; folded?: unknown}) {
   return {nodes: mapToObj(t.nodes), edges: t.edges, layers: mapToObj(t.layers), w: t.w, h: t.h, ...(t.folded ? {folded: t.folded} : {})};
 }
+// layered-route.ts's routeLayered()/layeredAttempt() take callback functions (place/groupOf/round/looseOf) that cannot cross the
+// JSON-lines protocol: both this CLI and the Python golden test build matching closures from the same small serializable spec.
+function buildPlace(spec: {swap?: boolean; scale?: number; dx?: number; dy?: number}): (p: {x: number; y: number}) => {x: number; y: number} {
+  const swap = spec.swap ?? false, scale = spec.scale ?? 1, dx = spec.dx ?? 0, dy = spec.dy ?? 0;
+  return p => ({x: (swap ? p.y : p.x) * scale + dx, y: (swap ? p.x : p.y) * scale + dy});
+}
+function buildGroupOf(spec: Record<string, number> | null | undefined): ((edge: number) => number | undefined) | undefined {
+  if (!spec) return undefined;
+  const m = new Map(Object.entries(spec).map(([k, v]) => [Number(k), v] as const));
+  return (edge: number) => m.get(edge);
+}
+function buildRound(ids: string[] | null | undefined): ((id: string) => boolean) | undefined {
+  if (!ids) return undefined;
+  const s = new Set(ids);
+  return (id: string) => s.has(id);
+}
 
 // Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
 // atoms.py/wrap.py: tests the ALGORITHM (icon grid geometry, dot pile packing), not real
@@ -247,6 +263,17 @@ function handle(req: Req): unknown {
     }
     case 'layoutWithLanes':
       return layeredLayoutToPlain(layoutWithLanes(req.nodes as never, req.edges as never, (req.opts ?? {}) as never, (req.chip ?? 0) as number, (req.space ?? 1) as number));
+    case 'routeLayered': {
+      const lay = layoutLayered(req.nodes as never, req.edges as never, (req.layoutOpts ?? {}) as never);
+      const place = buildPlace((req.place ?? {}) as never);
+      const groupOf = buildGroupOf(req.groupOf as never);
+      const round = buildRound(req.round as never);
+      const routes = routeLayered(
+        lay, place, (req.portStep ?? 14) as number, groupOf, round, (req.straighten ?? true) as boolean, (req.laneShare ?? false) as boolean,
+        (req.aside ?? false) as boolean, (req.detour ?? false) as boolean, req.lonePorts as boolean | undefined, (req.space ?? 1) as number, (req.laneHeads ?? false) as boolean,
+      );
+      return mapToObj(routes);
+    }
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
     case 'layoutBrace':

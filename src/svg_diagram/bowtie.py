@@ -3,30 +3,20 @@ lib/emit-bowtie.ts's renderBowtie(). bowtie(): threats on the left, each through
 preventive barriers, into the top event in the middle (under its hazard); out through the
 mitigating barriers to the consequences on the right. A fixed layout: no tree or layered
 routing — the ONLY auto-layout dependency is the width-narrowing cascade
-(lib/fit-width.ts's fitLayout()), which _fit_layout() below ports in scope.
-
-Scope note on fitLayout(): this port ONLY implements what bowtie() exercises — a single
-direction (bowtie never alternates it; "the flow runs left to right everywhere"), no
-folding (bowtie is not `foldable`), no `autoWidth` grid, and no diagram({keepWords}) floor
-retry (this port does not support that diagram option at all — see tree.py's identical
-scope note on this same Node module). The NARROWING width cascade and the `fitApplied`
-bookkeeping (what/from/to/mode/wasW/nowW) ARE ported faithfully, since they are part of
-layoutBowtie()'s own byte-compared output.
+(lib/fit-width.ts's fitLayout()), ported in scope in fit_width.py (shared with fta.py).
 
 Golden master: lib/bowtie.ts + lib/emit-bowtie.ts (Node.js, svg-diagram).
 """
 
 from __future__ import annotations
 
-import math
-
 from .emit_boxes import render_box_rect
 from .emit_common import arrow_path, emoji_span, js_round, snap4
+from .fit_width import fit_layout
 from .tokens import PALETTE, color_of, tone_style
 from .tree_text import measure_node, node_runs
 
 COL_GAP, BUS_GAP, ROW_GAP, KNOT_R, STEM, TOP_MIN_W, TOP_MAX_LINES = 32, 56, 20, 14, 14, 150, 3
-NARROWING = [200, 160, 130, 110]
 
 
 def _blank(s: object) -> bool:
@@ -77,25 +67,6 @@ def bowtie_band(data: dict, *, max_node_w: float | str | None = None, id: str | 
     if id is not None:
         band["id"] = id
     return band
-
-
-def _fit_layout(*, who: str, w: float, max_node_w: float | None, mode: str, build, fix: str) -> dict:
-    """Scoped port of lib/fit-width.ts's fitLayout() — see this module's docstring."""
-    widths = [max_node_w] if max_node_w is not None else NARROWING
-    from0 = widths[0]
-    tried: list[dict] = []
-    for mw in widths:
-        result = build(mw, False)
-        width = result["size"]["w"]
-        tw, th = math.ceil(width), math.ceil(result["size"]["h"])
-        tried.append({"w": tw, "h": th})
-        if width <= w + 0.5:
-            applied = []
-            if mw != from0:
-                applied = [{"what": "maxNodeW", "from": from0, "to": mw, "mode": mode, "wasW": tried[0]["w"], "nowW": tw}]
-            return {"result": result, "applied": applied}
-    tried_desc = "; ".join(f"maxNodeW {t['w']}px wide, {t['h']}px tall" for t in tried)
-    raise ValueError(f"{who}: the figure does not fit {js_round(w)}px.\n  tried: {tried_desc}\n  fix: {fix}")
 
 
 def _col_widths(rows: list[list[dict]]) -> list[float]:
@@ -209,7 +180,7 @@ def layout_bowtie(band: dict, x: float, y: float, w: float, width_of, roles: dic
 
     auto = band.get("maxNodeW") == "auto"
     written = band["maxNodeW"] if isinstance(band.get("maxNodeW"), (int, float)) else None
-    fitted = _fit_layout(
+    fitted = fit_layout(
         who="bowtie()", w=w, max_node_w=written, mode="auto" if auto else "omitted",
         build=lambda max_w, floor: attempt(max_w, floor),
         fix="a wider figure (diagram({width})), fewer barriers in a row, or shorter texts",

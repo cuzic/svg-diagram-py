@@ -51,6 +51,7 @@ from .tree import layout_tree_band, render_tree
 from .wordart import layout_word_art, render_word_art, word_art_band
 from .bars import bars_band, layout_bars, render_bars
 from .bowtie import bowtie_band, layout_bowtie, render_bowtie
+from .fta import fta_band, layout_fta, render_fta
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
@@ -374,6 +375,18 @@ class _Quadrant:
 class _Bowtie:
     """bowtie() is a standalone band type ("bowtie"), not part of the "chart" family —
     its own layout_bowtie()/render_bowtie() pair (lib/bowtie.ts/lib/emit-bowtie.ts)."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Fta:
+    """faultTree() is a standalone band type ("fta"), not part of the "chart" family —
+    its own layout_fta()/render_fta() pair (lib/fta.ts/lib/emit-fta.ts)."""
 
     x: float
     y: float
@@ -1252,6 +1265,15 @@ class Diagram:
         band = bowtie_band(input, max_node_w=max_node_w, id=id)
         self._elements.append(_Bowtie(x=x, y=y, w=width, band=band))
 
+    def fault_tree(self, root: dict, *, x: float, y: float, width: float, max_node_w: float | str | None = None, cut_sets: bool | None = None, quant: bool | None = None, quant_period: str | None = None, id: str | None = None) -> None:
+        """lib/dsl/diagrams.ts's faultTree(): a fault tree (FTA) — the top event, with a
+        gate (and/or/vote/inhibit) and its causes down to basic/undeveloped/house/condition
+        events. `root`: {label, kind?, gate?, children?, k?, condition?, p?, state?, id?,
+        ref?} recursively. `cut_sets`: mark the events that alone bring the top event about.
+        `quant`: work out and write the top event's probability from each event's `p`."""
+        band = fta_band(root, max_node_w=max_node_w, cut_sets=cut_sets, quant=quant, quant_period=quant_period, id=id)
+        self._elements.append(_Fta(x=x, y=y, w=width, band=band))
+
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's plane(): a coordinate plane — axes with ticks, points, guide
         lines, dimension lines and labels, all in the plane's own units. Unlike the other
@@ -1548,6 +1570,9 @@ class Diagram:
         if isinstance(el, _Bowtie):
             laid = layout_bowtie(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
             return render_bowtie(laid, day=el.day)
+        if isinstance(el, _Fta):
+            laid = layout_fta(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
+            return render_fta(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

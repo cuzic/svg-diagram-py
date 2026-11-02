@@ -62,10 +62,10 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 |---|---|---|
 | states(flowchartを含む) | ⬜ | layeredAttempt依存。Tier2から格上げ |
 | classes (UML) | ⬜ | layeredAttempt依存。Tier2から格上げ |
-| bpmn | ⬜ | レーン+フロー、大規模 |
+| bpmn | ⬜(再調査済み、Tier3確定) | emblem/quadrant/bowtie/ftaと同じ「過大評価」パターンを疑って再調査したが、今回は**裏付けが取れた**: `lib/bpmn.ts`(313行)は`layered-route.ts`の`layeredAttempt`ではなく`lib/graph-layout.ts`の`layoutLayered`(サイクル除去・longest-path layering・ALAP/tighten・層folding・barycenter交差削減・座標割当を含む257行)を直接呼ぶ——wrapperを経由しない分軽いが、肝心の重いアルゴリズム自体は同じで未移植。加えて`lib/orthogonal-route.ts`(97行、routeClear)も未移植。合計650行超級の投資で、bowtie/ftaのような「既存基盤に乗るだけ」の軽量ケースではない。Tier 3確定を維持 |
 | cause(CRT/FRT) | ⬜ | 最大規模。別計画で起票予定(交差削減・hop経路探索含む) |
 
-**bowtie は Tier 3 から外して移植済み(✅、下記参照)、fta は再調査の結果 layered routing 非依存と判明(下記参照、未移植)——どちらも当初の一括 Tier 3 分類は過大評価だった。**
+**bowtie・fta は Tier 3 から外して移植済み(✅、下記参照)——当初の一括 Tier 3 分類は過大評価だった。bpmn は再調査したが今回は過大評価ではなく確定(上記参照)。states/classes/causeは`layeredAttempt`そのものに依存するため同様にTier 3確定。**
 
 | band | 状態 | 備考 |
 |---|---|---|

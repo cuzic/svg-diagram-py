@@ -70,6 +70,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | 関数 | 状態 | 備考 |
 |---|---|---|
 | layoutLayered / breakCycles | ✅ | `lib/graph-layout.ts`の`layoutLayered`(257行、サイクル除去・longest-path layering・tighten/ALAP・層folding・barycenter交差削減・座標割当=relax/Brandes-Köpf)と`breakCycles`(DFSベースのサイクル検出、declared back edgeの妥当性検証含む)を`graph_layout.py`にフル移植。live golden test 34件一発通過(分岐・交差削減(transpose含む)・自己ループ・層skipダミー・2成分分離・tighten/ALAP・fold・outer lane(all/declared×near/low)・coord relax/bk・エラー経路5種)。**states/classes/bpmn/cause/pert/causalLoop/dependencyNetwork共有の最大の再利用可能基盤を先行切り出し**だが、`layeredAttempt`ラッパー(hop経路探索・levelGap再試行)と`routeClear`(直交ルーティング)は未移植のため、どのbandもまだこれだけでは動かせない |
+| routeClear | ✅ | `lib/orthogonal-route.ts`(97行、グリッド上のDijkstra探索による直交ルーティング——箱の膨張境界+ヒント線でグリッドを作り、曲がり/交差/他の経路への相乗りにコストを課す)を`orthogonal_route.py`にフル移植。bpmn()専用(他で使われていない)が、純粋な幾何アルゴリズムで自己完結。live golden test 10件一発通過(直線・縦横検出・障害物による迂回・margin/stub変更・xs/ys hint・他経路とのRIDE/CROSS・到達不能でNone・複数回の曲がり)。これでbpmn()が必要とする2つのアルゴリズム的前提(layoutLayered+routeClear)は揃ったが、`lib/bpmn.ts`本体(313行、ノード計測・レーン配置・呼び出しコード)はまだ未移植 |
 
 **bowtie・fta は Tier 3 から外して移植済み(✅、下記参照)——当初の一括 Tier 3 分類は過大評価だった。bpmn は再調査したが今回は過大評価ではなく確定(上記参照)。states/classes/causeは`layeredAttempt`そのものに依存するため同様にTier 3確定。**
 

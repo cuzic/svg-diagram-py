@@ -33,6 +33,7 @@ import {layoutGantt} from '../../lib/gantt.ts';
 import {layoutCloudBand} from '../../lib/toc.ts';
 import {renderCloud} from '../../lib/emit-figures.ts';
 import {layoutTree, layoutBalanced, layoutLayered, breakCycles} from '../../lib/graph-layout.ts';
+import {routeClear} from '../../lib/orthogonal-route.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
@@ -200,6 +201,8 @@ function handle(req: Req): unknown {
       return layeredLayoutToPlain(layoutLayered(req.nodes as never, req.edges as never, req.opts as never));
     case 'breakCycles':
       return [...breakCycles(req.nodes as never, req.edges as never, (req.declared ?? []) as never, (req.start ?? []) as never)].sort((a, b) => a - b);
+    case 'routeClear':
+      return routeClear(req.opts as never);
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
     case 'layoutBrace':

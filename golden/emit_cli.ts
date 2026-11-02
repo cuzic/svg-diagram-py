@@ -46,7 +46,7 @@ import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
-import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot} from '../../lib/dsl/charts-stats.ts';
+import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot} from '../../lib/dsl/charts-stats.ts';
 import {plane} from '../../lib/dsl/figures.ts';
 import {lines, burndown, burnup, strategyCanvas} from '../../lib/dsl/charts.ts';
 import {layoutPlane} from '../../lib/plane.ts';
@@ -276,6 +276,12 @@ function handle(req: Req): unknown {
         const distFns: Record<string, (data: never, opts: never) => never> = {displot, histplot, kdeplot, ecdfplot, rugplot} as never;
         const fn = distFns[req.distFn as string];
         if (!fn) throw new Error(`unknown distFn: ${req.distFn}`);
+        band = fn(req.data as never, (req.opts ?? {}) as never);
+      }
+      else if (req.chartKind === 'multiplot') {
+        const multiFns: Record<string, (data: never, opts: never) => never> = {hist2d, jointplot, kde2d: kde2dDsl, pairplot} as never;
+        const fn = multiFns[req.multiFn as string];
+        if (!fn) throw new Error(`unknown multiFn: ${req.multiFn}`);
         band = fn(req.data as never, (req.opts ?? {}) as never);
       }
       else throw new Error(`unknown chart kind: ${req.chartKind}`);

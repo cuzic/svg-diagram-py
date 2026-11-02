@@ -58,6 +58,7 @@ from .bubble import bubble_band
 from .combo import combo_band
 from .catplot import cat_band
 from .distplot import dist_band
+from .multiplot import multi_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .harvey import harvey_band
@@ -1153,6 +1154,36 @@ class Diagram:
         """seaborn rugplot(): a tick for every value. See displot() for `data`/`opts` (kind
         is fixed to 'rug')."""
         band = dist_band("rugplot", data, opts, "rug")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def hist2d(self, data: dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn histplot(x=, y=): a 2-D histogram — points counted in round-sized cells,
+        each cell shaded and labelled. `data`: {x: [...], y: [...]}. `opts` is Node's own
+        nested MultiOpts, passed through as-is (xLabel?, yLabel?, bins?, id?, width?,
+        height?, labelRole?). The binning math (lib/stats.ts) and the layout formula ARE
+        byte-identical to Node (golden-tested live); only text widths use this port's
+        approximation."""
+        band = multi_band("hist2d", "hist2d", data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def jointplot(self, data: dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn jointplot(): a scatter with the histogram of each variable beside it.
+        `data`: {x: [...], y: [...], group?: [...]} (group tells points apart by marker
+        shape, up to 4). See hist2d() for `opts`."""
+        band = multi_band("jointplot", "joint", data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def kde2d(self, data: dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn kdeplot(x=, y=): a Gaussian density over the plane as filled bands with
+        contour lines. `data`: {x: [...], y: [...]}. See hist2d() for `opts`."""
+        band = multi_band("kde2d", "kde2d", data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def pairplot(self, data: dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn pairplot(): every pair of 2 to 6 variables as a scatter, each variable's
+        histogram on the diagonal. `data`: {varName: [...], ...}. `opts` adds `corner?`
+        (lower triangle + diagonal only) and `groups?` on top of hist2d()'s own opts."""
+        band = multi_band("pairplot", "pair", data, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:

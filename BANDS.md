@@ -89,7 +89,8 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | pert / causalLoop / dependencyNetwork | ⬜(Tier 3相当) | 調査の結果、3つとも`semnet-common.ts`の`networkCanvas()`経由で`lib/layered-route.ts`(606行、交差削減+直交ルーティングの`layeredAttempt`)に依存することが判明。これは states/classes が依存する**同じ**layered routingエンジン(「重要な発見」節参照)。したがってchart系の軽量bandではなく、Tier 3の「layered routingエンジン」をまとめて移植する別計画でこそ扱うべき(一度移植すれば states/classes/bpmn/fta/cause と合わせて8 band種別に効く)。causalLoopはさらに`semnet-ring.ts`(83行、ring配置)+`semnet-interventions.ts`(79行)にも依存。本セッションでは見送り |
 | catplot(boxplot/violinplot/stripplot/swarmplot/pointplot/barplot) | ✅ | lib/stats.ts(統計計算、純粋関数)を`stats.py`としてフル移植(quantile/boxStats/errorBar/kde/swarmOffsets/polyFit/kde2d/averageLinkage/dendrogramOrder/lowessFit、live golden test 27件)。lib/charts-cat.tsの`layoutCat`/`catBand`を`catplot.py`に移植、Canvas基盤の上に乗る。live golden test一発通過(7つのDSL関数すべて、kindの重ね合わせ・hue・dir h/v含む) |
 | displot(histplot/kdeplot/ecdfplot/rugplot) | ✅ | lib/charts-dist.tsの`layoutDist`/`distBand`を`distplot.py`に移植(lib/qc.tsの`histogramBins`/`exact`は必要な分だけ`distplot.py`内に再実装、qc.ts自体は移植せず)。live golden test一発通過(5つのDSL関数すべて、kindの重ね合わせ・複数グループ・bins/bw/element: step含む) |
-| multiplot(hist2d/joint/kde2d/pair) / regplot/residplot / clustermap | ⬜ | 次に着手。残りはlib/charts-multi.ts(297行)+lib/charts-reg.ts(148行)+lib/charts-cluster.ts(102行)。stats.pyの基盤(kde2d/polyFit/averageLinkage/dendrogramOrder)は完了済み |
+| multiplot(hist2d/jointplot/kde2d/pairplot) | ✅ | lib/charts-multi.tsの`layoutMulti`/`multiBand`を`multiplot.py`に移植(4分岐: kde2dの等高線=marching squares、hist2dのグリッド、jointplotの散布図+周辺ヒストグラム、pairplotの散布図行列)。distplot.pyの`_histogram_bins`を再利用。live golden test一発通過(kde2d/kde2d名前衝突のCLI側バグのみ修正) |
+| regplot/residplot / clustermap | ⬜ | 次に着手。残りはlib/charts-reg.ts(148行)+lib/charts-cluster.ts(102行)。stats.pyの基盤(polyFit/averageLinkage/dendrogramOrder)は完了済み |
 | facet | ⬜ | lib/dsl/charts-stats.tsのfacet()はrow()/group()の組み合わせのみ(既に移植済み)、低リスク・小規模 |
 
 ## Tier 5 — 見送り候補

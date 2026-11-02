@@ -51,6 +51,7 @@ from .wordart import layout_word_art, render_word_art, word_art_band
 from .bars import bars_band, layout_bars, render_bars
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
+from .radar import radar_band
 from .sankey import sankey_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
@@ -729,6 +730,39 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = sankey_band(nodes, links, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def radar(
+        self,
+        axes: list[str],
+        series: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        min: float | None = None,
+        max: float | None = None,
+        rings: int | None = None,
+        values: bool | None = None,
+        unit: str | None = None,
+        fill: bool | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's radar(): 3-12 axes, 1-4 series (each told apart by line style AND
+        marker shape, never colour alone). `series`: [{label, values: [...], id?}]. The layout
+        formula IS byte-identical to Node (golden-tested live); only text widths use this
+        port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("min", min), ("max", max), ("rings", rings), ("values", values), ("unit", unit), ("fill", fill),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = radar_band(axes, series, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

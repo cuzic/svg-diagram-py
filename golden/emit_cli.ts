@@ -32,7 +32,7 @@ import {renderTimeline, renderGantt} from '../../lib/emit-figures.ts';
 import {layoutGantt} from '../../lib/gantt.ts';
 import {layoutCloudBand} from '../../lib/toc.ts';
 import {renderCloud} from '../../lib/emit-figures.ts';
-import {layoutTree, layoutBalanced} from '../../lib/graph-layout.ts';
+import {layoutTree, layoutBalanced, layoutLayered, breakCycles} from '../../lib/graph-layout.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
@@ -71,6 +71,9 @@ function mapToObj<K extends string, V>(m: Map<K, V>): Record<string, V> {
 }
 function treeLayoutToPlain(t: {nodes: Map<string, unknown>; edges: unknown; w: number; h: number; braces?: unknown}) {
   return {nodes: mapToObj(t.nodes), edges: t.edges, w: t.w, h: t.h, ...(t.braces ? {braces: t.braces} : {})};
+}
+function layeredLayoutToPlain(t: {nodes: Map<string, unknown>; edges: unknown; layers: Map<string, number>; w: number; h: number; folded?: unknown}) {
+  return {nodes: mapToObj(t.nodes), edges: t.edges, layers: mapToObj(t.layers), w: t.w, h: t.h, ...(t.folded ? {folded: t.folded} : {})};
 }
 
 // Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
@@ -193,6 +196,10 @@ function handle(req: Req): unknown {
       return treeLayoutToPlain(layoutTree(req.root as never, {dir: req.dir, gap: req.gap, levelGap: req.levelGap}));
     case 'layoutBalanced':
       return treeLayoutToPlain(layoutBalanced(req.root as never, {gap: req.gap, levelGap: req.levelGap, sides: req.sides}));
+    case 'layoutLayered':
+      return layeredLayoutToPlain(layoutLayered(req.nodes as never, req.edges as never, req.opts as never));
+    case 'breakCycles':
+      return [...breakCycles(req.nodes as never, req.edges as never, (req.declared ?? []) as never, (req.start ?? []) as never)].sort((a, b) => a - b);
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
     case 'layoutBrace':

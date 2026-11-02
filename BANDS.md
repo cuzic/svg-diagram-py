@@ -92,7 +92,9 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | multiplot(hist2d/jointplot/kde2d/pairplot) | ✅ | lib/charts-multi.tsの`layoutMulti`/`multiBand`を`multiplot.py`に移植(4分岐: kde2dの等高線=marching squares、hist2dのグリッド、jointplotの散布図+周辺ヒストグラム、pairplotの散布図行列)。distplot.pyの`_histogram_bins`を再利用。live golden test一発通過(kde2d/kde2d名前衝突のCLI側バグのみ修正) |
 | regplot / residplot | ✅ | lib/charts-reg.tsの`layoutReg`/`regBand`を`regplot.py`に移植(polyFit/lowessFitの曲線+信頼区間帯、group別のtone/dash)。live golden test一発通過(order 1-3・stats・lowess・group・residplot全パターン) |
 | clustermap | ✅ | lib/charts-cluster.tsの`layoutCluster`/`clusterBand`を`clustermap.py`に移植(averageLinkage/dendrogramOrderの木、行/列デンドログラムのpath描画はjs_numの手動変換が必要だった=js_num漏れの実例)。live golden test一発通過後、js_num漏れを1箇所自己修正 |
-| facet | ⬜ | lib/dsl/charts-stats.tsのfacet()はrow()/group()の組み合わせのみ(既に移植済み)、低リスク・小規模。**これでTier 4のchart系は全部完了(pert/causalLoop/dependencyNetworkのTier 3格上げを除く)** |
+| facet | ⛔(対象外、再調査の結果) | 当初「row()/group()の組み合わせのみ、低リスク」と見積もったが、実際はNode側の`row()`/`group()`が宣言的なBand木(どのDiagramにも属さない純粋データ)を組み立てるのに対し、本移植の`Diagram.row()`/`.group()`はDiagramへの副作用を伴う絶対座標APIで、Box以外の任意band(chart系等)を子として持てる「コンテナband」という型自体がPython側に存在しない。facet()を忠実移植するには新しい合成アーキテクチャの設計が必要で、Nodeとのgolden比較も原理的に不可能(Python側だけの新規座標APIになるため)。低優先度の便利関数のためにこの投資をするのは不釣り合いと判断し、対象外とする(wireframe/screens・states/classes等の既存の見送り判断と同じ理由付け) |
+
+**これでTier 4のchart系は実質完了**(pert/causalLoop/dependencyNetworkはTier 3格上げ、facetは対象外)。本セッションで移植: stats.ts(統計基盤)、catplot系(6関数)、displot系(5関数)、multiplot系(4関数)、regplot/residplot、clustermap。全てlive golden test一発通過(カテゴリ理解・ヘルパー再利用が徹底できていたため)。
 
 ## Tier 5 — 見送り候補
 

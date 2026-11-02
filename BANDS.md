@@ -49,7 +49,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 調査の結果、`states`(flowchartを含む)・`classes`(UML)・`cause`(CRT/FRT)・`pert`/`causalLoop`/`dependencyNetwork`(`semnet-common.ts`経由)は全て`lib/layered-route.ts`の
 `layeredAttempt`(layered graph routing — 交差削減・直交ルーティング・AND矢印のレーン共有・並走回避・detour探索)に依存していると判明し、一度は「規模が大きすぎるため独立したサブプランとして十分な時間を確保してから着手する」と判断していた。
 ユーザーの指示により専用のPlanフェーズ(Plan agentによる独立レビュー込み)を経て、`lib/layered-route.ts`本体(606行)を含むエンジン全体のフル移植が完了した(✅、下記参照)。
-**これでエンジン自体は6つのband種別(states/flowchart/classes/bpmn/pert/causalLoop/dependencyNetwork、causeを含めれば7)に効く状態になったが、各bandの呼び出しコード(ノード計測・配色・ラベル配置等)自体はまだ1つも移植していない** — bpmn()は例外で、エンジンの一部(layoutLayered+routeClear)だけで足りたため既に完了済み(Tier 3から独立に解消)。states/classes/cause/pert/causalLoop/dependencyNetworkの実装着手は別の投資として残る。
+**これでエンジン自体は6つのband種別(states/flowchart/classes/bpmn/pert/causalLoop/dependencyNetwork、causeを含めれば7)に効く状態になった。** bpmn()はエンジンの一部(layoutLayered+routeClear)だけで足りたため既に完了済み(Tier 3から独立に解消)。続けてclassDiagram()(UML、下記参照)も完了——エンジンに加えて`lib/fit-width.ts`の本来の`fitLayout`/`planFit`(方向探索+幅ナローイング+折り返しの全探索、253行、classDiagram()は方向探索のみ使用)と`lib/fit-split.ts`(45行、高さ/幅に収まらない図の分割提案)もフル移植した。states/cause/pert/causalLoop/dependencyNetworkの実装着手は別の投資として残る。
 
 | 関数 | 状態 | 備考 |
 |---|---|---|
@@ -60,7 +60,11 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | route-search | ✅ | `lib/route-search.ts`(140行、headCrossings/searchRoute——箱の脇を通る格子上でのA*探索)を`route_search.py`にフル移植。手書きの二分ヒープをpush/pop含めて忠実に移植(タイブレークの挙動をPythonのheapqに委ねず再現)。live golden test 11件一発通過 |
 | **layered-route(layeredAttempt本体)** | ✅ | `lib/layered-route.ts`(606行)を`layered_route.py`にフル移植。事前にPlan agentへ独立レビューを依頼し(ファイル全文の検証・フェーズ分割・翻訳の落とし穴の洗い出し・git blameによるADR系譜の確認)、承認済みプランに沿って実装。**フェーズ0**: `py/golden/emit_cli.ts`にdispatch caseを新設(従来0件)。place/groupOf/round(+layeredAttemptのみlooseOf)というコールバック引数はJSON越しに渡せないため、両サイドが同じ仕様(affine変換/`{edgeIndex:groupIndex}`/ノードid配列)から同じクロージャを組み立てる方式で解決(looseOfは唯一の実呼び出し元`toc.ts`のcause()専用のため対象外、`layeredAttempt`自身の既定`loose:[]`が実際に使う経路)。**フェーズ1**: `STUB`/`LANE`・`stubOf`/`laneStepOf`/`gapFor`/`elbows`/`corridorLoad`/`layoutWithLanes`(全てexport済みの小さな純粋関数)。`space=0.75`(`density:'compact'`)でJSの`Math.round`(半数+∞側)とPythonの組込み`round`(銀行丸め)が実際に分岐する値を明示的にテスト。**フェーズ2**: 非exportの`routeOnce`(約380行、ADR 0016のD3/D7/D11〜D14という8個以上の最適化パスが相互作用)を、exportされている`routeLayered`経由でのみブラックボックスとしてgolden test。Node側の1関数をPython側ではADR/パスごとに名前付きヘルパーに分解(翻訳の保守性のため、忠実性には影響しない)。line 152の非全順序なソート比較関数は`functools.cmp_to_key`で2引数のまま移植(タプルキーへの分解を避けた)。mutate-and-restoreの境界(D3の`align()`/`undo()`、spread再試行のロールバック)に非golden自己整合性assertionを追加。D3直線化・AND矢印のレーン共有・outer lane+laneHeads・detour探索が実際に発火する配置を手で確認した上でテスト(live golden test 18件)。**フェーズ3**: `layeredAttempt`本体(plain/BK候補の選択・D11共有・D12/D13 aside・D14 apart・far/near/low+laneHeadsの再試行)。4つの実呼び出し元(classes/states/toc(cause)/semnet-common)のオプション組み合わせを再現(live golden test 13件)。`cand.loose.length > plain.loose.length`の分岐(`looseOf`注入が無いと到達不能、toc.ts専用のため本スコープ外)は既知のギャップとして明示し、比較ロジック単体への非golden Pythonテストで代替。全フェーズでNode実機との一発またはテスト側の不備修正で通過(実装側のバグはゼロ、テストフィクスチャ側のnull/undefined取り扱いの不備を2件自己検出・修正) |
 
-**bowtie・fta・bpmn は Tier 3 から外して移植済み(✅)——当初の一括 Tier 3 分類は過大評価だった。states/classes/cause/pert/causalLoop/dependencyNetwork自体はエンジンが揃った今も未着手。**
+**bowtie・fta・bpmn・classes は Tier 3 から外して移植済み(✅)——当初の一括 Tier 3 分類は過大評価だった。states/cause/pert/causalLoop/dependencyNetwork自体はエンジンが揃った今も未着手。**
+
+| band | 状態 | 備考 |
+|---|---|---|
+| classes (UML) | ✅ | `lib/classes.ts`(176行)+`lib/emit-figures.ts`の`renderClasses`(~32行)を`classes.py`にフル移植。`layered_attempt`(dir 'down'/'right'の両方を試す、`transpose`/`tighten`/`portStep`)+`fit_width.py`の本来の`fitLayout`/`planFit`(本番初採用、`narrow:false`のためmaxNodeW探索は無し)の上に、クラスの計測(ヘッダ/属性/メソッドの3段構成)・継承/実装で親を先にする辺の反転・自己ループ(dir別に2種の幾何)・多重度/関係ラベルのチップ衝突回避配置を実装。`classesTexts()`は未移植(bpmnTexts/ftaTextsと同じ理由——テキスト事前登録、本移植では不要)。live golden test 44件一発通過(継承/コンポジション/集約/依存/開矢印の全関係種別・自己ループのdir right/down両方・dir autoでの方向選択・straighten:false・エラー経路5種)。これでstates/classes/causeの中で最初にband自体が完成した例になり、fit-width.ts本来のfitLayout/planFitが実運用で正しく動くことも実証された |
 
 | band | 状態 | 備考 |
 |---|---|---|

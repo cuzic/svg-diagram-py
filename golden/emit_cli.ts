@@ -51,13 +51,14 @@ import {renderWordArt} from '../../lib/emit-wordart.ts';
 import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
-import {bowtie, faultTree, bpmn} from '../../lib/dsl/diagrams.ts';
+import {bowtie, faultTree, bpmn, classDiagram} from '../../lib/dsl/diagrams.ts';
 import {layoutBowtie} from '../../lib/bowtie.ts';
 import {renderBowtie} from '../../lib/emit-bowtie.ts';
 import {layoutFta} from '../../lib/fta.ts';
 import {renderFta} from '../../lib/emit-fta.ts';
 import {layoutBpmn} from '../../lib/bpmn.ts';
-import {renderBpmn} from '../../lib/emit-figures.ts';
+import {renderBpmn, renderClasses} from '../../lib/emit-figures.ts';
+import {layoutClassesBand} from '../../lib/classes.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
 import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot, clustermap} from '../../lib/dsl/charts-stats.ts';
 import {quadrantBand, layoutQuadrant} from '../../lib/quadrant.ts';
@@ -440,6 +441,13 @@ function handle(req: Req): unknown {
     }
     case 'renderBpmn':
       return renderBpmn(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutClassesBand': {
+      const band = classDiagram(req.classes as never, req.relations as never, (req.opts ?? {}) as never);
+      const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: (req.keepWords ?? false) as boolean, space: (req.space ?? 1) as number};
+      return layoutClassesBand(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, env, req.heightBudget as number | undefined);
+    }
+    case 'renderClasses':
+      return renderClasses(req.band as never, (req.day ?? 1) as never, tones);
     case 'layoutLines': {
       let band: never;
       if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;

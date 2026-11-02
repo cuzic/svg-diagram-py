@@ -53,6 +53,7 @@ from .bars import bars_band, layout_bars, render_bars
 from .bowtie import bowtie_band, layout_bowtie, render_bowtie
 from .fta import fta_band, layout_fta, render_fta
 from .bpmn import bpmn_band, layout_bpmn, render_bpmn
+from .classes import classes_band, layout_classes_band, render_classes
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
@@ -400,6 +401,18 @@ class _Fta:
 class _Bpmn:
     """bpmn() is a standalone band type ("bpmn"), not part of the "chart" family —
     its own layout_bpmn()/render_bpmn() pair (lib/bpmn.ts/lib/emit-figures.ts)."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Classes:
+    """classDiagram() is a standalone band type ("classes"), not part of the "chart" family —
+    its own layout_classes_band()/render_classes() pair (lib/classes.ts/lib/emit-figures.ts)."""
 
     x: float
     y: float
@@ -1297,6 +1310,16 @@ class Diagram:
         band = bpmn_band(lanes, nodes, flows, fit=fit, id=id)
         self._elements.append(_Bpmn(x=x, y=y, w=width, band=band))
 
+    def classes(self, classes: list[dict], relations: list[dict], *, x: float, y: float, width: float, dir: str | None = None, straighten: bool | None = None, id: str | None = None) -> None:
+        """lib/dsl/diagrams.ts's classDiagram(): UML classes (name/attributes/methods
+        compartments) and the relations between them, placed in layers so a parent sits
+        above its children. `classes`: [{id, name?, stereotype?, abstract?, attrs?,
+        methods?, tone?}]. `relations`: [{from, to, kind?, label?, fromMult?, toMult?}] —
+        `kind`: assoc(default)/arrow/inherit/implement/compose/aggregate/depend. `dir`:
+        'down'(default)/'right'/'auto'."""
+        band = classes_band(classes, relations, dir=dir, straighten=straighten, id=id)
+        self._elements.append(_Classes(x=x, y=y, w=width, band=band))
+
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's plane(): a coordinate plane — axes with ticks, points, guide
         lines, dimension lines and labels, all in the plane's own units. Unlike the other
@@ -1599,6 +1622,9 @@ class Diagram:
         if isinstance(el, _Bpmn):
             laid = layout_bpmn(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
             return render_bpmn(laid, day=el.day)
+        if isinstance(el, _Classes):
+            laid = layout_classes_band(el.band, el.x, el.y, el.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
+            return render_classes(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

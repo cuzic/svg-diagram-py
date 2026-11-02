@@ -34,6 +34,8 @@ import {layoutCloudBand} from '../../lib/toc.ts';
 import {renderCloud} from '../../lib/emit-figures.ts';
 import {layoutTree, layoutBalanced, layoutLayered, breakCycles} from '../../lib/graph-layout.ts';
 import {routeClear} from '../../lib/orthogonal-route.ts';
+import {simplify as polySimplify, bendsOf, totalLength, crossingsOf, crossingsWith, scoreOf, runsTogether} from '../../lib/polyline-metrics.ts';
+import {moveApart} from '../../lib/route-apart.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
@@ -205,6 +207,26 @@ function handle(req: Req): unknown {
       return [...breakCycles(req.nodes as never, req.edges as never, (req.declared ?? []) as never, (req.start ?? []) as never)].sort((a, b) => a - b);
     case 'routeClear':
       return routeClear(req.opts as never);
+    case 'polySimplify':
+      return polySimplify(req.pts as never);
+    case 'bendsOf':
+      return bendsOf(req.points as never);
+    case 'totalLength':
+      return totalLength(req.points as never);
+    case 'crossingsOf':
+      return crossingsOf(req.paths as never, {margin: req.margin as number | undefined, tol: req.tol as number | undefined});
+    case 'crossingsWith':
+      return crossingsWith(req.path as never, req.others as never, {margin: req.margin as number | undefined, tol: req.tol as number | undefined});
+    case 'scoreOf':
+      return scoreOf(req.paths as never);
+    case 'runsTogether':
+      return runsTogether(req.a as never, req.b as never);
+    case 'moveApart': {
+      const routes = new Map(Object.entries(req.routes as Record<string, unknown>).map(([k, v]) => [Number(k), v as never]));
+      const edges = new Map(Object.entries(req.edges as Record<string, unknown>).map(([k, v]) => [Number(k), v as never]));
+      const rects = new Map(Object.entries(req.rects as Record<string, unknown>));
+      return Object.fromEntries(moveApart({routes, edges, rects} as never));
+    }
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
     case 'layoutBrace':

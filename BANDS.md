@@ -64,11 +64,15 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | classes (UML) | ⬜ | layeredAttempt依存。Tier2から格上げ |
 | cause(CRT/FRT) | ⬜ | 最大規模。別計画で起票予定(交差削減・hop経路探索含む) |
 
+**再調査の結果、`layeredAttempt`(lib/layered-route.ts、606行)自体がさらに3つの未移植モジュールに依存することが判明し、投資規模の見積もりは606行ではなく約930行に上方修正**: `lib/polyline-metrics.ts`(82行、bendsOf/crossingsOf/crossingsWith/scoreOf/runsTogether/simplify——経路の折れ・交差を数える純粋関数)、`lib/route-search.ts`(140行、headCrossings/searchRoute)、`lib/route-apart.ts`(102行、moveApart——並走する長い矢印を引き離す)。このうちpolyline-metrics.tsとroute-apart.tsは移植済み(✅、下記参照)。route-search.tsと、layered-route.ts本体(elbows/routeLayered/routeOnce/layeredAttempt)はまだ未着手。
+
 **bpmnはTier 3から外して移植済み(✅、下記参照)。** `layoutLayered`/`routeClear`という2つのアルゴリズム的前提を先行して切り出した上で、`lib/bpmn.ts`本体(313行、ノード計測・レーン/列配置・フロー経路探索・チップ/ゲートウェイラベル配置)もフル移植した。states/classes/cause/pert/causalLoop/dependencyNetworkは依然未着手: これらは`lib/layered-route.ts`の`layeredAttempt`(606行、layoutLayeredをラップしてlevelGapの再試行+hop経路探索を行う、未移植)経由でしか使わないため、bpmnの完了がこれらを直接解放するわけではない。
 
 | band | 状態 | 備考 |
 |---|---|---|
 | bpmn | ✅ | 再調査の結果、Tier 3格上げは一部誤りと判明: `lib/bpmn.ts`は`layered-route.ts`の`layeredAttempt`ではなく`lib/graph-layout.ts`の`layoutLayered`(既に移植済み)と`lib/orthogonal-route.ts`の`routeClear`(グリッド上のDijkstra探索、同じく先行移植済み)に直接依存するだけで、hop経路探索の再試行ラッパー自体は要らない。それでも本体(313行、ノードの計測・`layoutLayered`による列割当・レーンごとの行の高さ・フロー経路の試行リスト(直進/ゲートウェイ頂点/チャンネル経由/最終手段の`routeClear`探索)・条件チップの衝突回避配置・ゲートウェイラベルの空き場所探索)は大きかった。`icon`/`iconTone`(タスク上のアイコン)はicon registry自体が未移植のため対象外(box()のrenderBoxIcon・sankey()のノードアイコンと同じ理由)。`fit:'shrink'`の段階的縮小カスケードも含めてフル移植。live golden test 20件一発通過(2レーン直線・1レーンの戻り辺+ANDゲートウェイ+message flow(dashed)・自己ループ+ORゲートウェイ+戻り辺・fit:shrinkでの縮小・エラー経路7種)。`narrowTexts`/`narrowField`(fit:shrink時の「縮まりすぎた」診断、states()と共有予定)は`tree_text.py`に追加 |
+| polyline-metrics | ✅ | `lib/polyline-metrics.ts`(82行、simplify/bendsOf/totalLength/crossingsOf/crossingsWith/scoreOf/runsTogether——折れ・交差・並走の判定を数える純粋関数、依存なし)を`polyline_metrics.py`にフル移植。live golden test 41件一発通過。layered-route.ts(未移植)の候補経路スコアリングで使われるほか、check/lint側のedge-bends/edge-crossingsルール(本移植の対象外)でも共有される |
+| route-apart | ✅ | `lib/route-apart.ts`(102行、moveApart——並走して1本の線に見えてしまう長い矢印の内側の一辺を少しずつ横に動かし、交差・折れ・箱の貫通・図の外に出ることを増やさない移動だけを採用するADR 0016 D14)を`route_apart.py`にフル移植。依存は先行移植済みのpolyline_metrics.pyのみ。live golden test 4件一発通過(並走2本が実際に引き離される経路・self/outerで動かせない経路・遠く離れていて動かせない経路・3本並走)。layered-route.tsのroutingパイプラインの最終段で使われる(layered-route.ts本体はまだ未移植) |
 
 | 関数 | 状態 | 備考 |
 |---|---|---|

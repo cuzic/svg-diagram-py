@@ -86,8 +86,10 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | harvey | ✅ | layoutHarvey/renderChartともexport済み、live golden test(null未評価セル・corner・highlight列の枠・凡例の4分割円)。live golden test一発通過 |
 | bubble | ✅ | layoutBubble/renderChartともexport済み、live golden test(軸の自動拡張ループ・バブル内/外ラベル配置・サイズ凡例・閾値線)。自動拡張ループを含めてlive golden test一発通過 |
 | combo | ✅ | layoutCombo/renderChartともexport済み、live golden test(bar+line混在・左右2軸の目盛り間隔合わせ探索・stack・凡例の行折返し・anchors)。Canvas基盤の上のchart系はこれで一通り完了(bubble/butterfly/combo/harvey/heatmap/radar/sankey/stackedBars/mekko/tornado/treemap/waterfall) |
-| pert / causalLoop / dependencyNetwork | ⬜ | semnet.ts(ネットワーク図共通基盤)経由、未調査 |
-| catplot / displot / clustermap / facet(seaborn系) | ⬜ | 優先度低 |
+| pert / causalLoop / dependencyNetwork | ⬜(Tier 3相当) | 調査の結果、3つとも`semnet-common.ts`の`networkCanvas()`経由で`lib/layered-route.ts`(606行、交差削減+直交ルーティングの`layeredAttempt`)に依存することが判明。これは states/classes が依存する**同じ**layered routingエンジン(「重要な発見」節参照)。したがってchart系の軽量bandではなく、Tier 3の「layered routingエンジン」をまとめて移植する別計画でこそ扱うべき(一度移植すれば states/classes/bpmn/fta/cause と合わせて8 band種別に効く)。causalLoopはさらに`semnet-ring.ts`(83行、ring配置)+`semnet-interventions.ts`(79行)にも依存。本セッションでは見送り |
+| catplot(boxplot/violinplot/stripplot/swarmplot/pointplot/barplot) | ✅ | lib/stats.ts(統計計算、純粋関数)を`stats.py`としてフル移植(quantile/boxStats/errorBar/kde/swarmOffsets/polyFit/kde2d/averageLinkage/dendrogramOrder/lowessFit、live golden test 27件)。lib/charts-cat.tsの`layoutCat`/`catBand`を`catplot.py`に移植、Canvas基盤の上に乗る。live golden test一発通過(7つのDSL関数すべて、kindの重ね合わせ・hue・dir h/v含む) |
+| displot / multiplot(hist2d/joint/kde2d/pair) / regplot/residplot / clustermap | ⬜ | 次に着手。stats.pyの基盤は完了済み、残りはlib/charts-dist.ts(186行)+lib/charts-multi.ts(297行)+lib/charts-reg.ts(148行)+lib/charts-cluster.ts(102行) |
+| facet | ⬜ | lib/dsl/charts-stats.tsのfacet()はrow()/group()の組み合わせのみ(既に移植済み)、低リスク・小規模 |
 
 ## Tier 5 — 見送り候補
 

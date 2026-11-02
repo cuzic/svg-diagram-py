@@ -46,12 +46,15 @@ import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
+import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot} from '../../lib/dsl/charts-stats.ts';
 import {plane} from '../../lib/dsl/figures.ts';
 import {lines, burndown, burnup, strategyCanvas} from '../../lib/dsl/charts.ts';
 import {layoutPlane} from '../../lib/plane.ts';
 import {renderPlane} from '../../lib/emit-figures.ts';
 import {layoutChart} from '../../lib/charts.ts';
 import {renderChart} from '../../lib/charts-emit.ts';
+import {sum, meanOf, sdOf, quantile, boxStats, tCritical95, errorBar, kde, swarmOffsets, binCounts, binIndex, polyFit, kde2d, averageLinkage, dendrogramOrder, lowessFit} from '../../lib/stats.ts';
+import type {Merge} from '../../lib/stats.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -263,6 +266,12 @@ function handle(req: Req): unknown {
       else if (req.chartKind === 'harvey') band = harvey(req.rows as never, req.cols as never, req.values as never, (req.opts ?? {}) as never) as never;
       else if (req.chartKind === 'bubble') band = bubble(req.points as never, (req.opts ?? {}) as never) as never;
       else if (req.chartKind === 'combo') band = combo(req.categories as never, req.series as never, (req.opts ?? {}) as never) as never;
+      else if (req.chartKind === 'catplot') {
+        const catFns: Record<string, (data: never, opts: never) => never> = {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot} as never;
+        const fn = catFns[req.catFn as string];
+        if (!fn) throw new Error(`unknown catFn: ${req.catFn}`);
+        band = fn(req.data as never, (req.opts ?? {}) as never);
+      }
       else throw new Error(`unknown chart kind: ${req.chartKind}`);
       return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
     }
@@ -294,6 +303,35 @@ function handle(req: Req): unknown {
     case 'emitSvgFixture':
       // Used once, offline, to (re)capture golden/fixtures/*.json — not called by pytest itself.
       return emitSvg(req.diagram as never);
+    case 'stats': {
+      const fn = req.fn as string, a = (req.args ?? []) as unknown[];
+      const probeX = req.probeX as number[] | undefined;
+      switch (fn) {
+        case 'sum': return sum(a[0] as number[]);
+        case 'meanOf': return meanOf(a[0] as number[]);
+        case 'sdOf': return sdOf(a[0] as number[]);
+        case 'quantile': return quantile(a[0] as number[], a[1] as number);
+        case 'boxStats': return boxStats(a[0] as number[]);
+        case 'tCritical95': return tCritical95(a[0] as number);
+        case 'errorBar': return errorBar(a[0] as number[], a[1] as never) ?? null;
+        case 'kde': return kde(a[0] as number[], a[1] as number[], a[2] as number | undefined);
+        case 'swarmOffsets': return swarmOffsets(a[0] as number[], a[1] as number, a[2] as number) ?? null;
+        case 'binCounts': return binCounts(a[0] as number[], a[1] as number[]);
+        case 'binIndex': return binIndex(a[0] as number, a[1] as number[]);
+        case 'polyFit': {
+          const r = polyFit(a[0] as number[], a[1] as number[], a[2] as number);
+          return {order: r.order, coef: r.coef, r2: r.r2, n: r.n, rss: r.rss, atValues: (probeX ?? []).map(r.at), halfValues: r.half ? (probeX ?? []).map(r.half) : null};
+        }
+        case 'kde2d': return kde2d(a[0] as number[], a[1] as number[], a[2] as number[], a[3] as number[]);
+        case 'averageLinkage': return averageLinkage(a[0] as number[][]);
+        case 'dendrogramOrder': return dendrogramOrder(a[0] as Merge[], a[1] as number);
+        case 'lowessFit': {
+          const f = lowessFit(a[0] as number[], a[1] as number[], a[2] as number | undefined, a[3] as number | undefined);
+          return (probeX ?? []).map(f);
+        }
+        default: throw new Error(`unknown stats fn: ${fn}`);
+      }
+    }
     default:
       throw new Error(`unknown kind: ${req.kind}`);
   }

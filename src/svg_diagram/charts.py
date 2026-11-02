@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from .bubble import layout_bubble
 from .butterfly import layout_butterfly
+from .catplot import layout_cat
 from .combo import layout_combo
 from .charts_base import size_of
 from .emit_common import emoji_span, js_num, js_round
@@ -59,6 +60,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_bubble(band["spec"], g)
     elif kind == "combo":
         part = layout_combo(band["spec"], g)
+    elif kind == "catplot":
+        part = layout_cat(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

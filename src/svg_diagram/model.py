@@ -56,6 +56,7 @@ from .sankey import sankey_band
 from .butterfly import butterfly_band
 from .bubble import bubble_band
 from .combo import combo_band
+from .catplot import cat_band
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
 from .plane import layout_plane, plane_band, render_plane
 from .harvey import harvey_band
@@ -1066,6 +1067,55 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = combo_band(categories, series, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def catplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """lib/dsl/charts-stats.ts's catplot(): seaborn's categorical plots from raw values —
+        boxplot/violinplot/stripplot/swarmplot/pointplot/barplot, one or several layers
+        (`opts.kind`, a kind or a list of kinds drawn in order). `data`: a list of
+        {label, values} / {label, hues: [{name, values}]} groups, or {label: values, ...}.
+        `opts` is Node's own nested CatOpts, passed through as-is (kind?, dir?, label?,
+        unit?, error?, values?, counts?, scale?, id?, width?, height?, labelRole?). The
+        statistics (quartiles, KDE, confidence interval, beeswarm — lib/stats.ts) and the
+        layout formula ARE byte-identical to Node (golden-tested live); only text widths use
+        this port's approximation."""
+        band = cat_band("catplot", data, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def boxplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn boxplot(): quartiles, whiskers at 1.5 IQR, outliers as rings. See
+        catplot() for `data`/`opts` (kind is fixed to 'box')."""
+        band = cat_band("boxplot", data, opts, kind="box")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def violinplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn violinplot(): a kernel density estimate mirrored around each group, with
+        its quartiles inside. See catplot() for `data`/`opts` (kind is fixed to 'violin')."""
+        band = cat_band("violinplot", data, opts, kind="violin")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def stripplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn stripplot(): every value as a point, spread sideways without a pattern.
+        See catplot() for `data`/`opts` (kind is fixed to 'strip')."""
+        band = cat_band("stripplot", data, opts, kind="strip")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def swarmplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn swarmplot(): every value as a point, laid out so that none touch. See
+        catplot() for `data`/`opts` (kind is fixed to 'swarm')."""
+        band = cat_band("swarmplot", data, opts, kind="swarm")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def pointplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn pointplot(): the mean of each group with its error bar, joined by a line
+        per hue. See catplot() for `data`/`opts` (kind is fixed to 'point')."""
+        band = cat_band("pointplot", data, opts, kind="point")
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def barplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+        """seaborn barplot(): the mean of each group as a bar from 0, with its error bar.
+        See catplot() for `data`/`opts` (kind is fixed to 'bar')."""
+        band = cat_band("barplot", data, opts, kind="bar")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:

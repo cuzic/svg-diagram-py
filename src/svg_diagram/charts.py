@@ -20,6 +20,7 @@ from .radar import layout_radar
 from .sankey import layout_sankey
 from .tokens import PALETTE, color_of
 from .treemap import layout_treemap
+from .waterfall import layout_waterfall
 
 
 def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict, wrap: str = "phrase") -> dict:
@@ -38,6 +39,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_radar(band["spec"], g)
     elif kind == "treemap":
         part = layout_treemap(band["spec"], g)
+    elif kind == "waterfall":
+        part = layout_waterfall(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

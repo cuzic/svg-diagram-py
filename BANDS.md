@@ -76,7 +76,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | sankey | ✅ | layoutSankey/renderChartともexport済み、live golden test(複数レイヤー・barycenter並べ替え・align left/justify・tone/danger破線・リンクラベル配置)。ノードアイコンはicon registry未移植のため対象外(iconOfは常に0) |
 | radar | ✅ | layoutRadar/renderChartともexport済み、live golden test(1-4系列・min/max/rings・fill・values表示・凡例の折返し)。候補リストの構築順(`[d,F1..F4]`を3回繰り返す、まとめて1回ではない)がNodeのflatMapの実際の挙動と異なっていたバグをgolden testで検出・修正 |
 | treemap | ✅ | layoutTreemap/renderChartともexport済み、live golden test(squarified配置・反復重み補正・group/leaf・percent・strictエラー)。TreemapNodeオブジェクトをMapキーに使う箇所はPythonのid()による参照同一性で代替 |
-| waterfall | ⬜ | |
+| waterfall | ✅ | layoutWaterfall/layoutWaterfallH/renderChartともexport済み、live golden test(start/delta/subtotal/total・dir v/h・connectors・値ラベルの内外配置)。縦横ともライブgolden test一発通過 |
 | lines | ⬜ | |
 | burndown / burnup | ⬜ | |
 | bubble / butterfly / combo / harvey / tornado / mekko | ⬜ | 優先度低 |

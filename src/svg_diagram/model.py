@@ -54,6 +54,7 @@ from .heatmap import heatmap_band
 from .radar import radar_band
 from .sankey import sankey_band
 from .treemap import treemap_band
+from .waterfall import waterfall_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -793,6 +794,39 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = treemap_band(tree, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def waterfall(
+        self,
+        steps: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        axis: bool | None = None,
+        connectors: bool | None = None,
+        direction: str | None = None,
+        domain: tuple[float, float] | None = None,
+        plot_inset: tuple[float, float] | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's waterfall(): how a start value turns into an end value, step by
+        step. `steps`: [{label, value?, kind?: 'start'|'delta'|'subtotal'|'total', id?, tone?}]
+        (the first step defaults to 'start', every other to 'delta'). `direction` is Node's
+        `dir` ('v' default, or 'h'). The layout formula IS byte-identical to Node
+        (golden-tested live); only text widths use this port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("unit", unit), ("axis", axis), ("connectors", connectors), ("dir", direction), ("domain", domain),
+            ("plotInset", plot_inset), ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = waterfall_band(steps, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

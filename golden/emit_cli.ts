@@ -46,6 +46,10 @@ import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
+import {plane} from '../../lib/dsl/figures.ts';
+import {lines, burndown, burnup, strategyCanvas} from '../../lib/dsl/charts.ts';
+import {layoutPlane} from '../../lib/plane.ts';
+import {renderPlane} from '../../lib/emit-figures.ts';
 import {layoutChart} from '../../lib/charts.ts';
 import {renderChart} from '../../lib/charts-emit.ts';
 
@@ -264,6 +268,21 @@ function handle(req: Req): unknown {
     }
     case 'renderChart':
       return renderChart(req.band as never, (req.day ?? 1) as never, emojiSpan);
+    case 'layoutPlane': {
+      const band = plane(req.opts as never);
+      return layoutPlane(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles);
+    }
+    case 'renderPlane':
+      return renderPlane(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutLines': {
+      let band: never;
+      if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;
+      else if (req.linesKind === 'burndown') band = burndown(req.spec as never, (req.opts ?? {}) as never) as never;
+      else if (req.linesKind === 'burnup') band = burnup(req.spec as never, (req.opts ?? {}) as never) as never;
+      else if (req.linesKind === 'strategyCanvas') band = strategyCanvas(req.factors as never, req.series as never, (req.opts ?? {}) as never) as never;
+      else throw new Error(`unknown lines kind: ${req.linesKind}`);
+      return layoutPlane(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles);
+    }
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

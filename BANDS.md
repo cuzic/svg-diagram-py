@@ -79,8 +79,8 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | treemap | ✅ | layoutTreemap/renderChartともexport済み、live golden test(squarified配置・反復重み補正・group/leaf・percent・strictエラー)。TreemapNodeオブジェクトをMapキーに使う箇所はPythonのid()による参照同一性で代替 |
 | waterfall | ✅ | layoutWaterfall/layoutWaterfallH/renderChartともexport済み、live golden test(start/delta/subtotal/total・dir v/h・connectors・値ラベルの内外配置)。縦横ともライブgolden test一発通過 |
 | mekko | ✅ | stackedBarsと同じlayoutStacked/stackedBand経由。Canvas基盤の上に乗るためbars/stackedBarsと合わせて移植済み |
-| lines | ⬜ | **重要な発見**: chart系(kind+Canvas基盤)ではなく`plane()`(lib/plane.ts、367行、軸・目盛・monotone/centripetal曲線・マーカー・リーダー線付きラベル)の上に乗る別系統。plane()自体が未移植の大きい依存(layoutPlane単体で約270行)。burndown/burnup/strategyCanvasもlines()のラッパーなので同様に保留 |
-| burndown / burnup / strategyCanvas | ⬜(保留) | 上記lines()依存のため保留。plane()を移植する別の機会に合わせて着手するのが合理的 |
+| lines | ✅ | `plane()`(lib/plane.ts、standalone band "plane"、layoutPlane/renderPlaneをフルで移植——軸・目盛・stages・点の8方向自動ラベル配置・evolves矢印とクラッシュ検出・monotone/centripetal曲線フィッティング+ベジエサンプリング・寸法線)の上にlines()のエルゴノミックな層(linesOpts)を移植。live golden testで検証(カテゴリ軸・target線・ideal線・stages+evolves・smooth path(monotone/非monotone両方)・dims)。**既知のfloat差**: パスの矢印方向(および非monotoneのcentripetal曲線)が内部でhypot()を使うため、V8のMath.hypotとCPythonのmath.hypotが最後の1 ULPで不一致になることがある(render後の表示には影響なし、テストはtoleranceありの比較を使用) |
+| burndown / burnup / strategyCanvas | ✅ | lines()のラッパー(burndownOpts/burnupOpts/strategyCanvasOpts)を移植。live golden testで検証 |
 | tornado | ✅ | layoutTornado/renderChartともexport済み、live golden test(sort有無・lowTone/highTone・base線・凡例の行折返し)。live golden test一発通過 |
 | butterfly | ✅ | layoutButterfly/renderChartともexport済み、live golden test(sort given/left/right・leftTone/rightTone・両側バー配置)。live golden test一発通過 |
 | harvey | ✅ | layoutHarvey/renderChartともexport済み、live golden test(null未評価セル・corner・highlight列の枠・凡例の4分割円)。live golden test一発通過 |

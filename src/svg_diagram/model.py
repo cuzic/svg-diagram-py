@@ -1,30 +1,35 @@
-"""The absolute-coordinate Diagram API — spec section 4/5.
+"""The absolute-coordinate Diagram API — spec section 4/5, now covering box() extensions
+(tag/stamp/step/frame/dim/raw), caption()/group()/banner(), legend(), and row()/grid().
 
-This has NO Node.js counterpart: svg-diagram's real box()/connect() always go
-through the full auto-layout pipeline (lib/pipeline.ts) and never accept an
-explicit x/y. This module is new, Python-only code (not a port, not
-golden-tested); it composes the ported drawing-layer primitives in
-emit_boxes.py/emit_common.py/emit.py, which ARE golden-tested against Node.
+Placement (x/y of every element) has NO Node.js counterpart: svg-diagram's real
+box()/connect()/row()/grid() always go through the full auto-layout pipeline
+(lib/pipeline.ts) and never accept an explicit x/y. This module is new, Python-only code
+(not a port, not golden-tested at this composed level); it composes the ported
+drawing-layer primitives in emit_boxes.py/emit_common.py/emit.py/badge.py/legend.py, which
+ARE golden-tested against Node — EXCEPT row()/grid()'s child-width distribution
+(layout_util.py's grid_columns/row_child_geometry/grid_child_geometry), which IS
+golden-tested, because that one piece is pure arithmetic with no text-metrics dependency
+(see the plan's Phase E notes) and so is byte-identical to Node, unlike everything else
+here.
 
-Padding constants (BOX_PAD_X=20, BOX_PAD_Y=16) are copied from
-lib/layout-util.ts for visual familiarity with Node's own box() padding —
-that is a style choice, not a compatibility requirement.
+Padding/geometry constants (BOX_PAD_X, STEP_BADGE_R, TAG_H, ...) are copied from
+lib/layout-util.ts for visual familiarity with Node's own look — that is a style choice,
+not a compatibility requirement.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from itertools import count
-from typing import Literal
+from typing import Callable, Literal
 
+from .approx_width import approx_width_of
 from .emit import emit_svg
-from .emit_boxes import render_box_rect, render_connect
+from .emit_boxes import render_banner, render_box_rect, render_caption, render_connect, render_group_rect, render_raw, render_step_badge, render_stamp, render_tag
 from .emit_common import text_lines
-from .tokens import ROLES, run_color_of
-
-BOX_PAD_X = 20
-BOX_PAD_Y = 16
-_LH_EM = 1.4
+from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
+from .legend import render_legend_item
+from .tokens import ROLES, run_color_of, text_color_of
 
 Tone = Literal["plain", "accent", "danger", "muted", "new", "changed", "removed", "solid", "solid-danger"]
 ArrowStyle = Literal["start", "end", "both", "none"]
@@ -43,6 +48,13 @@ class Box:
     fill: str | None = None
     stroke: str | None = None
     dashed: bool | None = None
+    frame: bool = True
+    dim: bool = False
+    step: int | str | None = None
+    tag: str | None = None
+    tag_tone: Literal["accent", "danger", "muted"] | None = None
+    tag_at: float = 1.0
+    stamp: str | None = None
 
 
 @dataclass
@@ -52,6 +64,56 @@ class Arrow:
     arrow: ArrowStyle = "end"
     line: LineStyle | None = None
     tone: Tone | None = None
+    label: str | None = None
+    chip: bool = False
+    label_at: float = 0.5
+
+
+@dataclass
+class _Caption:
+    x: float
+    y: float
+    w: float
+    text: str
+    align: str = "center"
+    tone: Tone | None = None
+
+
+@dataclass
+class _Group:
+    x: float
+    y: float
+    w: float
+    h: float
+    title: str | None = None
+    tone: Tone | None = None
+    dashed: bool | None = None
+    dim: bool = False
+    stamp: str | None = None
+
+
+@dataclass
+class _Banner:
+    x: float
+    y: float
+    w: float
+    h: float
+    lines: list[str] = field(default_factory=list)
+    tone: Tone | None = None
+
+
+@dataclass
+class _Legend:
+    items: list[dict]
+
+
+@dataclass
+class _Raw:
+    x: float
+    y: float
+    w: float
+    h: float
+    draw: Callable[[dict], str]
 
 
 def _edge_point(box: Box, side: str) -> dict:
@@ -75,7 +137,10 @@ class Diagram:
         self.height = height
         self.boxes: list[Box] = []
         self.arrows: list[Arrow] = []
+        self._elements: list[object] = []
         self._ids = count(1)
+
+    # ---- box() -----------------------------------------------------------------------
 
     def box(
         self,
@@ -90,6 +155,13 @@ class Diagram:
         fill: str | None = None,
         stroke: str | None = None,
         dashed: bool | None = None,
+        frame: bool = True,
+        dim: bool = False,
+        step: int | str | None = None,
+        tag: str | None = None,
+        tag_tone: Literal["accent", "danger", "muted"] | None = None,
+        tag_at: float = 1.0,
+        stamp: str | None = None,
     ) -> Box:
         if width <= 0 or height <= 0:
             raise ValueError(f"box(): width and height must both be positive (got {width}, {height})")
@@ -97,9 +169,33 @@ class Diagram:
         box_id = id or f"b{next(self._ids)}"
         if any(b.id == box_id for b in self.boxes):
             raise ValueError(f"box(): id {box_id!r} is already used")
-        b = Box(id=box_id, x=x, y=y, width=width, height=height, lines=lines, tone=tone, fill=fill, stroke=stroke, dashed=dashed)
+        b = Box(
+            id=box_id, x=x, y=y, width=width, height=height, lines=lines, tone=tone, fill=fill, stroke=stroke,
+            dashed=dashed, frame=frame, dim=dim, step=step, tag=tag, tag_tone=tag_tone, tag_at=tag_at, stamp=stamp,
+        )
         self.boxes.append(b)
+        self._elements.append(b)
         return b
+
+    def raw(self, *, x: float, y: float, width: float, height: float, draw: Callable[[dict], str]) -> None:
+        """lib/dsl/text-bands.ts's raw(): the escape hatch for a shape this port has no primitive for."""
+        self._elements.append(_Raw(x=x, y=y, w=width, h=height, draw=draw))
+
+    def caption(self, text: str, *, x: float, y: float, width: float, align: str = "center", tone: Tone | None = None) -> None:
+        self._elements.append(_Caption(x=x, y=y, w=width, text=text, align=align, tone=tone))
+
+    def group(self, *, x: float, y: float, width: float, height: float, title: str | None = None, tone: Tone | None = None, dashed: bool | None = None, dim: bool = False, stamp: str | None = None) -> None:
+        self._elements.append(_Group(x=x, y=y, w=width, h=height, title=title, tone=tone, dashed=dashed, dim=dim, stamp=stamp))
+
+    def banner(self, label: str | list[str] = "", *, x: float, y: float, width: float, height: float, tone: Tone | None = None) -> None:
+        lines = label if isinstance(label, list) else ([label] if label else [])
+        self._elements.append(_Banner(x=x, y=y, w=width, h=height, lines=lines, tone=tone))
+
+    def legend(self, items: list[dict]) -> None:
+        """Each item: `{x, y, label, kind, ...}` — see legend.render_legend_item()."""
+        self._elements.append(_Legend(items=items))
+
+    # ---- arrow()/connect() ------------------------------------------------------------
 
     def arrow(
         self,
@@ -109,6 +205,9 @@ class Diagram:
         style: ArrowStyle = "end",
         line: LineStyle | None = None,
         tone: Tone | None = None,
+        label: str | None = None,
+        chip: bool = False,
+        label_at: float = 0.5,
     ) -> Arrow:
         source_id = source.id if isinstance(source, Box) else source
         target_id = target.id if isinstance(target, Box) else target
@@ -116,9 +215,55 @@ class Diagram:
             raise ValueError(f"arrow(): unknown source id {source_id!r}")
         if not any(b.id == target_id for b in self.boxes):
             raise ValueError(f"arrow(): unknown target id {target_id!r}")
-        a = Arrow(source=source_id, target=target_id, arrow=style, line=line, tone=tone)
+        a = Arrow(source=source_id, target=target_id, arrow=style, line=line, tone=tone, label=label, chip=chip, label_at=label_at)
         self.arrows.append(a)
         return a
+
+    # ---- row() / grid() ----------------------------------------------------------------
+
+    def row(
+        self,
+        children: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        height: float,
+        gap: float = 16,
+        justify: str | None = None,
+        cols: int | None = None,
+        item_width: float | None = None,
+        arrows: bool = False,
+    ) -> list[Box]:
+        """lib/dsl/containers.ts's row(): equal/flex/fixed-width distribution — ported byte-identically
+        from lib/layout-util.ts's rowChildGeometry() (pure arithmetic, no text metrics). Creates one
+        Box per child at the computed x; `arrows=True` adds a connector between each adjacent pair
+        (Node's renderRow() arrow style)."""
+        band = {"gap": gap, "justify": justify, "cols": cols, "itemWidth": item_width, "children": children}
+        geom = row_child_geometry(band, width)
+        boxes = []
+        for child, w, x_off in zip(children, geom["widths"], geom["xOffsets"]):
+            kwargs = {k: v for k, v in child.items() if k not in ("label", "width", "flex", "span", "col")}
+            boxes.append(self.box(child.get("label", ""), x=x + x_off, y=y, width=w, height=height, **kwargs))
+        if arrows:
+            for a, b in zip(boxes, boxes[1:]):
+                self.arrow(a, b)
+        return boxes
+
+    def grid(self, children: list[dict], *, x: float, y: float, width: float, row_height: float, cols: int, gap: float = 16, row_gap: float | None = None) -> list[Box]:
+        """lib/dsl/containers.ts's grid(): an N-column grid, each child in the next free cell, wrapping
+        to a new row. Width distribution is lib/layout-util.ts's gridChildGeometry() (byte-identical)."""
+        band = {"cols": cols, "gap": gap}
+        geom = grid_child_geometry(band, width)
+        rg = row_gap if row_gap is not None else gap
+        boxes = []
+        for i, child in enumerate(children):
+            col, r = i % cols, i // cols
+            kwargs = {k: v for k, v in child.items() if k not in ("label",)}
+            boxes.append(self.box(child.get("label", ""), x=x + geom["xs"][col], y=y + r * (row_height + rg), width=geom["ws"][col], height=row_height, **kwargs))
+        return boxes
+
+    # ---- rendering -----------------------------------------------------------------------
 
     def _box_by_id(self, box_id: str) -> Box:
         for b in self.boxes:
@@ -127,14 +272,59 @@ class Diagram:
         raise KeyError(box_id)
 
     def _render_box(self, b: Box) -> str:
-        rect = render_box_rect(x=b.x, y=b.y, w=b.width, h=b.height, tone=b.tone, dashed=b.dashed, fill=b.fill, stroke=b.stroke)
-        if not b.lines:
-            return rect
-        # the title run has no color override of its own, so this is Node's runColorOf(tones, undefined, b.tone, day):
-        # white on a solid/solid-danger box, plain text color otherwise (tokens.ts:220-222)
-        fill_color = run_color_of(None, b.tone, day=1)
-        text = text_lines(b.lines, x=b.x + BOX_PAD_X, top=b.y + BOX_PAD_Y, size=ROLES["title"], weight=700, fill=fill_color)
-        return f"{rect}\n  {text}"
+        # Mirrors Node's renderBox() concatenation exactly — it is NOT a uniform join: frame
+        # carries its own trailing "\n  ", badge/tag need a caller-added LEADING "\n  ", and
+        # stamp already carries its own leading "\n  " (lib/emit-boxes.ts:89-95).
+        out = ""
+        if b.frame:
+            out += render_box_rect(x=b.x, y=b.y, w=b.width, h=b.height, tone=b.tone, dashed=b.dashed, dim=b.dim, fill=b.fill, stroke=b.stroke) + "\n  "
+        if b.lines:
+            # the title run has no color override of its own, so this is Node's runColorOf(tones, undefined, b.tone, day):
+            # white on a solid/solid-danger box, plain text color otherwise (tokens.ts:220-222)
+            fill_color = run_color_of(None, b.tone, day=1)
+            # Node only indents the FIRST (title) line for a step badge; this port has no
+            # title/body distinction, so — as a documented simplification — every line shifts.
+            indent = STEP_INDENT if b.step is not None else 0
+            out += text_lines(b.lines, x=b.x + BOX_PAD_X + indent, top=b.y + BOX_PAD_Y, size=ROLES["title"], weight=700, fill=fill_color)
+        if b.step is not None:
+            title_baseline_y = b.y + BOX_PAD_Y + ROLES["title"]
+            out += "\n  " + render_step_badge(x=b.x, pad_x=BOX_PAD_X, title_baseline_y=title_baseline_y, step=b.step, tone=b.tone, dim=b.dim)
+        if b.tag is not None:
+            tag_w = approx_width_of(b.tag, 14, 700) + 2 * TAG_PAD_X
+            tx = b.x + 8 + (b.width - 16 - tag_w) * b.tag_at
+            tag_box = {"x": tx, "y": b.y - TAG_H / 2, "w": tag_w, "h": TAG_H}
+            out += "\n  " + render_tag(tag_box=tag_box, tag=b.tag, tag_tone=b.tag_tone, tone=b.tone, dim=b.dim)
+        if b.stamp is not None:
+            stamp_w = approx_width_of(b.stamp, ROLES["note"], 400) + 2 * STAMP_PAD_X
+            out += render_stamp(x=b.x, y=b.y, w=b.width, h=b.height, stamp=b.stamp, stamp_w=stamp_w, note_size=ROLES["note"])
+        return out
+
+    def _render_element(self, el: object) -> str:
+        if isinstance(el, Box):
+            return self._render_box(el)
+        if isinstance(el, _Caption):
+            return render_caption(x=el.x, y=el.y, w=el.w, text=el.text, size=ROLES["title"], align=el.align, tone=el.tone)
+        if isinstance(el, _Group):
+            # lib/emit-boxes.ts:98-101 renderGroup(): rect and stamp concatenate directly
+            # (renderStamp already carries its own leading "\n  "); the title caption is a
+            # SEPARATE top-level band in Node (lib/layout-util.ts's groupTitleBand()), so it
+            # joins here the same way two bands join in the body list ("\n\n  ").
+            out = render_group_rect(x=el.x, y=el.y, w=el.w, h=el.h, tone=el.tone, dashed=el.dashed, dim=el.dim)
+            if el.stamp:
+                stamp_w = approx_width_of(el.stamp, ROLES["note"], 400) + 2 * STAMP_PAD_X
+                out += render_stamp(x=el.x, y=el.y, w=el.w, h=el.h, stamp=el.stamp, stamp_w=stamp_w, note_size=ROLES["note"])
+            if el.title:
+                title_color = text_color_of("accent" if el.tone == "accent" else None, 1)
+                title_svg = text_lines([el.title], x=el.x + BOX_PAD_X, top=el.y + BOX_PAD_Y, size=ROLES["title"], weight=700, fill=title_color)
+                out += "\n\n  " + title_svg
+            return out
+        if isinstance(el, _Banner):
+            return render_banner(x=el.x, y=el.y, w=el.w, h=el.h, lines=el.lines, size=ROLES["title"], tone=el.tone)
+        if isinstance(el, _Legend):
+            return "\n  ".join(render_legend_item(note_size=ROLES["note"], **item) for item in el.items)
+        if isinstance(el, _Raw):
+            return render_raw(x=el.x, y=el.y, w=el.w, h=el.h, day=1, draw=el.draw)
+        raise TypeError(f"unknown element type {type(el)!r}")
 
     def _route(self, a: Arrow) -> list[dict]:
         source, target = self._box_by_id(a.source), self._box_by_id(a.target)
@@ -149,9 +339,9 @@ class Diagram:
         return [_edge_point(source, from_side), _edge_point(target, to_side)]
 
     def render_svg(self) -> str:
-        """Builds the final SVG document — see Module docstring for the non-ported/ported split."""
-        body = "\n\n  ".join(self._render_box(b) for b in self.boxes)
-        connects = [render_connect(points=self._route(a), arrow=a.arrow, line=a.line, tone=a.tone) for a in self.arrows]
+        """Builds the final SVG document — see module docstring for the non-ported/ported split."""
+        body = "\n\n  ".join(self._render_element(el) for el in self._elements)
+        connects = [render_connect(points=self._route(a), arrow=a.arrow, line=a.line, tone=a.tone, label=a.label, chip=a.chip, label_at=a.label_at) for a in self.arrows]
         connect_svg = "\n\n  ".join(connects)
         has_arrow = any(a.arrow != "none" for a in self.arrows)
         return emit_svg(width=self.width, height=self.height, body=body, connect_svg=connect_svg, has_arrow=has_arrow)

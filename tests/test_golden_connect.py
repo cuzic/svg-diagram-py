@@ -34,7 +34,25 @@ def test_render_connect_matches_node(node_golden, case):
     assert py_result == node_result
 
 
-@pytest.mark.parametrize("bad_kwargs", [{"weight": "strong"}, {"line": "double"}, {"label": "x"}])
+@pytest.mark.parametrize("bad_kwargs", [{"weight": "strong"}, {"line": "double"}])
 def test_render_connect_raises_for_out_of_scope_features(bad_kwargs):
     with pytest.raises(NotImplementedError):
         render_connect(points=[{"x": 0, "y": 0}, {"x": 1, "y": 1}], **bad_kwargs)
+
+
+def test_render_connect_with_plain_label():
+    svg = render_connect(points=[{"x": 0, "y": 0}, {"x": 100, "y": 0}], label="A & B")
+    assert "<text" in svg
+    assert "A &amp; B" in svg
+
+
+def test_render_connect_with_chip_label():
+    svg = render_connect(points=[{"x": 0, "y": 0}, {"x": 100, "y": 0}], label="A & B", chip=True)
+    assert "<rect" in svg
+    assert "A &amp; B" in svg
+
+
+def test_render_connect_label_position_moves_with_label_at():
+    svg_start = render_connect(points=[{"x": 0, "y": 0}, {"x": 100, "y": 0}], label="x", label_at=0.1)
+    svg_end = render_connect(points=[{"x": 0, "y": 0}, {"x": 100, "y": 0}], label="x", label_at=0.9)
+    assert svg_start != svg_end

@@ -116,3 +116,21 @@ FONT_STACKS: dict[str, str] = {
 ROLES: dict[str, int] = {"title": 15, "label": 14, "body": 14, "note": 14, "banner": 16, "stat": 34, "display": 56}
 CONNECT_LABEL_SIZE = 14
 STRONG_STROKE = 5
+TAG_SIZE = 14
+
+
+def relative_luminance(hex_color: str) -> float:
+    """lib/tokens.ts:367-371 relativeLuminance()."""
+
+    def lin(c: float) -> float:
+        c /= 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+
+
+def wcag_ratio(a: str, b: str) -> float:
+    """lib/tokens.ts:372-375 wcagRatio()."""
+    la, lb = relative_luminance(a), relative_luminance(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)

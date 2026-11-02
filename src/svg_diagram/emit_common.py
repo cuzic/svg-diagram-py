@@ -12,6 +12,7 @@ import re
 EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF⭐⚠❤]")
 
 LH_EM = 1.4  # lib/emit-common.ts:173
+ARROW_L = 12  # lib/cause-hop.ts:11
 
 
 def js_round(n: float) -> int:
@@ -74,6 +75,57 @@ def arrow_markers(arrow: str | None, dim: bool = False, strong: bool = False) ->
     start = f' marker-start="url(#{marker_id})"' if arrow in ("start", "both") else ""
     end = f' marker-end="url(#{marker_id})"' if arrow in ("end", "both") else ""
     return start + end
+
+
+def _sign(n: float) -> int:
+    """Matches JS Math.sign for the finite, non-zero inputs arrow_path() uses."""
+    return (n > 0) - (n < 0)
+
+
+def arrow_path(
+    points: list[dict],
+    color: str,
+    line: str | None,
+    width: float = 2,
+    head_at: str = "end",
+    end: str = "arrow",
+    cuts: list | None = None,
+) -> str:
+    """lib/emit-common.ts:149-169 arrowPath(): a filled-triangle arrowhead baked into the path
+    (not a <marker>), used where a marker on a reversed end would not be trusted by every
+    renderer (legend AND/back/blocks lines, cloud()'s double-headed conflict arrow). `cuts`
+    (hop-over bumps over a crossing line) is cause()'s engine — deferred, see the plan's Phase H."""
+    if cuts:
+        raise NotImplementedError("arrow_path(cuts=...) is cause()'s hop-over routing — deferred (plan Phase H)")
+    pts = [dict(p) for p in points]
+    heads: list[str] = []
+
+    def head(tip: dict, frm: dict) -> dict:
+        dx, dy = _sign(tip["x"] - frm["x"]), _sign(tip["y"] - frm["y"])
+        tx, ty = snap4(tip["x"]), snap4(tip["y"])
+        w = 5
+        heads.append(
+            f'<path d="M{js_num(tx)},{js_num(ty)} L{js_num(tx - dx * ARROW_L - dy * w)},{js_num(ty - dy * ARROW_L + dx * w)} '
+            f'L{js_num(tx - dx * ARROW_L + dy * w)},{js_num(ty - dy * ARROW_L - dx * w)} z" fill="{color}"/>'
+        )
+        return {"x": tip["x"] - dx * (ARROW_L - 2), "y": tip["y"] - dy * (ARROW_L - 2)}
+
+    n = len(pts)
+    effective_line = None if line == "solid" else line
+    if end == "bar":
+        tip, frm = points[n - 1], points[n - 2]
+        dx, dy = _sign(tip["x"] - frm["x"]), _sign(tip["y"] - frm["y"])
+        w, off = 10, 3
+        bx, by = snap4(tip["x"] - dx * off), snap4(tip["y"] - dy * off)
+        pts[n - 1] = {"x": tip["x"] - dx * off, "y": tip["y"] - dy * off}
+        heads.append(f'<path d="M{js_num(bx - dy * w)},{js_num(by + dx * w)} L{js_num(bx + dy * w)},{js_num(by - dx * w)}" fill="none" stroke="{color}" stroke-width="3"/>')
+    else:
+        pts[n - 1] = head(points[n - 1], points[n - 2])
+        if head_at == "both":
+            pts[0] = head(points[0], points[1])
+    d = "M" + " L".join(f"{js_num(snap4(p['x']))},{js_num(snap4(p['y']))}" for p in pts)
+    path = f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{js_num(width)}"{line_attrs(effective_line)}/>'
+    return f"{path}\n  " + "\n  ".join(heads)
 
 
 def text_lines(

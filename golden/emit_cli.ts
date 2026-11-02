@@ -16,10 +16,21 @@
 //   out: {"ok": true, "result": "<rect .../>"}
 
 import {createInterface} from 'node:readline';
-import {renderBoxRect, renderConnect} from '../../lib/emit-boxes.ts';
-import {escapeXml, escapeAttr, snap4, textLines, emojiSpan} from '../../lib/emit-common.ts';
+import {renderBoxRect, renderConnect, renderStamp, renderTag, renderStepBadge, renderRaw, renderLegend} from '../../lib/emit-boxes.ts';
+import {escapeXml, escapeAttr, snap4, textLines, emojiSpan, arrowPath} from '../../lib/emit-common.ts';
 import {toneEnv, runColorOf} from '../../lib/tokens.ts';
 import {emitSvg} from '../../lib/emit.ts';
+import {splitAtoms} from '../../lib/atoms.ts';
+import {wrapText} from '../../lib/wrap.ts';
+import type {WrapMode} from '../../lib/wrap.ts';
+import {badgeSvg, pillSvg} from '../../lib/badge.ts';
+import {gridColumns, rowChildGeometry, gridChildGeometry, colSlots} from '../../lib/layout-util.ts';
+
+// Phase A's wrap/atoms golden tests inject the SAME trivial width function on both sides
+// (codepoint count, ignoring size/weight/font) — see py/src/svg_diagram/wrap.py's module
+// docstring and tests/test_wrap.py. This tests the SPLITTING/WRAPPING DECISIONS only;
+// real pixel widths come from HarfBuzz on the Node side and are not golden-tested here.
+const dummyWidthOf = (atom: string): number => [...atom].length;
 
 const tones = toneEnv(undefined); // NO_TONES: tone overrides are out of MVP scope
 const roles = {title: 15, label: 14, body: 14, note: 14, banner: 16, stat: 34, display: 56};
@@ -53,6 +64,49 @@ function handle(req: Req): unknown {
       return snap4(req.n as number);
     case 'runColorOf':
       return runColorOf(tones, req.runTone as never, req.boxTone as never, (req.day ?? 1) as never);
+    case 'splitAtoms':
+      return splitAtoms(req.text as string);
+    case 'wrapText':
+      return wrapText(req.text as string, {maxWidth: req.maxWidth as number, atomWidth: dummyWidthOf, mode: (req.mode ?? 'char') as WrapMode});
+    case 'badgeSvg':
+      return badgeSvg({
+        cx: req.cx as number, cy: req.cy as number, shape: req.shape as never, r: req.r as number, w: req.w as number,
+        label: req.label as string, aria: req.aria as string, size: req.size as number, weight: req.weight as number | undefined,
+        fill: req.fill as string, stroke: req.stroke as string | null | undefined, sw: req.sw as number | undefined, text: req.text as string | undefined,
+        baseline: req.baseline as number | undefined, snap: snap4, esc: escapeXml,
+      });
+    case 'pillSvg':
+      return pillSvg({
+        x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number,
+        fill: req.fill as string, stroke: req.stroke as string | null | undefined, sw: req.sw as number | undefined, dash: req.dash as string | undefined,
+        cx: req.cx as number, baseline: req.baseline as number, text: req.textColor as string, size: req.size as number,
+        weight: req.weight as number | undefined, labelHtml: req.labelHtml as string, rawY: req.rawY as number | undefined,
+      });
+    case 'gridColumns':
+      return gridColumns(req.contentWidth as number, req.n as number, req.gap as number, {fixedGap: req.fixedGap as boolean | undefined, centerGutter: req.centerGutter as boolean | undefined, anyGap: req.anyGap as boolean | undefined});
+    case 'rowChildGeometry':
+      return rowChildGeometry(req.band as never, req.contentWidth as number);
+    case 'gridChildGeometry':
+      return gridChildGeometry(req.band as never, req.contentWidth as number);
+    case 'colSlots':
+      return colSlots(req.children as never);
+    case 'renderStamp':
+      return renderStamp({x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number, stamp: req.stamp as string | undefined, stampW: req.stampW as number | undefined}, roles);
+    case 'renderTag':
+      return renderTag({tagBox: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, tag: req.tag, tagTone: req.tagTone, tone: req.tone, dim: req.dim} as never, (req.day ?? 1) as never, tones, roles);
+    case 'renderStepBadge': {
+      // titleBaselineY = y + padY + lineY0 — computed the same way Node's renderStepBadge does
+      // internally, so Python's render_step_badge (which takes title_baseline_y directly, since
+      // computing wrapped-run baselines is layout, not drawing) can be golden-tested against this.
+      const y = req.y as number, padY = req.padY as number, lineY0 = req.lineY0 as number;
+      return renderStepBadge({x: req.x as number, y, padX: req.padX as number, padY, step: req.step, tone: req.tone, dim: req.dim, wrappedRuns: [{lineYs: [lineY0]}]} as never, (req.day ?? 1) as never);
+    }
+    case 'arrowPath':
+      return arrowPath(req.points as never, req.color as string, req.line as never, (req.width ?? 2) as number, (req.headAt ?? 'end') as never, (req.end ?? 'arrow') as never);
+    case 'renderLegend':
+      return renderLegend({items: req.items as never} as never, (req.day ?? 1) as never, tones, roles);
+    case 'renderRaw':
+      return renderRaw({x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number, draw: (ctx: {color: (t: string) => string}) => `<circle cx="50" cy="50" r="10" fill="${ctx.color(req.tone as string)}"/>`} as never, (req.day ?? 1) as never);
     case 'emojiSpan':
       return emojiSpan(req.text as string);
     case 'textLines':

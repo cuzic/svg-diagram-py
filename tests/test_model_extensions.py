@@ -5,8 +5,6 @@ primitives it calls are) via XML well-formedness and basic structural checks."""
 
 import xml.dom.minidom as minidom
 
-import pytest
-
 from svg_diagram import Diagram
 
 

@@ -8,7 +8,6 @@ Golden master: lib/timeline.ts + lib/emit-figures.ts (Node.js, svg-diagram).
 from __future__ import annotations
 
 import datetime
-import math
 import re
 
 from .atoms import text_width

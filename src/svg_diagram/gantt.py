@@ -13,7 +13,7 @@ import re
 from .atoms import text_width
 from .emit_common import emoji_span, js_round, snap4
 from .timeline import timeline_day, ticks_of
-from .tokens import PALETTE, color_of
+from .tokens import PALETTE
 
 ROW_H, BAR_H, HEAD_H, PAD, LABEL_MAX, ARROW = 32, 18, 44, 8, 0.4, 8
 SHORT_AXIS = 140

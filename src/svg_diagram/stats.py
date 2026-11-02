@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import functools
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 def _g(a: list[float], i: int) -> float:

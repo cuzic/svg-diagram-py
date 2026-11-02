@@ -45,7 +45,7 @@ import {renderWordArt} from '../../lib/emit-wordart.ts';
 import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
-import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko} from '../../lib/dsl/charts.ts';
+import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado} from '../../lib/dsl/charts.ts';
 import {layoutChart} from '../../lib/charts.ts';
 import {renderChart} from '../../lib/charts-emit.ts';
 
@@ -254,6 +254,7 @@ function handle(req: Req): unknown {
       else if (req.chartKind === 'waterfall') band = waterfall(req.steps as never, (req.opts ?? {}) as never) as never;
       else if (req.chartKind === 'stackedBars') band = stackedBars(req.columns as never, (req.opts ?? {}) as never) as never;
       else if (req.chartKind === 'mekko') band = mekko(req.columns as never, (req.opts ?? {}) as never) as never;
+      else if (req.chartKind === 'tornado') band = tornado(req.items as never, (req.opts ?? {}) as never) as never;
       else throw new Error(`unknown chart kind: ${req.chartKind}`);
       return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
     }

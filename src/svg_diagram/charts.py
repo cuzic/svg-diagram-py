@@ -20,6 +20,7 @@ from .radar import layout_radar
 from .sankey import layout_sankey
 from .stacked import layout_stacked
 from .tokens import PALETTE, color_of
+from .tornado import layout_tornado
 from .treemap import layout_treemap
 from .waterfall import layout_waterfall
 
@@ -44,6 +45,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_waterfall(band["spec"], g)
     elif kind == "stacked":
         part = layout_stacked(band["spec"], g)
+    elif kind == "tornado":
+        part = layout_tornado(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

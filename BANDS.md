@@ -81,7 +81,8 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | mekko | ✅ | stackedBarsと同じlayoutStacked/stackedBand経由。Canvas基盤の上に乗るためbars/stackedBarsと合わせて移植済み |
 | lines | ⬜ | **重要な発見**: chart系(kind+Canvas基盤)ではなく`plane()`(lib/plane.ts、367行、軸・目盛・monotone/centripetal曲線・マーカー・リーダー線付きラベル)の上に乗る別系統。plane()自体が未移植の大きい依存(layoutPlane単体で約270行)。burndown/burnup/strategyCanvasもlines()のラッパーなので同様に保留 |
 | burndown / burnup / strategyCanvas | ⬜(保留) | 上記lines()依存のため保留。plane()を移植する別の機会に合わせて着手するのが合理的 |
-| bubble / butterfly / combo / harvey / tornado | ⬜ | Canvas基盤の上(優先度は元は低いとしたが、plane()より着手しやすいため次点候補) |
+| tornado | ✅ | layoutTornado/renderChartともexport済み、live golden test(sort有無・lowTone/highTone・base線・凡例の行折返し)。live golden test一発通過 |
+| bubble / butterfly / combo / harvey | ⬜ | Canvas基盤の上、着手しやすい |
 | pert / causalLoop / dependencyNetwork | ⬜ | semnet.ts(ネットワーク図共通基盤)経由、未調査 |
 | catplot / displot / clustermap / facet(seaborn系) | ⬜ | 優先度低 |
 

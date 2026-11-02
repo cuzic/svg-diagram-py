@@ -28,7 +28,8 @@ import {gridColumns, rowChildGeometry, gridChildGeometry, colSlots} from '../../
 import {layoutPeople, layoutDots} from '../../lib/people.ts';
 import {renderPeople, renderDots} from '../../lib/emit-boxes.ts';
 import {layoutTimeline} from '../../lib/timeline.ts';
-import {renderTimeline} from '../../lib/emit-figures.ts';
+import {renderTimeline, renderGantt} from '../../lib/emit-figures.ts';
+import {layoutGantt} from '../../lib/gantt.ts';
 
 // Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
 // atoms.py/wrap.py: tests the ALGORITHM (icon grid geometry, dot pile packing), not real
@@ -133,6 +134,12 @@ function handle(req: Req): unknown {
     }
     case 'renderTimeline':
       return renderTimeline(req.band as never, (req.day ?? 1) as never);
+    case 'layoutGantt': {
+      const band = {rows: req.rows, from: req.from, to: req.to, today: req.today, todayLabel: req.todayLabel, extendToToday: req.extendToToday ?? false, id: undefined, reveal: undefined, until: undefined} as never;
+      return layoutGantt(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles);
+    }
+    case 'renderGantt':
+      return renderGantt(req.band as never, (req.day ?? 1) as never);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

@@ -30,6 +30,7 @@ from .emit_common import LH_EM, js_round, text_lines
 from .figures import pyramid_layer_geometry, render_curve, render_pyramid
 from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
 from .legend import render_legend_item
+from .gantt import layout_gantt, render_gantt
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .timeline import layout_timeline, render_timeline
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
@@ -198,6 +199,20 @@ class _Timeline:
 
 
 @dataclass
+class _Gantt:
+    x: float
+    y: float
+    w: float
+    rows: list[dict]
+    from_: str | None = None
+    to: str | None = None
+    today: str | None = None
+    today_label: str | None = None
+    extend_to_today: bool = False
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -323,6 +338,26 @@ class Diagram:
         byte-identical to Node (golden-tested live); only text widths use this port's
         approximation."""
         self._elements.append(_Timeline(x=x, y=y, w=width, now=now, deadline=deadline, marks=marks or [], from_=from_, to=to, span=span, remaining=remaining))
+
+    def gantt(
+        self,
+        rows: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        from_: str | None = None,
+        to: str | None = None,
+        today: str | None = None,
+        today_label: str | None = None,
+        extend_to_today: bool = False,
+    ) -> None:
+        """lib/gantt.ts's gantt(): rows are tasks ({label, start, end|days|milestone, id?,
+        after?, tone?, progress?}) or section headings ({section}). The layout formula
+        (layout_gantt — axis placement, dependency-arrow routing, cycle detection) IS
+        byte-identical to Node (golden-tested live); only label text widths use this port's
+        approximation."""
+        self._elements.append(_Gantt(x=x, y=y, w=width, rows=rows, from_=from_, to=to, today=today, today_label=today_label, extend_to_today=extend_to_today))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
@@ -526,6 +561,9 @@ class Diagram:
         if isinstance(el, _Timeline):
             laid = layout_timeline(now=el.now, deadline=el.deadline, marks=el.marks, from_=el.from_, to=el.to, span=el.span, remaining=el.remaining, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES)
             return render_timeline(laid, day=el.day)
+        if isinstance(el, _Gantt):
+            laid = layout_gantt(rows=el.rows, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, from_=el.from_, to=el.to, today=el.today, today_label=el.today_label, extend_to_today=el.extend_to_today)
+            return render_gantt(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

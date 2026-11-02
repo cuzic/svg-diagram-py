@@ -28,7 +28,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | pyramid | ✅ | 台形スタック、幾何はNode実機キャプチャとバイト同一を確認 |
 | curve | ✅ | 点列配置もNode実機キャプチャとバイト同一を確認 |
 | timeline | ✅ | layoutTimeline/renderTimelineともexport済み、live golden test。数値軸版(layoutNumeric)は見送り |
-| gantt | ⬜ | 日付→x座標、閉形式の可能性高 |
+| gantt | ✅ | layoutGantt/renderGanttともexport済み、live golden test(依存矢印ルーティング・循環検出含む) |
 | people | ✅ | layoutPeople/layoutDotsはexport済みなのでlive golden test、閉形式 |
 | dots | ✅ | 同上 |
 

@@ -1,0 +1,7 @@
+{
+  "_comment": "Captured live from Node's exported emitSvg() — see golden/emit_cli.ts header and tests/test_svg_wrapper.py. Not hand-transcribed.",
+  "_capturedFrom": "lib/emit.ts",
+  "_capturedAt": "2026-11-02",
+  "input": {"width": 600, "height": 200, "day": 1, "laidOut": [], "connects": []},
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"600\" height=\"200\" viewBox=\"0 0 600 200\">\n  <style>\n    text { font-family: 'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic','YuGothic',Meiryo,'Noto Sans JP',sans-serif; }\n    .emoji { font-family: 'Noto Color Emoji','Segoe UI Emoji',sans-serif; }\n  </style>\n  <rect x=\"0\" y=\"0\" width=\"600\" height=\"200\" fill=\"#ffffff\"/>\n\n  \n</svg>\n"
+}

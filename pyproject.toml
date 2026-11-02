@@ -1,0 +1,19 @@
+[project]
+name = "svg-diagram"
+version = "0.1.0"
+description = "Python port of svg-diagram's drawing layer (box/connect/svg emission), with Node.js as the golden master for visual style"
+readme = "README.md"
+authors = [
+    { name = "Tomoya Kawanishi", email = "tomoya.kaw@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.6,<0.9.0"]
+build-backend = "uv_build"

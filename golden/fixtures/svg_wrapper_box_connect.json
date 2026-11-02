@@ -1,0 +1,13 @@
+{
+  "_comment": "Captured live from Node's exported emitSvg() — see golden/emit_cli.ts header and tests/test_svg_wrapper.py. Not hand-transcribed. body/connect_svg below are exactly what Node's renderBox()/renderConnect() produced for this input, so this fixture also doubles as a cross-check of render_box_rect/render_connect against the wrapper.",
+  "_capturedFrom": "lib/emit.ts",
+  "_capturedAt": "2026-11-02",
+  "input": {
+    "width": 600, "height": 200, "day": 1,
+    "laidOut": [{"type": "box", "x": 10, "y": 20, "w": 100, "h": 50, "wrappedRuns": []}],
+    "connects": [{"points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}], "arrow": "end"}]
+  },
+  "body": "<rect x=\"12\" y=\"20\" width=\"100\" height=\"52\" rx=\"8\" fill=\"#ffffff\" stroke=\"#22201b\" stroke-width=\"2.5\"/>\n  ",
+  "connectSvg": "<path d=\"M0,0 L100,0\" fill=\"none\" stroke=\"#22201b\" stroke-width=\"2\" marker-end=\"url(#dsl-arrow)\"/>",
+  "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"600\" height=\"200\" viewBox=\"0 0 600 200\">\n  <defs>\n    <marker id=\"dsl-arrow\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\">\n      <path d=\"M0,0 L10,5 L0,10 z\" fill=\"#22201b\"/>\n    </marker>\n  </defs>\n  <style>\n    text { font-family: 'Hiragino Sans','Hiragino Kaku Gothic ProN','Yu Gothic','YuGothic',Meiryo,'Noto Sans JP',sans-serif; }\n    .emoji { font-family: 'Noto Color Emoji','Segoe UI Emoji',sans-serif; }\n  </style>\n  <rect x=\"0\" y=\"0\" width=\"600\" height=\"200\" fill=\"#ffffff\"/>\n\n  <rect x=\"12\" y=\"20\" width=\"100\" height=\"52\" rx=\"8\" fill=\"#ffffff\" stroke=\"#22201b\" stroke-width=\"2.5\"/>\n  \n\n  <path d=\"M0,0 L100,0\" fill=\"none\" stroke=\"#22201b\" stroke-width=\"2\" marker-end=\"url(#dsl-arrow)\"/>\n</svg>\n"
+}

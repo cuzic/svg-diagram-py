@@ -1,9 +1,6 @@
 """1:1 port of lib/flow-shapes.ts's layoutFlowShape() (exported, golden-tested live) for
-chevron/valueChain/funnel/cycle/venn/concentric, and lib/emit-figures.ts's renderFlowShape().
-
-NOT ported: emblem (layoutEmblem) — it additionally depends on lib/emblem-shapes.ts's
-per-shape outline geometry (~13 shapes) and an iterative sizing search; deferred, see
-BANDS.md.
+chevron/valueChain/funnel/cycle/venn/concentric/emblem, and lib/emit-figures.ts's
+renderFlowShape().
 
 Golden master: lib/flow-shapes.ts + lib/emit-figures.ts (Node.js, svg-diagram).
 """
@@ -11,10 +8,12 @@ Golden master: lib/flow-shapes.ts + lib/emit-figures.ts (Node.js, svg-diagram).
 from __future__ import annotations
 
 import math
+import re
 
 from .atoms import text_width
+from .emblem_shapes import EMBLEM_FLEX, EMBLEM_SHAPES, EMBLEM_TEXT, emblem_height, emblem_max_height, emblem_outline
 from .emit_common import emoji_span, js_round, round1
-from .tokens import PALETTE, color_of, resolve_box_style
+from .tokens import PALETTE, TONES, color_of, resolve_box_style
 from .tree_text import katakana_width
 from .wrap import wrap_text
 
@@ -123,6 +122,30 @@ def concentric_band(rings: list[dict], *, order: str | None = None, labels: str 
     return band
 
 
+_EMBLEM_SHAPE_SET = set(EMBLEM_SHAPES)
+
+
+def emblem_band(items: list[dict], *, shape: str | None = None, gap: float | None = None, min_size: float | None = None, width: float | None = None, id: str | None = None) -> dict:
+    """lib/flow-shapes.ts:126-139 emblemBand() (defaults + the checks that gate
+    layoutEmblem's own correctness; the renamed-field/scope/id-uniqueness checks are not
+    ported, matching this file's existing chevron_band()-style convention)."""
+    for k in [shape, *(i.get("shape") for i in items)]:
+        if k is not None and k not in _EMBLEM_SHAPE_SET:
+            raise ValueError(f"emblem(): unknown shape \"{k}\" ({' | '.join(EMBLEM_SHAPES)})")
+    if gap is not None and gap < 0:
+        raise ValueError("emblem(): gap must be >= 0")
+    if min_size is not None and not (64 <= min_size <= 320):
+        raise ValueError("emblem(): minSize must be 64..320")
+    band = {"type": "emblem", "items": list(items), "shape": shape or "circle", "gap": gap if gap is not None else 16}
+    if min_size is not None:
+        band["minSize"] = min_size
+    if width is not None:
+        band["width"] = width
+    if id is not None:
+        band["id"] = id
+    return band
+
+
 def value_chain_band(*, support: list[dict] | None = None, primary: list[dict], margin: str | bool | None = None, titles: tuple[str, str] | bool | None = None, width: float | None = None, id: str | None = None) -> dict:
     """lib/flow-shapes.ts:143-154 valueChainBand(). `margin`/`titles` False means "leave it out";
     None (omitted) means the Japanese defaults — NOT falsy/absent, matching Node's `?? default`."""
@@ -164,10 +187,12 @@ def layout_flow_shape(b: dict, x: float, y: float, cw: float, width_of, roles: d
         _layout_venn(b, out, t, anchor)
     elif kind == "concentric":
         _layout_concentric(b, out, t, anchor, roles)
+    elif kind == "emblem":
+        _layout_emblem(b, out, t, anchor)
     elif kind == "valueChain":
         _layout_value_chain(b, out, t, anchor)
     else:
-        raise NotImplementedError(f"layout_flow_shape(): {kind!r} is not supported by this port (emblem needs lib/emblem-shapes.ts, not ported)")
+        raise NotImplementedError(f"layout_flow_shape(): {kind!r} is not supported by this port")
     return out
 
 
@@ -504,6 +529,144 @@ def _layout_concentric(b: dict, out: dict, t: Texts, anchor, roles: dict) -> Non
         t.place(c, cx, max(cy - c["h"] / 2, inner_bottom + 4))
 
 
+# emblem: a word or two inside a circle, square, triangle, diamond, hexagon, trapezoid, parallelogram, pentagon-down,
+# pill, rounded square, document or cylinder (outlines: emblem_shapes.py). lib/flow-shapes.ts:456-522.
+_EMBLEM_MAX, _EMBLEM_WORD_MAX = 320, 240
+_KANA_RE = re.compile(r"[ァ-ヺー-ヾｦ-ﾟ]")
+_LATIN_RE = re.compile(r"[A-Za-z0-9Ａ-Ｚａ-ｚ０-９]")
+
+
+def _word_kind(c: str | None) -> str | None:
+    if c is None:
+        return None
+    if _KANA_RE.match(c):
+        return "kana"
+    if _LATIN_RE.match(c):
+        return "latin"
+    return None
+
+
+def _splits_word(text: str, lines: list[str]) -> bool:
+    """lib/flow-shapes.ts:463-477 splitsWord()."""
+    at = 0
+    last: str | None = None
+    for line in lines:
+        rest = text[at:]
+        skipped = len(rest) - len(rest.lstrip())
+        kind = _word_kind(last)
+        if last is not None and skipped == 0 and kind is not None and kind == _word_kind(line[0] if line else None):
+            return True
+        at += skipped
+        if not text[at:].startswith(line):
+            return False
+        at += len(line)
+        last = line[-1] if line else None
+    return False
+
+
+def _label_tone(tone: str) -> str:
+    """lib/flow-shapes.ts:479 labelTone()."""
+    t = TONES[tone].text
+    return t if t in ("accent", "muted", "danger") else "text"
+
+
+def _layout_emblem(b: dict, out: dict, t: Texts, anchor) -> None:
+    """lib/flow-shapes.ts:480-522 layoutEmblem()."""
+    items = b["items"]
+
+    def shape_of(i: dict) -> str:
+        return i.get("shape") or b["shape"]
+
+    gap = g4(b["gap"])
+    widest = min(_EMBLEM_MAX, math.floor(out["w"] / 8) * 8)
+    least = math.ceil((b.get("minSize", 96)) / 8) * 8
+    if least > widest:
+        raise ValueError(f"emblem(): minSize {b.get('minSize', 96)} is wider than the band ({js_round(out['w'])}px) — lower `minSize` or widen the band")
+
+    def blocks(d: float) -> list[dict]:
+        out_blocks = []
+        for i in items:
+            shape = shape_of(i)
+            g = EMBLEM_TEXT[shape]
+            label = t.wrap(i["label"], g["w"] * d)
+            sub = t.wrap(i["sub"], g["w"] * d, 400) if i.get("sub") else None
+            text_h = label["h"] + (sub["h"] if sub else 0)
+            h = emblem_height(shape, d, text_h)
+            fits = max(label["w"], sub["w"] if sub else 0) <= g["w"] * d + 0.5 and (h <= emblem_max_height(shape, d) if shape in EMBLEM_FLEX else text_h <= g["h"] * d)
+            whole = not _splits_word(i["label"], label["lines"]) and not (sub and i.get("sub") and _splits_word(i["sub"], sub["lines"]))
+            out_blocks.append({"label": label, "sub": sub, "fits": fits, "h": h, "whole": whole})
+        return out_blocks
+
+    whole_cap = min(widest, max(_EMBLEM_WORD_MAX, least + _EMBLEM_WORD_MAX - 96))
+    plans: dict[float, list[dict]] = {}
+
+    def plan_at(d: float) -> list[dict]:
+        p = plans.get(d)
+        if p is None:
+            p = plans[d] = blocks(d)
+        return p
+
+    def d_range(limit: float):
+        d = least
+        while d <= limit:
+            yield d
+            d += 8
+
+    let_off = [not any(plan_at(d)[n]["whole"] for d in d_range(whole_cap)) for n in range(len(items))]
+
+    def solve(whole: bool, limit: float) -> tuple[float, list[dict]] | None:
+        for d in d_range(limit):
+            plan = plan_at(d)
+            if all(p["fits"] and (not whole or p["whole"] or let_off[n]) for n, p in enumerate(plan)):
+                return d, plan
+        return None
+
+    found = solve(True, whole_cap) or solve(False, widest)
+    if not found:
+        wide_plan = blocks(widest)
+        bad_n = next(n for n, p in enumerate(wide_plan) if not p["fits"])
+        bad = items[bad_n]
+        shape = shape_of(bad)
+        flex = shape in EMBLEM_FLEX
+        square_hint = "" if shape == "square" else ", or use shape: 'square'"
+        ways = "shorten it" if flex else f"shorten it, move words to `sub`{square_hint}"
+        sub_part = f' / "{bad["sub"]}"' if bad.get("sub") else ""
+        past_band = " (the width of the band)" if widest < _EMBLEM_MAX else ""
+        widen = ", or widen the band" if widest < _EMBLEM_MAX else ""
+        raise ValueError(f'emblem(): "{bad["label"]}"{sub_part} does not fit in a {shape} up to {widest}px{past_band} — {ways}{widen}')
+    d, plan = found
+    per_row = max(1, math.floor((out["w"] + gap) / (d + gap)))
+    rows = math.ceil(len(items) / per_row)
+    row_h = max(p["h"] for p in plan)
+    out["h"] = rows * row_h + (rows - 1) * gap
+    for n, item in enumerate(items):
+        row = n // per_row
+        in_row = min(per_row, len(items) - row * per_row)
+        col = n - row * per_row
+        row_w = in_row * d + (in_row - 1) * gap
+        shape = shape_of(item)
+        k = plan[n]
+        h = k["h"]
+        left = g4(out["x"] + (out["w"] - row_w) / 2 + col * (d + gap))
+        top = g4(out["y"] + row * (row_h + gap) + (row_h - h) / 2)
+        o = emblem_outline(shape, left, top, d, h)
+        tone = item.get("tone", "plain")
+        if o.get("points"):
+            out["primitives"].append({"k": "polygon", "points": o["points"], "tone": tone, **_node_of(item)})
+        elif o.get("path"):
+            out["primitives"].append({"k": "path", "d": o["path"], "tone": "text", "fill": tone, "box": o["box"], **_node_of(item)})
+        else:
+            out["primitives"].append({"k": "circle", "cx": left + d / 2, "cy": top + d / 2, "r": d / 2, "tone": "text", "fill": tone, **_node_of(item)})
+        anchor(item.get("id"), o["anchor"])
+        if item.get("id"):
+            out.setdefault("bounds", []).append({"id": item["id"], "x": left, "y": top, "w": d, "h": o["h"]})
+        block_h = k["label"]["h"] + (k["sub"]["h"] if k["sub"] else 0)
+        cx, cy = left + d / 2, top + o["textCy"]
+        t.place(k["label"], cx, cy - block_h / 2, _label_tone(tone))
+        if k["sub"]:
+            t.place(k["sub"], cx, cy - block_h / 2 + k["label"]["h"], "muted")
+
+
 def render_flow_shape(b: dict, day: int | str = 1) -> str:
     """lib/emit-figures.ts:188-213 renderFlowShape()."""
     dim = bool(b.get("dim"))
@@ -517,7 +680,7 @@ def render_flow_shape(b: dict, day: int | str = 1) -> str:
     def n(v: float) -> str:
         from .emit_common import js_num
 
-        return js_num(round(v * 10) / 10)
+        return js_num(round1(v))
 
     def dn(p: dict) -> str:
         # ADR 0034: `dataNode` is set by the withNodeIds pass, which this port doesn't run —

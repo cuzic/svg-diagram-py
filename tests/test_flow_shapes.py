@@ -1,7 +1,7 @@
 """Golden-master tests for layout_flow_shape()/render_flow_shape() against Node's
 layoutFlowShape()/renderFlowShape() (both exported — live-tested via the shared dummy
-width function). chevron/funnel/cycle/venn/concentric/valueChain only — emblem is not
-ported, see flow_shapes.py's module docstring."""
+width function). Covers all 7 flow-shape kinds: chevron/funnel/cycle/venn/concentric/
+emblem/valueChain."""
 
 import pytest
 
@@ -9,6 +9,7 @@ from svg_diagram.flow_shapes import (
     chevron_band,
     concentric_band,
     cycle_band,
+    emblem_band,
     funnel_band,
     layout_flow_shape,
     render_flow_shape,
@@ -128,6 +129,72 @@ def test_render_flow_shape_matches_node(node_golden):
     node_result = node_golden.call({"kind": "renderFlowShape", "band": laid})
     py_result = render_flow_shape(laid)
     assert py_result == node_result
+
+
+EMBLEM_CASES = [
+    {"items": [{"label": "課題"}], "opts": {}},
+    {"items": [{"label": "課題", "sub": "3 件"}, {"label": "原因"}], "opts": {}},
+    {
+        "items": [
+            {"label": "円", "shape": "circle"}, {"label": "角", "shape": "square"}, {"label": "三角", "shape": "triangle"},
+            {"label": "菱形", "shape": "diamond"}, {"label": "六角", "shape": "hexagon"}, {"label": "台形", "shape": "trapezoid"},
+            {"label": "逆台形", "shape": "inverted-trapezoid"}, {"label": "平行四辺形", "shape": "parallelogram"}, {"label": "矢印", "shape": "pentagon-down"},
+            {"label": "錠剤", "shape": "pill"}, {"label": "角丸", "shape": "rounded"}, {"label": "文書", "shape": "document"}, {"label": "円柱", "shape": "cylinder"},
+        ],
+        "opts": {},
+    },
+    {"items": [{"label": "重要", "shape": "triangle", "tone": "danger", "id": "warn"}], "opts": {}},
+    {"items": [{"label": "A", "sub": "補足テキストが長い場合の折返し確認用"}, {"label": "B"}], "opts": {"shape": "rounded", "gap": 24}},
+    {"items": [{"label": f"項目{i}"} for i in range(7)], "opts": {"minSize": 80}},
+    {"items": [{"label": "ア"}, {"label": "イ", "tone": "accent"}, {"label": "ウ", "tone": "muted"}], "opts": {"shape": "document"}},
+]
+
+
+@pytest.mark.parametrize("case", EMBLEM_CASES, ids=lambda c: str(c))
+def test_emblem_matches_node(node_golden, case):
+    node_result = node_golden.call({"kind": "layoutFlowShape", "shape": "emblem", "x": 0, "y": 0, "cw": 600, **case})
+    opts = case["opts"]
+    band = emblem_band(case["items"], shape=opts.get("shape"), gap=opts.get("gap"), min_size=opts.get("minSize"))
+    py_result = layout_flow_shape(band, 0, 0, 600, _width_of, ROLES, "phrase")
+    for key in ("x", "y", "w", "h", "primitives", "texts", "anchors", "labelBoxes", "bounds"):
+        assert py_result.get(key) == node_result.get(key), key
+
+
+@pytest.mark.parametrize("case", EMBLEM_CASES, ids=lambda c: str(c))
+def test_render_emblem_matches_node(node_golden, case):
+    opts = case["opts"]
+    band = emblem_band(case["items"], shape=opts.get("shape"), gap=opts.get("gap"), min_size=opts.get("minSize"))
+    laid = layout_flow_shape(band, 0, 0, 600, _width_of, ROLES, "phrase")
+    node_result = node_golden.call({"kind": "renderFlowShape", "band": laid})
+    py_result = render_flow_shape(laid)
+    assert py_result == node_result
+
+
+def test_emblem_rejects_unknown_shape():
+    with pytest.raises(ValueError):
+        emblem_band([{"label": "a"}], shape="nope")
+
+
+def test_emblem_rejects_negative_gap():
+    with pytest.raises(ValueError):
+        emblem_band([{"label": "a"}], gap=-1)
+
+
+def test_emblem_rejects_min_size_out_of_range():
+    with pytest.raises(ValueError):
+        emblem_band([{"label": "a"}], min_size=10)
+
+
+def test_emblem_rejects_min_size_wider_than_band():
+    band = emblem_band([{"label": "a"}], min_size=320)
+    with pytest.raises(ValueError):
+        layout_flow_shape(band, 0, 0, 200, _width_of, ROLES, "phrase")
+
+
+def test_emblem_rejects_label_too_long_for_any_size():
+    band = emblem_band([{"label": "あ" * 300}])
+    with pytest.raises(ValueError):
+        layout_flow_shape(band, 0, 0, 200, _width_of, ROLES, "phrase")
 
 
 def test_cycle_rejects_bad_step_count():

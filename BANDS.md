@@ -40,8 +40,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | table | ✅ | layoutTable/renderTableともexport済み、live golden test。アイコン付きセルは対象外 |
 | sequence | ✅ | layoutSequence/renderSequenceともexport済み、live golden test(msg/self/note/divider全種別)。アクターアイコンは対象外 |
 | wireframe / screens | ⬜(保留) | lib/wireframe.ts(844行)+lib/wireframe-parts.ts(444行、installPartsによるノード種別拡張)の専用flexエンジン。他bandと共有されない一枚岩の大規模実装で、規模・構造ともTier 3(layered routing)に近い。したがってTier 2から外し、着手するなら別計画として起票するのが合理的(本セッションでは見送り、chart系を先に進める) |
-| chevron / funnel / cycle / venn / concentric / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(6形状全て) |
-| emblem | ⬜ | lib/emblem-shapes.ts(~13形状の輪郭幾何+反復サイズ探索)が別途必要、見送り |
+| chevron / funnel / cycle / venn / concentric / emblem / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(7形状全て)。emblemは再調査の結果、lib/emblem-shapes.ts(157行、13形状の輪郭幾何)がlib/flow-shapes.tsのlayoutEmblem()から直接呼ばれるだけの小さな依存で、既存のflow_shapes.py基盤(Texts/anchor/render_flow_shapeのpath+fill分岐)にそのまま乗ることが判明、「別途必要」は見積もり過大だった。`emblem_shapes.py`にemblemOutline/emblemHeight/emblemMaxHeightをフル移植(emblemClearance/flatOutlineは非公開のテスト専用ヘルパーのため対象外)、flow_shapes.pyにemblem_band()/_layout_emblem()を追加。live golden test一発通過(13形状全網羅・sub折返し・tone・gap/minSize・複数行ラップ・エラー経路)。render_flow_shape()の`n()`がPython組込みroundを使っていて.5の境界で不一致になる既存バグ(round1化し忘れ)をこのテストで検出・修正 |
 | wordart | ✅ | layoutWordArt/renderWordArtともexport済み、live golden test(horizontal/vertical/arc、全プリセット・gradient/plate/flip/rotate)。grapheme分割はIntl.Segmenter未再現(コードポイント単位の近似、approx_width.pyと同方針)、uid/gradient idはNode非再現(1枚のSVG内で一意なら十分、golden比較から除外) |
 
 ## 重要な発見: states/classes は Tier 3 相当(layeredAttempt依存)

@@ -38,7 +38,7 @@ import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
 import {layoutTable, layoutSequence} from '../../lib/seq-table.ts';
 import {renderTable, renderSequence} from '../../lib/emit-tables.ts';
-import {chevronBand, funnelBand, cycleBand, vennBand, concentricBand, valueChainBand, layoutFlowShape} from '../../lib/flow-shapes.ts';
+import {chevronBand, funnelBand, cycleBand, vennBand, concentricBand, emblemBand, valueChainBand, layoutFlowShape} from '../../lib/flow-shapes.ts';
 import {renderFlowShape} from '../../lib/emit-figures.ts';
 import {wordartBand, layoutWordArt} from '../../lib/wordart.ts';
 import {renderWordArt} from '../../lib/emit-wordart.ts';
@@ -236,6 +236,7 @@ function handle(req: Req): unknown {
       else if (req.shape === 'cycle') band = cycleBand(req.items as never, o) as never;
       else if (req.shape === 'venn') band = vennBand(req.items as never, o) as never;
       else if (req.shape === 'concentric') band = concentricBand(req.items as never, o) as never;
+      else if (req.shape === 'emblem') band = emblemBand(req.items as never, o) as never;
       else if (req.shape === 'valueChain') band = valueChainBand(req.items as never, o) as never; // req.items = {support?, primary} for this one shape
       else throw new Error(`unknown flow shape: ${req.shape}`);
       return layoutFlowShape(band, req.x as number, req.y as number, req.cw as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);

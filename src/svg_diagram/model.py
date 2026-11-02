@@ -38,6 +38,7 @@ from .flow_shapes import (
     chevron_band,
     concentric_band,
     cycle_band,
+    emblem_band,
     funnel_band,
     layout_flow_shape,
     render_flow_shape,
@@ -622,6 +623,12 @@ class Diagram:
     def concentric(self, rings: list[dict], *, x: float, y: float, width: float, order: str | None = None, labels: str | None = None, centre: str | None = None) -> None:
         """lib/flow-shapes.ts's concentric(): nested rings. `rings`: [{label, description?, id?, tone?}]."""
         band = concentric_band(rings, order=order, labels=labels, centre=centre)
+        self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
+
+    def emblem(self, items: list[dict], *, x: float, y: float, width: float, shape: str | None = None, gap: float | None = None, min_size: float | None = None) -> None:
+        """lib/flow-shapes.ts's emblem(): a word or two inside a circle/square/triangle/.../cylinder.
+        `items`: [{label, sub?, shape?, id?, tone?}]."""
+        band = emblem_band(items, shape=shape, gap=gap, min_size=min_size)
         self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
 
     def value_chain(self, *, primary: list[dict], x: float, y: float, width: float, support: list[dict] | None = None, margin: str | bool | None = None, titles: tuple | bool | None = None) -> None:

@@ -1,4 +1,4 @@
-"""End-to-end tests for Diagram.chevron()/.funnel()/.cycle()/.venn()/.concentric()/.value_chain()."""
+"""End-to-end tests for Diagram.chevron()/.funnel()/.cycle()/.venn()/.concentric()/.emblem()/.value_chain()."""
 
 import xml.dom.minidom as minidom
 
@@ -47,6 +47,14 @@ def test_concentric_renders():
     svg = d.render_svg()
     _ok(svg)
     assert "コア" in svg
+
+
+def test_emblem_renders():
+    d = Diagram(width=600, height=300)
+    d.emblem([{"label": "課題", "sub": "3 件"}, {"label": "重要", "shape": "triangle", "tone": "danger"}], x=0, y=0, width=600)
+    svg = d.render_svg()
+    _ok(svg)
+    assert "課題" in svg and "重要" in svg
 
 
 def test_value_chain_renders():

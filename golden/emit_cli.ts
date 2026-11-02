@@ -37,6 +37,7 @@ import {routeClear} from '../../lib/orthogonal-route.ts';
 import {simplify as polySimplify, bendsOf, totalLength, crossingsOf, crossingsWith, scoreOf, runsTogether} from '../../lib/polyline-metrics.ts';
 import {moveApart} from '../../lib/route-apart.ts';
 import {headCrossings, searchRoute} from '../../lib/route-search.ts';
+import {gapFor, stubOf, laneStepOf, elbows, corridorLoad, layoutWithLanes, routeLayered, layeredAttempt} from '../../lib/layered-route.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
@@ -232,6 +233,20 @@ function handle(req: Req): unknown {
       return headCrossings(req.paths as never);
     case 'searchRoute':
       return searchRoute(req.start as never, req.end as never, req.boxes as never, req.others as never, req.bounds as never, (req.opts ?? {}) as never) ?? null;
+    case 'gapFor':
+      return gapFor(req.n as number, (req.chip ?? 0) as number, (req.space ?? 1) as number);
+    case 'stubOf':
+      return stubOf((req.space ?? 1) as number);
+    case 'laneStepOf':
+      return laneStepOf((req.space ?? 1) as number);
+    case 'elbows':
+      return elbows(req.pts as never, req.turn as number | undefined, req.lastTurn as number | undefined);
+    case 'corridorLoad': {
+      const lay = layoutLayered(req.nodes as never, req.edges as never, (req.opts ?? {}) as never);
+      return corridorLoad(lay);
+    }
+    case 'layoutWithLanes':
+      return layeredLayoutToPlain(layoutWithLanes(req.nodes as never, req.edges as never, (req.opts ?? {}) as never, (req.chip ?? 0) as number, (req.space ?? 1) as number));
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));
     case 'layoutBrace':

@@ -14,13 +14,13 @@ from __future__ import annotations
 import math
 
 from .catplot import SHAPES, marker_path
+from .charts_base import CHART_DASH as DASH
+from .charts_base import CHART_TONES as TONES
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, nice_scale, num_text
 from .distplot import _histogram_bins
-from .emit_common import js_round
+from .emit_common import round1
 from .stats import bin_counts, bin_index, kde2d
 
-TONES: list[str] = ["accent", "danger", "text", "muted"]
-DASH: list[str] = ["", "6,4", "2,4", "10,4,2,4"]
 LEVELS: list[float] = [0.1, 0.3, 0.5, 0.7, 0.9]
 
 
@@ -122,8 +122,7 @@ def _grid2d(s: dict) -> dict:
     return {"bx": bx, "by": by, "cells": cells}
 
 
-def _r1(v: float) -> float:
-    return js_round(v * 10) / 10
+_r1 = round1
 
 
 def layout_multi(s: dict, g: dict) -> dict:

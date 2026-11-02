@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, num_text
-from .emit_common import js_round
+from .emit_common import round1
 
 
 def resolve_butterfly(rows: list[dict], opts: dict) -> dict:
@@ -74,8 +74,7 @@ def layout_butterfly(s: dict, g: dict) -> dict:
     c = Canvas(g["x"], g["y"], g["w"], 100, size, g["widthOf"], g["wrap"])
     line_h = c.line_h()
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     def v_text(v: float) -> str:
         return f"{num_text(v)}{s['unit']}"

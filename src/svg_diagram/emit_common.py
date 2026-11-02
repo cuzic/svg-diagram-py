@@ -34,6 +34,13 @@ def snap4(n: float) -> int:
     return js_round(n / 4) * 4
 
 
+def round1(n: float) -> float:
+    """The ``const r1 = (v: number) => Math.round(v * 10) / 10;`` one-tenth rounding helper
+    every chart module (lib/charts-*.ts) redefines locally — hoisted here once since it has
+    no module-specific state."""
+    return js_round(n * 10) / 10
+
+
 _XML_ESC = {"&": "&amp;", "<": "&lt;", ">": "&gt;"}
 _XML_ESC_RE = re.compile(r"[&<>]")
 

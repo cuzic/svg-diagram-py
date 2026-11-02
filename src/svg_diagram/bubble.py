@@ -14,7 +14,7 @@ import math
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, overlaps, thin_ticks
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_num, js_round
+from .emit_common import js_num, js_round, round1
 
 MAX_WIDEN = 8
 
@@ -106,8 +106,7 @@ def layout_bubble(s: dict, g: dict) -> dict:
     size = g["size"]
     c = Canvas(g["x"], g["y"], g["w"], g["height"] if g.get("height") is not None else 440, size, g["widthOf"], g["wrap"])
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     xs = _axis_range(s, "x")
     ys = _axis_range(s, "y")

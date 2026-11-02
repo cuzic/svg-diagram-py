@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, thin_ticks
-from .emit_common import js_num, js_round
+from .emit_common import js_num, js_round, round1
 
 BAR_TONES = ("accent", "text", "muted")
 LINE_TONES = ("danger", "text", "accent")
@@ -149,8 +149,7 @@ def layout_combo(s: dict, g: dict) -> dict:
     n = len(s["categories"])
     c = Canvas(g["x"], g["y"], g["w"], g["height"] if g.get("height") is not None else 380, size, g["widthOf"], g["wrap"])
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     has_right = any(x["axis"] == "right" for x in s["series"])
     sl = _scale_of(s, "left")

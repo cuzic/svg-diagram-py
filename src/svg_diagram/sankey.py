@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from .charts_base import Canvas, check_text, common_chart_opts, fail, finite_num, num_text
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_num, js_round
+from .emit_common import js_num, js_round, round1
 
 
 def _val(v: float, s: dict) -> str:
@@ -129,8 +129,7 @@ def layout_sankey(s: dict, g: dict) -> dict:
     c = Canvas(g["x"], g["y"], g["w"], 100, size, g["widthOf"], g["wrap"])
     lh = c.line_h()
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     layer = layers_of(s)
     layer_count = max(layer.values()) + 1

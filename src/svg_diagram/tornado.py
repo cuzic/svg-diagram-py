@@ -14,7 +14,7 @@ import json
 import math
 
 from .charts_base import Canvas, check_domain, check_ids, check_inset, check_text, common_chart_opts, fail, finite_num, inset_or_need, num_text, thin_ticks, value_scale
-from .emit_common import js_round
+from .emit_common import round1
 
 
 def tornado_scale(s: dict) -> dict:
@@ -137,8 +137,7 @@ def layout_tornado(s: dict, g: dict) -> dict:
         fail("tornado", f"height {g['height']} is too small for {len(s['items'])} rows (need at least {head_h + row_h_total + axis_h})")
     body_b = y0 + row_h_total
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     for i, (tone, text) in enumerate(((s["lowTone"], s["lowLabel"]), (s["highTone"], s["highLabel"]))):
         la = legend_at[i]

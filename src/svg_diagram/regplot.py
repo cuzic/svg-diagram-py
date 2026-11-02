@@ -10,26 +10,14 @@ Golden master: lib/charts-reg.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-import json
 import math
 
 from .catplot import SHAPES, marker_path
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text
-from .emit_common import js_num, js_round
+from .charts_base import CHART_DASH as DASH
+from .charts_base import CHART_TONES as TONES
+from .charts_base import Canvas, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text
+from .emit_common import js_num, round1
 from .stats import lowess_fit, mean_of, poly_fit
-
-TONES: list[str] = ["accent", "danger", "text", "muted"]
-DASH: list[str] = ["", "6,4", "2,4", "10,4,2,4"]
-
-
-def _to_precision(n: float, p: int) -> float:
-    """JS `parseFloat(n.toPrecision(p))`."""
-    if n == 0:
-        return 0.0
-    d = p - 1 - math.floor(math.log10(abs(n)))
-    factor = 10.0**d
-    rounded = math.floor(abs(n) * factor + 0.5) / factor
-    return rounded if n >= 0 else -rounded
 
 
 def resolve_reg(who: str, resid: bool, data: dict, opts: dict | None) -> dict:
@@ -89,16 +77,8 @@ def resolve_reg(who: str, resid: bool, data: dict, opts: dict | None) -> dict:
             group["smooth"] = lowess_fit(gx, smooth_values, frac)
         groups.append(group)
 
-    def rng(k: str) -> tuple[float, float] | None:
-        v = opts.get(k)
-        if v is None:
-            return None
-        if not isinstance(v, (list, tuple)) or len(v) != 2 or not all(math.isfinite(q) for q in v) or not v[0] < v[1]:
-            fail(who, f"{k} must be [min, max] with min < max (got {json.dumps(list(v)) if isinstance(v, (list, tuple)) else v})")
-        return (v[0], v[1])
-
     spec: dict = {"resid": resid, "xLabel": opts.get("xLabel") or "", "yLabel": opts.get("yLabel") or "", "order": order, "band": opts.get("band") if opts.get("band") is not None else True, "stats": bool(opts.get("stats")), "lowess": lowess, "groups": groups}
-    x_range, y_range = rng("xRange"), rng("yRange")
+    x_range, y_range = check_range(who, opts, "xRange"), check_range(who, opts, "yRange")
     if x_range:
         spec["xRange"] = x_range
     if y_range:
@@ -195,8 +175,7 @@ def layout_reg(s: dict, g: dict) -> dict:
     size = g["size"]
     c = Canvas(g["x"], g["y"], g["w"], 100, size, g["widthOf"], g["wrap"])
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     sc = _scales(s)
 

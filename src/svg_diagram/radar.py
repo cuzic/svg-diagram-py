@@ -14,7 +14,7 @@ import math
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_near, nice_scale, num_text, overlaps
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_num, js_round
+from .emit_common import js_num, js_round, round1
 
 SERIES_STYLES: list[dict] = [
     {"tone": "accent", "marker": "circle"},
@@ -115,8 +115,7 @@ def layout_radar(s: dict, g: dict) -> dict:
 
     cx = g["x"] + g["w"] / 2
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     def ang(i: int) -> float:
         return -math.pi / 2 + 2 * math.pi * i / n

@@ -15,7 +15,7 @@ import json
 import math
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, shade_ops
-from .emit_common import js_num, js_round
+from .emit_common import js_num, round1
 from .stats import box_stats, error_bar, kde, mean_of, swarm_offsets
 
 CatKind = str
@@ -137,8 +137,7 @@ def cat_alt(s: dict) -> str:
     return f"{kinds_txt}{label_txt}: {groups_txt}"
 
 
-def _r1(v: float) -> float:
-    return js_round(v * 10) / 10
+_r1 = round1
 
 
 def marker_path(shape: str, x: float, y: float, r: float) -> str:

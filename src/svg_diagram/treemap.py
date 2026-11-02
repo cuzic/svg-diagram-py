@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_round
+from .emit_common import js_round, round1
 
 
 def _total_of(n: dict) -> float:
@@ -141,8 +141,7 @@ def layout_treemap(s: dict, g: dict) -> dict:
     c = Canvas(g["x"], g["y"], g["w"], h, size, g["widthOf"], g["wrap"])
     lh = c.line_h()
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     head_h = size + 10
 

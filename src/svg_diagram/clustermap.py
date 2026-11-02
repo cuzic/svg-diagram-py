@@ -11,7 +11,7 @@ Golden master: lib/charts-cluster.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 from __future__ import annotations
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
-from .emit_common import js_num, js_round
+from .emit_common import js_num, round1
 from .stats import average_linkage, dendrogram_order
 
 _MAX = 40
@@ -82,8 +82,7 @@ def cluster_alt(s: dict) -> str:
     return f"クラスタ付きヒートマップ（行 {row_names} / 列 {col_names}、値 {num_text(min(all_v))}〜{num_text(max(all_v))}{s['unit']}）"
 
 
-def _r1(v: float) -> float:
-    return js_round(v * 10) / 10
+_r1 = round1
 
 
 def layout_cluster(s: dict, g: dict) -> dict:

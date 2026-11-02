@@ -16,7 +16,7 @@ import math
 
 from .charts_base import Canvas, check_domain, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text, shade_ops, value_scale
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_round
+from .emit_common import js_round, round1
 
 
 def resolve_stacked(who: str, columns: list[dict], mode: str, opts: dict) -> dict:
@@ -109,8 +109,7 @@ def layout_stacked(s: dict, g: dict) -> dict:
     n = len(s["columns"])
     scale = stacked_scale(s)
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     if scale:
         ticks = [{"v": t, "f": t / scale["max"], "s": num_text(t)} for t in scale["ticks"]]

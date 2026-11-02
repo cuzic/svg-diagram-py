@@ -16,7 +16,7 @@ import math
 
 from .charts_base import Canvas, check_domain, check_ids, check_inset, check_text, common_chart_opts, fail, finite_num, inset_or_need, num_text, signed_text, thin_ticks, value_scale
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_round
+from .emit_common import js_round, round1
 
 KINDS = ("start", "delta", "subtotal", "total")
 KIND_JA: dict[str, str] = {"start": "開始", "delta": "増減", "subtotal": "小計", "total": "合計"}
@@ -153,8 +153,7 @@ def layout_waterfall(spec: dict, g: dict) -> dict:
     def y_of(v: float) -> float:
         return y_bot - (v - sc["min"]) / (sc["max"] - sc["min"]) * (y_bot - y_top)
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     shown = thin_ticks(ticks, y_of, lambda t: size + 2, 2)
     for t in ticks:
@@ -217,8 +216,7 @@ def _layout_waterfall_h(spec: dict, g: dict) -> dict:
     c = Canvas(g["x"], g["y"], g["w"], 100, size, g["widthOf"], g["wrap"])
     lh = c.line_h()
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     los = [v for s in spec["steps"] for v in (s["from"], s["to"])]
     lo = min([0, *los])

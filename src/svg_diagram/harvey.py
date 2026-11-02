@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 
 from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num
-from .emit_common import js_num, js_round
+from .emit_common import js_num, js_round, round1
 
 
 def resolve_harvey(rows_in: list, cols: list[str], values: list[list], opts: dict | None = None) -> dict:
@@ -112,8 +112,7 @@ def layout_harvey(s: dict, g: dict) -> dict:
     c = Canvas(g["x"], g["y"], g["w"], 100, size, g["widthOf"], g["wrap"])
     lh = c.line_h()
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     r = max(12, math.ceil(size * 0.9))
     cell_h = 2 * r + 16

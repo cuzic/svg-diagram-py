@@ -16,7 +16,7 @@ import math
 
 from .charts_base import Canvas, check_text, common_chart_opts, decimals_in, fail, finite_num, ink_on_shade, nice_near, nice_up, num_text, shade_ops
 from .charts_base import _to_precision as to_precision
-from .emit_common import js_round
+from .emit_common import round1
 
 
 def resolve_heatmap(rows: list[str], cols: list[str], values: list[list[float | None]], opts: dict) -> dict:
@@ -172,8 +172,7 @@ def layout_heatmap(s: dict, g: dict) -> dict:
     if g.get("height") is not None and g["height"] < head_h + len(s["rows"]) * cell_h + legend_h:
         fail("heatmap", f'height {g["height"]} is too small for {len(s["rows"])} rows (need at least {head_h + len(s["rows"]) * cell_h + legend_h})')
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     if s["corner"]:
         corner_lines = c.wrap(s["corner"], row_w - 12, True)

@@ -17,32 +17,23 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_near, nice_scale, num_text
-from .emit_common import js_num, js_round
+from .charts_base import CHART_DASH as DASH
+from .charts_base import CHART_TONES as TONES
+from .charts_base import Canvas, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, nice_near, nice_scale, num_text
+from .emit_common import js_num, round1
 from .stats import bin_counts, kde
 
 KINDS: list[str] = ["hist", "kde", "ecdf", "rug"]
 DIST_FN: dict[str, str] = {"hist": "histplot", "kde": "kdeplot", "ecdf": "ecdfplot", "rug": "rugplot"}
 NAME: dict[str, str] = {"hist": "ヒストグラム", "kde": "密度曲線（KDE）", "ecdf": "経験累積分布（ECDF）", "rug": "ラグプロット"}
-TONES: list[str] = ["accent", "danger", "text", "muted"]
-DASH: list[str] = ["", "6,4", "2,4", "10,4,2,4"]
 STATS: list[str] = ["count", "density", "probability", "percent"]
 
 _MAX_CLASSES = 60
 
 
-def _to_precision12(n: float) -> float:
-    if n == 0:
-        return 0.0
-    d = 11 - math.floor(math.log10(abs(n)))
-    factor = 10.0**d
-    rounded = math.floor(abs(n) * factor + 0.5) / factor
-    return rounded if n >= 0 else -rounded
-
-
 def _exact(n: float) -> str:
     """lib/qc.ts:9 exact()."""
-    return js_num(_to_precision12(n))
+    return js_num(_to_precision(n, 12))
 
 
 def _histogram_bins(values: list[float], bins: int | None = None, width: float | None = None) -> dict:
@@ -58,7 +49,7 @@ def _histogram_bins(values: list[float], bins: int | None = None, width: float |
         raise ValueError(f"histogram(): {n} classes of width {_exact(w)} (at most {_MAX_CLASSES}): use a wider width, fewer bins, or limits closer to the data")
     if start + n * w <= hi - 1e-9:
         n += 1
-    edges = [_to_precision12(start + i * w) for i in range(n + 1)]
+    edges = [_to_precision(start + i * w, 12) for i in range(n + 1)]
     counts = [0.0] * n
     for v in values:
         k = min(n - 1, max(0, math.floor((v - start) / w + 1e-9)))
@@ -128,16 +119,8 @@ def resolve_dist(who: str, data, opts: dict | None, default_kind: str) -> dict:
         except ValueError as e:
             fail(who, str(e).removeprefix("histogram(): "))
 
-    def rng(k: str) -> tuple[float, float] | None:
-        r = opts.get(k)
-        if r is None:
-            return None
-        if not isinstance(r, (list, tuple)) or len(r) != 2 or not all(math.isfinite(x) for x in r) or not r[0] < r[1]:
-            fail(who, f"{k} must be [min, max] with min < max (got {json.dumps(list(r)) if isinstance(r, (list, tuple)) else r})")
-        return (r[0], r[1])
-
     spec: dict = {"groups": groups, "kinds": kinds, "label": opts.get("label") or "", "unit": opts.get("unit") or "", "stat": stat, "element": element, "bw": bw}
-    x_range, y_range = rng("xRange"), rng("yRange")
+    x_range, y_range = check_range(who, opts, "xRange"), check_range(who, opts, "yRange")
     if x_range:
         spec["xRange"] = x_range
     if y_range:
@@ -263,8 +246,7 @@ def layout_dist(s: dict, g: dict) -> dict:
     def y_of(v: float) -> float:
         return plot_b - (v - p["ys"]["min"]) / (p["ys"]["max"] - p["ys"]["min"]) * (plot_b - plot_t)
 
-    def r1(v: float) -> float:
-        return js_round(v * 10) / 10
+    r1 = round1
 
     def pt(x: float, y: float) -> str:
         return f"{js_num(r1(x_of(x)))},{js_num(r1(y_of(y)))}"

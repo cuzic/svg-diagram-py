@@ -7,11 +7,12 @@ Golden master: lib/charts-base.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
+import json
 import math
 import re
 
 from .atoms import split_atoms, text_width
-from .emit_common import js_round
+from .emit_common import js_num, js_round, round1
 from .wrap import wrap_atoms
 
 
@@ -75,6 +76,12 @@ def check_ids(who: str, ids: list, band_id: str | None) -> None:
 
 _SHADE_LADDER: dict[int, list[float]] = {1: [0.5], 2: [0.25, 0.7], 3: [0.15, 0.5, 0.85], 4: [0.12, 0.35, 0.6, 0.85], 5: [0.1, 0.3, 0.5, 0.7, 0.9], 6: [0.1, 0.25, 0.4, 0.55, 0.7, 0.9]}
 
+# The tone/dash ladder the seaborn-style multi-group charts (distplot/multiplot/regplot) use
+# to tell up to 4 groups apart — each of lib/charts-dist.ts / lib/charts-multi.ts /
+# lib/charts-reg.ts redefines this pair of constants verbatim; hoisted here once.
+CHART_TONES: list[str] = ["accent", "danger", "text", "muted"]
+CHART_DASH: list[str] = ["", "6,4", "2,4", "10,4,2,4"]
+
 
 def shade_ops(count: int) -> list[float]:
     """lib/charts-base.ts:211-215 shadeOps()."""
@@ -101,8 +108,6 @@ _COMMA_RE = re.compile(r"(?<=\d)(?=(?:\d{3})+$)")
 
 def num_text(n: float) -> str:
     """lib/charts-base.ts:58-64 numText()."""
-    from .emit_common import js_num
-
     if not math.isfinite(n):
         return str(n)
     s = js_num(_to_precision(n, 12))
@@ -120,8 +125,6 @@ def signed_text(n: float) -> str:
 
 def decimals_in(n: float) -> int:
     """lib/charts-base.ts:67 decimalsIn()."""
-    from .emit_common import js_num
-
     s = js_num(_to_precision(n, 12))
     if "e" in s.lower():
         return 6
@@ -178,6 +181,18 @@ def check_inset(who: str, inset: tuple[float, float] | None) -> tuple[float, flo
     if len(inset) != 2 or not all(isinstance(v, (int, float)) and math.isfinite(v) and v >= 0 for v in inset):
         fail(who, f"plotInset must be [left, right], two numbers >= 0 (got {list(inset)})")
     return (inset[0], inset[1])
+
+
+def check_range(who: str, opts: dict, key: str) -> tuple[float, float] | None:
+    """The `xRange`/`yRange` validator every seaborn-style chart's resolve*() repeats
+    verbatim (lib/charts-dist.ts's / lib/charts-multi.ts's / lib/charts-reg.ts's inline
+    `range()`/`rng()` closures): opts[key] must be [min, max] with min < max, or left out."""
+    v = opts.get(key)
+    if v is None:
+        return None
+    if not isinstance(v, (list, tuple)) or len(v) != 2 or not all(isinstance(q, (int, float)) and math.isfinite(q) for q in v) or not v[0] < v[1]:
+        fail(who, f"{key} must be [min, max] with min < max (got {json.dumps(list(v)) if isinstance(v, (list, tuple)) else v})")
+    return (v[0], v[1])
 
 
 def inset_or_need(who: str, inset: tuple[float, float] | None, need_left: float, need_right: float) -> tuple[float, float]:
@@ -307,12 +322,7 @@ class Canvas:
         self.items.append(item)
 
     def line(self, x1: float, y1: float, x2: float, y2: float, o: dict) -> None:
-        def r(n: float) -> float:
-            return js_round(n * 10) / 10
-
-        from .emit_common import js_num
-
-        self.path(f"M{js_num(r(x1))},{js_num(r(y1))} L{js_num(r(x2))},{js_num(r(y2))}", {"fill": "none", "stroke": o["stroke"], "sw": o.get("sw", 2), "dash": o.get("dash"), "of": o.get("of"), "soft": o.get("soft")})
+        self.path(f"M{js_num(round1(x1))},{js_num(round1(y1))} L{js_num(round1(x2))},{js_num(round1(y2))}", {"fill": "none", "stroke": o["stroke"], "sw": o.get("sw", 2), "dash": o.get("dash"), "of": o.get("of"), "soft": o.get("soft")})
         if o.get("avoid"):
             self.segs.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
 

@@ -365,6 +365,13 @@ class _Status:
     size: float = 14
 
 
+def _opts(*pairs: tuple[str, object]) -> dict:
+    """The kwarg-to-opts-dict collection every chart-family Diagram method repeats at its
+    tail (keep only the kwargs the caller actually set): opts = {k: v for (k, v) in pairs if
+    v is not None}."""
+    return {k: v for k, v in pairs if v is not None}
+
+
 def _edge_point(box: Box, side: str) -> dict:
     cx, cy = box.x + box.width / 2, box.y + box.height / 2
     return {
@@ -718,14 +725,11 @@ class Diagram:
         retention table). `values[i][j]` may be `None` for an empty cell. The layout formula
         IS byte-identical to Node (golden-tested live); only text widths use this port's
         approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("unit", unit), ("decimals", decimals), ("min", min), ("max", max), ("levels", levels),
             ("rowHeader", row_header), ("corner", corner), ("scale", scale), ("cellH", cell_h),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = heatmap_band(rows, cols, values, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -749,13 +753,10 @@ class Diagram:
         or {id, label?, tone?}. `links`: [{from, to, value, tone?}]. The layout formula IS
         byte-identical to Node (golden-tested live); only text widths use this port's
         approximation. Node icons (`SankeyNode.icon`) are not supported."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("unit", unit), ("align", align), ("linkLabels", link_labels),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = sankey_band(nodes, links, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -782,13 +783,10 @@ class Diagram:
         marker shape, never colour alone). `series`: [{label, values: [...], id?}]. The layout
         formula IS byte-identical to Node (golden-tested live); only text widths use this
         port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("min", min), ("max", max), ("rings", rings), ("values", values), ("unit", unit), ("fill", fill),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = radar_band(axes, series, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -811,13 +809,10 @@ class Diagram:
         area proportional to value. `tree`: one node or a list of root nodes, each
         {label, value | children: [...], id?, tone?}. The layout formula IS byte-identical to
         Node (golden-tested live); only text widths use this port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("unit", unit), ("percent", percent), ("strict", strict),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = treemap_band(tree, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -844,13 +839,10 @@ class Diagram:
         (the first step defaults to 'start', every other to 'delta'). `direction` is Node's
         `dir` ('v' default, or 'h'). The layout formula IS byte-identical to Node
         (golden-tested live); only text widths use this port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("unit", unit), ("axis", axis), ("connectors", connectors), ("dir", direction), ("domain", domain),
             ("plotInset", plot_inset), ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = waterfall_band(steps, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -873,13 +865,10 @@ class Diagram:
         [{label, parts: [{label, value}, ...], id?}]. `percent: true` makes 100% columns. The
         layout formula IS byte-identical to Node (golden-tested live); only text widths use
         this port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("unit", unit), ("percent", percent), ("domain", domain),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = stacked_bars_band(columns, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -900,10 +889,7 @@ class Diagram:
         share of the column (so area = share of the whole). `columns`:
         [{label, parts: [{label, value}, ...], id?}]. The layout formula IS byte-identical to
         Node (golden-tested live); only text widths use this port's approximation."""
-        opts: dict = {}
-        for k, v in (("unit", unit), ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width)):
-            if v is not None:
-                opts[k] = v
+        opts = _opts(("unit", unit), ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width))
         band = mekko_band(columns, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -933,14 +919,11 @@ class Diagram:
         from the base result. `items`: [{label, low, high, id?}]. The layout formula IS
         byte-identical to Node (golden-tested live); only text widths use this port's
         approximation."""
-        opts: dict = {"base": base}
-        for k, v in (
-            ("unit", unit), ("lowLabel", low_label), ("highLabel", high_label), ("baseLabel", base_label),
+        opts = _opts(
+            ("base", base), ("unit", unit), ("lowLabel", low_label), ("highLabel", high_label), ("baseLabel", base_label),
             ("sort", sort), ("lowTone", low_tone), ("highTone", high_tone), ("domain", domain), ("plotInset", plot_inset),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = tornado_band(items, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -966,13 +949,11 @@ class Diagram:
         outwards from a column of names in the middle. `rows`: [{label, left, right, id?}].
         The layout formula IS byte-identical to Node (golden-tested live); only text widths
         use this port's approximation."""
-        opts: dict = {"leftLabel": left_label, "rightLabel": right_label}
-        for k, v in (
+        opts = _opts(
+            ("leftLabel", left_label), ("rightLabel", right_label),
             ("unit", unit), ("sort", sort), ("leftTone", left_tone), ("rightTone", right_tone),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = butterfly_band(rows, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -997,13 +978,10 @@ class Diagram:
         quarter/half/three-quarters/fully. `rows`: a label string or {label, id?}. `values`:
         0-4 (quarters filled) or None (not rated). The layout formula IS byte-identical to
         Node (golden-tested live); only text widths use this port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("levels", levels), ("corner", corner), ("highlight", highlight),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = harvey_band(rows, cols, values, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -1029,13 +1007,10 @@ class Diagram:
         are this method's own position kwargs. The layout formula IS byte-identical to Node
         (golden-tested live, including the axis auto-widening loop); only text widths use
         this port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("x", x_axis), ("y", y_axis), ("sizeTitle", size_title), ("sizeUnit", size_unit),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = bubble_band(points, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
@@ -1063,13 +1038,10 @@ class Diagram:
         renamed here since `y` is this method's own position kwarg. `stack: true` piles the
         bar series into one column per category. The layout formula IS byte-identical to
         Node (golden-tested live); only text widths use this port's approximation."""
-        opts: dict = {}
-        for k, v in (
+        opts = _opts(
             ("y", y_axis), ("y2", y2_axis), ("values", values), ("stack", stack),
             ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
-        ):
-            if v is not None:
-                opts[k] = v
+        )
         band = combo_band(categories, series, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 

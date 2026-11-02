@@ -13,7 +13,7 @@ from __future__ import annotations
 import math
 
 from .atoms import text_width
-from .emit_common import emoji_span, js_round, snap4
+from .emit_common import emoji_span, js_round, round1
 from .tokens import PALETTE, color_of, resolve_box_style
 from .tree_text import katakana_width
 from .wrap import wrap_text
@@ -357,8 +357,7 @@ def _layout_cycle(b: dict, out: dict, t: Texts, anchor, roles: dict) -> None:
 
     skip = 2 * math.asin(min(1, (nr + 8) / (2 * r)))
 
-    def r1(v: float) -> float:
-        return round(v * 10) / 10
+    r1 = round1
 
     for i in range(n):
         p = at(angle(i) + sign * skip)

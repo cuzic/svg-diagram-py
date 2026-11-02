@@ -73,7 +73,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 |---|---|---|
 | bars / stackedBars | ✅ | layoutBars/renderBarsともexport済み、live golden test(horizontal/vertical/stack/cumulative(パレート)/range/edges/lines/vlines/plotInset)。rangeBars()/pareto()/histogram()/scatter()の便利ラッパーは未移植(lib/qc.ts等の統計ヘルパーとplane()が別途必要、見送り) |
 | heatmap | ✅ | layoutHeatmap/renderChartともexport済み、live golden test(min/max/levels/decimals/scale/rowHeader/corner/cellH/null cell)。`charts_base.py`にCanvas共有基盤を新設(他chart種別もこの上に乗る) |
-| sankey | ⬜ | |
+| sankey | ✅ | layoutSankey/renderChartともexport済み、live golden test(複数レイヤー・barycenter並べ替え・align left/justify・tone/danger破線・リンクラベル配置)。ノードアイコンはicon registry未移植のため対象外(iconOfは常に0) |
 | radar | ⬜ | |
 | treemap | ⬜ | |
 | waterfall | ⬜ | |

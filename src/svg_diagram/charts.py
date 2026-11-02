@@ -16,6 +16,7 @@ from __future__ import annotations
 from .charts_base import size_of
 from .emit_common import emoji_span, js_num, js_round
 from .heatmap import layout_heatmap
+from .sankey import layout_sankey
 from .tokens import PALETTE, color_of
 
 
@@ -29,6 +30,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
     kind = band["kind"]
     if kind == "heatmap":
         part = layout_heatmap(band["spec"], g)
+    elif kind == "sankey":
+        part = layout_sankey(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

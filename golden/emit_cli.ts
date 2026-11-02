@@ -45,7 +45,7 @@ import {renderWordArt} from '../../lib/emit-wordart.ts';
 import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
-import {heatmap} from '../../lib/dsl/charts.ts';
+import {heatmap, sankey} from '../../lib/dsl/charts.ts';
 import {layoutChart} from '../../lib/charts.ts';
 import {renderChart} from '../../lib/charts-emit.ts';
 
@@ -248,6 +248,7 @@ function handle(req: Req): unknown {
     case 'layoutChart': {
       let band: never;
       if (req.chartKind === 'heatmap') band = heatmap(req.rows as never, req.cols as never, req.values as never, (req.opts ?? {}) as never) as never;
+      else if (req.chartKind === 'sankey') band = sankey(req.nodes as never, req.links as never, (req.opts ?? {}) as never) as never;
       else throw new Error(`unknown chart kind: ${req.chartKind}`);
       return layoutChart(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
     }

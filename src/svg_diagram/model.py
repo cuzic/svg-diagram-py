@@ -51,6 +51,7 @@ from .wordart import layout_word_art, render_word_art, word_art_band
 from .bars import bars_band, layout_bars, render_bars
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
+from .sankey import sankey_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -698,6 +699,36 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = heatmap_band(rows, cols, values, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def sankey(
+        self,
+        nodes: list,
+        links: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        align: str | None = None,
+        link_labels: bool | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's sankey(): flows between layers of nodes. `nodes`: a label string
+        or {id, label?, tone?}. `links`: [{from, to, value, tone?}]. The layout formula IS
+        byte-identical to Node (golden-tested live); only text widths use this port's
+        approximation. Node icons (`SankeyNode.icon`) are not supported."""
+        opts: dict = {}
+        for k, v in (
+            ("unit", unit), ("align", align), ("linkLabels", link_labels),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = sankey_band(nodes, links, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

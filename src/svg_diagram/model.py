@@ -31,6 +31,7 @@ from .figures import pyramid_layer_geometry, render_curve, render_pyramid
 from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
 from .legend import render_legend_item
 from .people_dots import layout_dots, layout_people, render_dots, render_people
+from .timeline import layout_timeline, render_timeline
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -182,6 +183,21 @@ class _Dots:
 
 
 @dataclass
+class _Timeline:
+    x: float
+    y: float
+    w: float
+    now: dict
+    deadline: dict
+    marks: list[dict] = field(default_factory=list)
+    from_: str = ""
+    to: str = ""
+    span: str | None = None
+    remaining: object = None
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -286,6 +302,27 @@ class Diagram:
         if len(points) < 2:
             raise ValueError("curve(points) needs at least 2 points")
         self._elements.append(_Curve(x=x, y=y, width=width, height=height, points=points, y_top_label=y_top_label, y_bottom_label=y_bottom_label, x_label=x_label))
+
+    def timeline(
+        self,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        now: dict,
+        deadline: dict,
+        marks: list[dict] | None = None,
+        from_: str,
+        to: str,
+        span: str | None = None,
+        remaining: object = None,
+    ) -> None:
+        """lib/timeline.ts's timeline() (date-based only — see timeline.py's module
+        docstring for the numeric-axis variant, not ported). `now`/`deadline`: {at, label?,
+        line?}; `marks`: [{at, label, tone?}]. The layout formula (layout_timeline) IS
+        byte-identical to Node (golden-tested live); only text widths use this port's
+        approximation."""
+        self._elements.append(_Timeline(x=x, y=y, w=width, now=now, deadline=deadline, marks=marks or [], from_=from_, to=to, span=span, remaining=remaining))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
@@ -486,6 +523,9 @@ class Diagram:
         if isinstance(el, _Dots):
             laid = layout_dots(r=el.r, dots=el.dots, zones=el.zones, min_val=el.min_val, max_val=el.max_val, x=el.x, y=el.y, cw=el.cw, width_of=approx_width_of, width=el.width, low_label=el.low_label, high_label=el.high_label, height=el.height, roles=ROLES)
             return render_dots(axis=laid["axis"], zones=laid["zones"], dots=laid["dots"], texts=laid["texts"], r=el.r, alt=el.alt, day=el.day)
+        if isinstance(el, _Timeline):
+            laid = layout_timeline(now=el.now, deadline=el.deadline, marks=el.marks, from_=el.from_, to=el.to, span=el.span, remaining=el.remaining, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES)
+            return render_timeline(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

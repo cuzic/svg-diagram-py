@@ -27,6 +27,8 @@ import {badgeSvg, pillSvg} from '../../lib/badge.ts';
 import {gridColumns, rowChildGeometry, gridChildGeometry, colSlots} from '../../lib/layout-util.ts';
 import {layoutPeople, layoutDots} from '../../lib/people.ts';
 import {renderPeople, renderDots} from '../../lib/emit-boxes.ts';
+import {layoutTimeline} from '../../lib/timeline.ts';
+import {renderTimeline} from '../../lib/emit-figures.ts';
 
 // Shared dummy width function for layoutPeople/layoutDots golden tests, same technique as
 // atoms.py/wrap.py: tests the ALGORITHM (icon grid geometry, dot pile packing), not real
@@ -125,6 +127,12 @@ function handle(req: Req): unknown {
       return renderPeople({x: req.x, y: req.y, size: req.size, icons: req.icons, texts: req.texts, tone: req.tone, tone2: req.tone2, rest: req.rest, alt: req.alt} as never, (req.day ?? 1) as never, tones);
     case 'renderDots':
       return renderDots({axis: req.axis, zones: req.zones, dots: req.dots, texts: req.texts, r: req.r, alt: req.alt} as never, (req.day ?? 1) as never, tones);
+    case 'layoutTimeline': {
+      const band = {now: req.now, deadline: req.deadline, marks: req.marks ?? [], from: req.from, to: req.to, span: req.span, remaining: req.remaining, id: undefined, reveal: undefined, until: undefined} as never;
+      return layoutTimeline(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles);
+    }
+    case 'renderTimeline':
+      return renderTimeline(req.band as never, (req.day ?? 1) as never);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

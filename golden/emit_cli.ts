@@ -41,6 +41,9 @@ import {gapFor, stubOf, laneStepOf, elbows, corridorLoad, layoutWithLanes, route
 import {splitByHeight, splitWidest} from '../../lib/fit-split.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
+import {diamondLines, pillLines, diamondPoints, ontoDiamond, vertexDrops} from '../../lib/flow-nodes.ts';
+import {statesWords} from '../../lib/states-words.ts';
+import {statesProblems} from '../../lib/verify-base.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
 import {layoutTable, layoutSequence} from '../../lib/seq-table.ts';
 import {renderTable, renderSequence} from '../../lib/emit-tables.ts';
@@ -448,6 +451,20 @@ function handle(req: Req): unknown {
     }
     case 'renderClasses':
       return renderClasses(req.band as never, (req.day ?? 1) as never, tones);
+    case 'diamondLines':
+      return diamondLines(req.label as string, req.sub as string | undefined, req.maxW as number, req.iconH as number, peopleWidthOf, roles, (req.mode ?? 'phrase') as never, (req.floor ?? false) as boolean);
+    case 'pillLines':
+      return pillLines(req.l as never, req.iconH as number);
+    case 'diamondPoints':
+      return diamondPoints(req.r as never);
+    case 'ontoDiamond':
+      return ontoDiamond(req.end as never, req.next as never, req.r as never);
+    case 'vertexDrops':
+      return vertexDrops(req.outs as never, req.r as never, req.others as never);
+    case 'statesWords':
+      return statesWords(req.flavor as never);
+    case 'statesProblems':
+      return statesProblems(req.band as never);
     case 'layoutLines': {
       let band: never;
       if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;

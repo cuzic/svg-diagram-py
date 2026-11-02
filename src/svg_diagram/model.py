@@ -54,6 +54,7 @@ from .heatmap import heatmap_band
 from .radar import radar_band
 from .sankey import sankey_band
 from .butterfly import butterfly_band
+from .harvey import harvey_band
 from .stacked import mekko_band, stacked_bars_band
 from .tornado import tornado_band
 from .treemap import treemap_band
@@ -952,6 +953,37 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = butterfly_band(rows, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def harvey(
+        self,
+        rows: list,
+        cols: list[str],
+        values: list[list[float | None]],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        levels: tuple[str, str, str, str, str] | None = None,
+        corner: str | None = None,
+        highlight: list[str] | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's harvey(): a table of Harvey balls, each a circle filled by a
+        quarter/half/three-quarters/fully. `rows`: a label string or {label, id?}. `values`:
+        0-4 (quarters filled) or None (not rated). The layout formula IS byte-identical to
+        Node (golden-tested live); only text widths use this port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("levels", levels), ("corner", corner), ("highlight", highlight),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = harvey_band(rows, cols, values, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

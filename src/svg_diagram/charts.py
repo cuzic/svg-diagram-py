@@ -16,6 +16,7 @@ from __future__ import annotations
 from .butterfly import layout_butterfly
 from .charts_base import size_of
 from .emit_common import emoji_span, js_num, js_round
+from .harvey import layout_harvey
 from .heatmap import layout_heatmap
 from .radar import layout_radar
 from .sankey import layout_sankey
@@ -50,6 +51,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_tornado(band["spec"], g)
     elif kind == "butterfly":
         part = layout_butterfly(band["spec"], g)
+    elif kind == "harvey":
+        part = layout_harvey(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

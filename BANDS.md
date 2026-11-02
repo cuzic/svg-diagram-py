@@ -83,7 +83,8 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | burndown / burnup / strategyCanvas | ⬜(保留) | 上記lines()依存のため保留。plane()を移植する別の機会に合わせて着手するのが合理的 |
 | tornado | ✅ | layoutTornado/renderChartともexport済み、live golden test(sort有無・lowTone/highTone・base線・凡例の行折返し)。live golden test一発通過 |
 | butterfly | ✅ | layoutButterfly/renderChartともexport済み、live golden test(sort given/left/right・leftTone/rightTone・両側バー配置)。live golden test一発通過 |
-| bubble / combo / harvey | ⬜ | Canvas基盤の上、着手しやすい |
+| harvey | ✅ | layoutHarvey/renderChartともexport済み、live golden test(null未評価セル・corner・highlight列の枠・凡例の4分割円)。live golden test一発通過 |
+| bubble / combo | ⬜ | Canvas基盤の上、着手しやすい |
 | pert / causalLoop / dependencyNetwork | ⬜ | semnet.ts(ネットワーク図共通基盤)経由、未調査 |
 | catplot / displot / clustermap / facet(seaborn系) | ⬜ | 優先度低 |
 

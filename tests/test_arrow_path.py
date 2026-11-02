@@ -1,5 +1,5 @@
-"""Golden-master tests for arrow_path() against Node's arrowPath() (no `cuts` — that's
-cause()'s hop-over routing, deferred to Phase H)."""
+"""Golden-master tests for arrow_path() against Node's arrowPath(), including `cuts`
+(cause()'s hop-over routing, ADR 0028)."""
 
 import pytest
 
@@ -13,6 +13,17 @@ CASES = [
     {"points": [{"x": 0, "y": 0}, {"x": 60, "y": 0}, {"x": 60, "y": 80}], "color": "#22201b"},
     {"points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}], "color": "#22201b", "line": "dashed", "end": "bar"},
     {"points": [{"x": 0, "y": 0}, {"x": 0, "y": 100}], "color": "#22201b"},
+    # with cuts (hop-over bumps): one cut on the first segment of an elbow arrow
+    {"points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 100}], "color": "#111111", "cuts": [{"x": 50, "y": 0, "side": {"x": 0, "y": 1}, "r": 6}]},
+    # two cuts on the same segment, in written order (the path sorts them by position along the run)
+    {
+        "points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 100}], "color": "#111111", "line": "dashed",
+        "cuts": [{"x": 30, "y": 0, "side": {"x": 0, "y": 1}, "r": 5}, {"x": 70, "y": 0, "side": {"x": 0, "y": -1}, "r": 5}],
+    },
+    # a cut on the second (vertical) segment, bulging sideways
+    {"points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}, {"x": 100, "y": 100}], "color": "#111111", "line": "dashed", "cuts": [{"x": 100, "y": 40, "side": {"x": 1, "y": 0}, "r": 6}]},
+    # both ends get a head; the cut must not touch either arrowhead's run
+    {"points": [{"x": 0, "y": 0}, {"x": 100, "y": 0}], "color": "#111111", "headAt": "both", "cuts": [{"x": 50, "y": 0, "side": {"x": 0, "y": -1}, "r": 6}]},
 ]
 
 
@@ -26,10 +37,6 @@ def test_arrow_path_matches_node(node_golden, case):
         case.get("width", 2),
         case.get("headAt", "end"),
         case.get("end", "arrow"),
+        case.get("cuts"),
     )
     assert py_result == node_result
-
-
-def test_arrow_path_raises_for_cuts():
-    with pytest.raises(NotImplementedError):
-        arrow_path([{"x": 0, "y": 0}, {"x": 10, "y": 0}], "#000", None, cuts=[{"x": 5, "y": 0}])

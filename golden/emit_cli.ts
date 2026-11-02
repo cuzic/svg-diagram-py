@@ -193,7 +193,7 @@ function handle(req: Req): unknown {
       return renderStepBadge({x: req.x as number, y, padX: req.padX as number, padY, step: req.step, tone: req.tone, dim: req.dim, wrappedRuns: [{lineYs: [lineY0]}]} as never, (req.day ?? 1) as never);
     }
     case 'arrowPath':
-      return arrowPath(req.points as never, req.color as string, req.line as never, (req.width ?? 2) as number, (req.headAt ?? 'end') as never, (req.end ?? 'arrow') as never);
+      return arrowPath(req.points as never, req.color as string, req.line as never, (req.width ?? 2) as number, (req.headAt ?? 'end') as never, (req.end ?? 'arrow') as never, req.cuts as never);
     case 'renderLegend':
       return renderLegend({items: req.items as never} as never, (req.day ?? 1) as never, tones, roles);
     case 'layoutPeople': {

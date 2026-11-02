@@ -89,6 +89,29 @@ def _sign(n: float) -> int:
     return (n > 0) - (n < 0)
 
 
+def _cut_path(pts: list[dict], cuts: list[dict]) -> str:
+    """lib/emit-common.ts:131-143 cutPath(): a hop (a bump of height `r` toward `side`) over
+    another line, at each point of `cuts` that lies on one of `pts`'s runs (ADR 0028)."""
+
+    def f(n: float) -> str:
+        return str(snap4(n))
+
+    first = pts[0]
+    d = f"M{f(first['x'])},{f(first['y'])}"
+    for i in range(len(pts) - 1):
+        a, b = pts[i], pts[i + 1]
+        length = math.hypot(b["x"] - a["x"], b["y"] - a["y"])
+        ux, uy = (b["x"] - a["x"]) / length, (b["y"] - a["y"]) / length
+        here = sorted(
+            (c for c in cuts if abs((c["x"] - a["x"]) * uy - (c["y"] - a["y"]) * ux) < 0.5 and 0 < (c["x"] - a["x"]) * ux + (c["y"] - a["y"]) * uy < length),
+            key=lambda c: (c["x"] - a["x"]) * ux + (c["y"] - a["y"]) * uy,
+        )
+        for c in here:
+            d += f" L{f(c['x'] - ux * c['r'])},{f(c['y'] - uy * c['r'])} Q{f(c['x'] + c['side']['x'] * 2 * c['r'])},{f(c['y'] + c['side']['y'] * 2 * c['r'])} {f(c['x'] + ux * c['r'])},{f(c['y'] + uy * c['r'])}"
+        d += f" L{f(b['x'])},{f(b['y'])}"
+    return d
+
+
 def arrow_path(
     points: list[dict],
     color: str,
@@ -101,9 +124,9 @@ def arrow_path(
     """lib/emit-common.ts:149-169 arrowPath(): a filled-triangle arrowhead baked into the path
     (not a <marker>), used where a marker on a reversed end would not be trusted by every
     renderer (legend AND/back/blocks lines, cloud()'s double-headed conflict arrow). `cuts`
-    (hop-over bumps over a crossing line) is cause()'s engine — deferred, see the plan's Phase H."""
-    if cuts:
-        raise NotImplementedError("arrow_path(cuts=...) is cause()'s hop-over routing — deferred (plan Phase H)")
+    (hop-over bumps over a crossing line, ADR 0028): cause()'s engine, used only on the
+    non-`end='bar'` path (a cutting arrow never gets cuts — causeCrossings() never marks a
+    `kind: 'blocks'` edge as the "over" of a crossing)."""
     pts = [dict(p) for p in points]
     heads: list[str] = []
 
@@ -126,11 +149,16 @@ def arrow_path(
         bx, by = snap4(tip["x"] - dx * off), snap4(tip["y"] - dy * off)
         pts[n - 1] = {"x": tip["x"] - dx * off, "y": tip["y"] - dy * off}
         heads.append(f'<path d="M{js_num(bx - dy * w)},{js_num(by + dx * w)} L{js_num(bx + dy * w)},{js_num(by - dx * w)}" fill="none" stroke="{color}" stroke-width="3"/>')
+        d = "M" + " L".join(f"{js_num(snap4(p['x']))},{js_num(snap4(p['y']))}" for p in pts)
+        path = f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{js_num(width)}"{line_attrs(effective_line)}/>'
+        return f"{path}\n  " + "\n  ".join(heads)
+    pts[n - 1] = head(points[n - 1], points[n - 2])
+    if head_at == "both":
+        pts[0] = head(points[0], points[1])
+    if cuts:
+        d = _cut_path(pts, cuts)
     else:
-        pts[n - 1] = head(points[n - 1], points[n - 2])
-        if head_at == "both":
-            pts[0] = head(points[0], points[1])
-    d = "M" + " L".join(f"{js_num(snap4(p['x']))},{js_num(snap4(p['y']))}" for p in pts)
+        d = "M" + " L".join(f"{js_num(snap4(p['x']))},{js_num(snap4(p['y']))}" for p in pts)
     path = f'<path d="{d}" fill="none" stroke="{color}" stroke-width="{js_num(width)}"{line_attrs(effective_line)}/>'
     return f"{path}\n  " + "\n  ".join(heads)
 

@@ -40,15 +40,27 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | table | ✅ | layoutTable/renderTableともexport済み、live golden test。アイコン付きセルは対象外 |
 | sequence | ✅ | layoutSequence/renderSequenceともexport済み、live golden test(msg/self/note/divider全種別)。アクターアイコンは対象外 |
 | wireframe / screens | ⬜ | 独自のflexレイアウトエンジン(844行) |
-| chevron / funnel / cycle / venn / concentric / emblem / valueChain | ⬜ | renderFlowShape共通、形状ごとに閉形式幾何 |
-| states(flowchartを含む) | ⬜ | |
-| wordart | ⬜ | |
-| classes (UML) | ⬜ | |
+| chevron / funnel / cycle / venn / concentric / emblem / valueChain | ⬜ | renderFlowShape共通(522行)、形状ごとに閉形式幾何のはずだが未調査。次の着手候補 |
+| wordart | ⬜ | layoutWordArt(128行)、閉形式の可能性高い |
 
-## Tier 3 — 専用図種(大規模)
+## 重要な発見: states/classes は Tier 3 相当(layeredAttempt依存)
+
+調査の結果、`states`(flowchartを含む)と`classes`(UML)は`lib/layered-route.ts`の
+`layeredAttempt`(layered graph routing — 交差削減・直交ルーティング・診断用
+ラベル配置探索)に依存していることが判明した。これは`cause()`が使う
+`lib/graph-layout.ts`の`layoutLayered`と同系統の重いエンジンで、cause()の
+ために後回しにした「交差削減・hop経路探索」と同規模の投資が必要。
+したがって states/classes は Tier 2 ではなく **Tier 3 に格上げし、
+bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて移植する
+別計画で扱うのが合理的**(エンジン自体は一度移植すれば5 band種別
+(states/flowchart/classes/bpmn/fta/cause)に効く)。
+
+## Tier 3 — 専用図種(大規模、layered routing エンジン共有)
 
 | band | 状態 | 備考 |
 |---|---|---|
+| states(flowchartを含む) | ⬜ | layeredAttempt依存。Tier2から格上げ |
+| classes (UML) | ⬜ | layeredAttempt依存。Tier2から格上げ |
 | bowtie | ⬜ | |
 | fta | ⬜ | Fault Tree Analysis |
 | bpmn | ⬜ | レーン+フロー、大規模 |

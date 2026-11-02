@@ -42,6 +42,9 @@ import {chevronBand, funnelBand, cycleBand, vennBand, concentricBand, valueChain
 import {renderFlowShape} from '../../lib/emit-figures.ts';
 import {wordartBand, layoutWordArt} from '../../lib/wordart.ts';
 import {renderWordArt} from '../../lib/emit-wordart.ts';
+import {bars} from '../../lib/dsl/bars.ts';
+import {layoutBars} from '../../lib/bars.ts';
+import {renderBars} from '../../lib/emit-figures.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -233,6 +236,12 @@ function handle(req: Req): unknown {
     }
     case 'renderWordArt':
       return renderWordArt(req.band as never, (req.day ?? 1) as never, (req.dim ?? false) as never);
+    case 'layoutBars': {
+      const band = bars(req.data as never, (req.opts ?? {}) as never);
+      return layoutBars(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles);
+    }
+    case 'renderBars':
+      return renderBars(req.band as never, (req.day ?? 1) as never);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

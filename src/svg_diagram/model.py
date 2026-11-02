@@ -48,6 +48,7 @@ from .sequence import layout_sequence, render_sequence
 from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
 from .wordart import layout_word_art, render_word_art, word_art_band
+from .bars import bars_band, layout_bars, render_bars
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -297,6 +298,15 @@ class _WordArt:
     x: float
     y: float
     cw: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Bars:
+    x: float
+    y: float
+    w: float
     band: dict
     day: int | str = 1
 
@@ -596,6 +606,48 @@ class Diagram:
         )
         self._elements.append(_WordArt(x=x, y=y, cw=width, band=band))
 
+    def bars(
+        self,
+        data: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        direction: str | None = None,
+        stack: bool = False,
+        height: float | None = None,
+        id: str | None = None,
+        max_value: float | None = None,
+        plot_inset: tuple[float, float] | None = None,
+        labels: str | None = None,
+        axis: bool | None = None,
+        grid: bool | None = None,
+        baseline: bool | None = None,
+        bar_ratio: float | None = None,
+        label_role: str | None = None,
+        hide_zero: bool = False,
+        lines: list[dict] | None = None,
+        vlines: list[dict] | None = None,
+        curve: dict | None = None,
+        cumulative: dict | None = None,
+        edges: list[str] | None = None,
+        value_format=None,
+    ) -> None:
+        """lib/dsl/bars.ts's bars(): horizontal or vertical bars (`direction`: 'h'/'v'), plain
+        or `stack`ed, with an optional cumulative/Pareto overlay, reference lines and edge
+        labels. `data`: [{label, value | range, id?, tone?, series?, replaces?}]. The layout
+        formula IS byte-identical to Node (golden-tested live); only text widths use this
+        port's approximation. rangeBars()/pareto()/histogram()/scatter() convenience wrappers
+        are not supported — build their equivalent `data`/opts directly."""
+        band = bars_band(
+            data, unit=unit, direction=direction, stack=stack, height=height, id=id, max_value=max_value,
+            plot_inset=plot_inset, labels=labels, axis=axis, grid=grid, baseline=baseline, bar_ratio=bar_ratio,
+            label_role=label_role, hide_zero=hide_zero, lines=lines, vlines=vlines, curve=curve,
+            cumulative=cumulative, edges=edges, value_format=value_format,
+        )
+        self._elements.append(_Bars(x=x, y=y, w=width, band=band))
+
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
         self._elements.append(_Status(x=x, y=y, width=width, text=text, status=status, height=height, size=size))
@@ -819,6 +871,9 @@ class Diagram:
         if isinstance(el, _WordArt):
             laid = layout_word_art(el.band, el.x, el.y, el.cw, approx_width_of, ROLES, "phrase")
             return render_word_art(laid, day=el.day)
+        if isinstance(el, _Bars):
+            laid = layout_bars(el.band, el.x, el.y, el.w, approx_width_of, ROLES)
+            return render_bars(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

@@ -39,7 +39,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | mindmap / tree | ✅ | layoutTreeBand/renderTreeともexport済み、live golden test(fitLayoutの幅×方向探索も忠実に移植、org/list/brace/fishbone/timeline/radial/sides/curve全層対応)。band-node(tree({band}))は対象外 |
 | table | ✅ | layoutTable/renderTableともexport済み、live golden test。アイコン付きセルは対象外 |
 | sequence | ✅ | layoutSequence/renderSequenceともexport済み、live golden test(msg/self/note/divider全種別)。アクターアイコンは対象外 |
-| wireframe / screens | ⬜ | 独自のflexレイアウトエンジン(844行) |
+| wireframe / screens | ⬜(保留) | lib/wireframe.ts(844行)+lib/wireframe-parts.ts(444行、installPartsによるノード種別拡張)の専用flexエンジン。他bandと共有されない一枚岩の大規模実装で、規模・構造ともTier 3(layered routing)に近い。したがってTier 2から外し、着手するなら別計画として起票するのが合理的(本セッションでは見送り、chart系を先に進める) |
 | chevron / funnel / cycle / venn / concentric / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(6形状全て) |
 | emblem | ⬜ | lib/emblem-shapes.ts(~13形状の輪郭幾何+反復サイズ探索)が別途必要、見送り |
 | wordart | ✅ | layoutWordArt/renderWordArtともexport済み、live golden test(horizontal/vertical/arc、全プリセット・gradient/plate/flip/rotate)。grapheme分割はIntl.Segmenter未再現(コードポイント単位の近似、approx_width.pyと同方針)、uid/gradient idはNode非再現(1枚のSVG内で一意なら十分、golden比較から除外) |
@@ -71,7 +71,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 
 | band/関数 | 状態 | 備考 |
 |---|---|---|
-| bars / stackedBars | ⬜ | |
+| bars / stackedBars | ✅ | layoutBars/renderBarsともexport済み、live golden test(horizontal/vertical/stack/cumulative(パレート)/range/edges/lines/vlines/plotInset)。rangeBars()/pareto()/histogram()/scatter()の便利ラッパーは未移植(lib/qc.ts等の統計ヘルパーとplane()が別途必要、見送り) |
 | heatmap | ⬜ | |
 | sankey | ⬜ | |
 | radar | ⬜ | |

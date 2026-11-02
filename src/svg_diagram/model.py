@@ -53,6 +53,7 @@ from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
 from .sankey import sankey_band
+from .stacked import mekko_band, stacked_bars_band
 from .treemap import treemap_band
 from .waterfall import waterfall_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
@@ -827,6 +828,59 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = waterfall_band(steps, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def stacked_bars(
+        self,
+        columns: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        percent: bool | None = None,
+        domain: tuple[float, float] | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's stackedBars(): columns cut into segments. `columns`:
+        [{label, parts: [{label, value}, ...], id?}]. `percent: true` makes 100% columns. The
+        layout formula IS byte-identical to Node (golden-tested live); only text widths use
+        this port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("unit", unit), ("percent", percent), ("domain", domain),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = stacked_bars_band(columns, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def mekko(
+        self,
+        columns: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        unit: str | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's mekko(): a column's width is its total, a segment's height its
+        share of the column (so area = share of the whole). `columns`:
+        [{label, parts: [{label, value}, ...], id?}]. The layout formula IS byte-identical to
+        Node (golden-tested live); only text widths use this port's approximation."""
+        opts: dict = {}
+        for k, v in (("unit", unit), ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width)):
+            if v is not None:
+                opts[k] = v
+        band = mekko_band(columns, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

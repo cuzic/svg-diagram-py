@@ -71,16 +71,18 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 
 | band/関数 | 状態 | 備考 |
 |---|---|---|
-| bars / stackedBars | ✅ | layoutBars/renderBarsともexport済み、live golden test(horizontal/vertical/stack/cumulative(パレート)/range/edges/lines/vlines/plotInset)。rangeBars()/pareto()/histogram()/scatter()の便利ラッパーは未移植(lib/qc.ts等の統計ヘルパーとplane()が別途必要、見送り) |
+| bars | ✅ | layoutBars/renderBarsともexport済み、live golden test(horizontal/vertical/stack(bars自体のstack:trueオプション)/cumulative(パレート)/range/edges/lines/vlines/plotInset)。rangeBars()/pareto()/histogram()/scatter()の便利ラッパーは未移植(lib/qc.ts等の統計ヘルパーとplane()が別途必要、見送り) |
+| stackedBars | ✅ | bars({stack:true})とは別のDSL関数(lib/charts-stacked.ts、layoutStacked/stackedBand)。Canvas基盤。live golden test(stacked/percent両モード) |
 | heatmap | ✅ | layoutHeatmap/renderChartともexport済み、live golden test(min/max/levels/decimals/scale/rowHeader/corner/cellH/null cell)。`charts_base.py`にCanvas共有基盤を新設(他chart種別もこの上に乗る) |
 | sankey | ✅ | layoutSankey/renderChartともexport済み、live golden test(複数レイヤー・barycenter並べ替え・align left/justify・tone/danger破線・リンクラベル配置)。ノードアイコンはicon registry未移植のため対象外(iconOfは常に0) |
 | radar | ✅ | layoutRadar/renderChartともexport済み、live golden test(1-4系列・min/max/rings・fill・values表示・凡例の折返し)。候補リストの構築順(`[d,F1..F4]`を3回繰り返す、まとめて1回ではない)がNodeのflatMapの実際の挙動と異なっていたバグをgolden testで検出・修正 |
 | treemap | ✅ | layoutTreemap/renderChartともexport済み、live golden test(squarified配置・反復重み補正・group/leaf・percent・strictエラー)。TreemapNodeオブジェクトをMapキーに使う箇所はPythonのid()による参照同一性で代替 |
 | waterfall | ✅ | layoutWaterfall/layoutWaterfallH/renderChartともexport済み、live golden test(start/delta/subtotal/total・dir v/h・connectors・値ラベルの内外配置)。縦横ともライブgolden test一発通過 |
-| lines | ⬜ | |
-| burndown / burnup | ⬜ | |
-| bubble / butterfly / combo / harvey / tornado / mekko | ⬜ | 優先度低 |
-| pert / causalLoop / dependencyNetwork / strategyCanvas | ⬜ | 優先度低 |
+| mekko | ✅ | stackedBarsと同じlayoutStacked/stackedBand経由。Canvas基盤の上に乗るためbars/stackedBarsと合わせて移植済み |
+| lines | ⬜ | **重要な発見**: chart系(kind+Canvas基盤)ではなく`plane()`(lib/plane.ts、367行、軸・目盛・monotone/centripetal曲線・マーカー・リーダー線付きラベル)の上に乗る別系統。plane()自体が未移植の大きい依存(layoutPlane単体で約270行)。burndown/burnup/strategyCanvasもlines()のラッパーなので同様に保留 |
+| burndown / burnup / strategyCanvas | ⬜(保留) | 上記lines()依存のため保留。plane()を移植する別の機会に合わせて着手するのが合理的 |
+| bubble / butterfly / combo / harvey / tornado | ⬜ | Canvas基盤の上(優先度は元は低いとしたが、plane()より着手しやすいため次点候補) |
+| pert / causalLoop / dependencyNetwork | ⬜ | semnet.ts(ネットワーク図共通基盤)経由、未調査 |
 | catplot / displot / clustermap / facet(seaborn系) | ⬜ | 優先度低 |
 
 ## Tier 5 — 見送り候補

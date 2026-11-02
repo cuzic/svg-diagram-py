@@ -118,6 +118,14 @@ CONNECT_LABEL_SIZE = 14
 STRONG_STROKE = 5
 TAG_SIZE = 14
 
+# lib/tokens.ts:314-319 CELL_MARKS
+CELL_MARKS: dict[str, dict] = {
+    "ok": {"glyph": "○", "tone": "accent", "bold": False},
+    "mid": {"glyph": "△", "tone": "text", "bold": False},
+    "ng": {"glyph": "×", "tone": "danger", "bold": False},
+    "best": {"glyph": "◎", "tone": "accent", "bold": True},
+}
+
 
 def relative_luminance(hex_color: str) -> float:
     """lib/tokens.ts:367-371 relativeLuminance()."""

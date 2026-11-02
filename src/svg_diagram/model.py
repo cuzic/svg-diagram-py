@@ -34,6 +34,7 @@ from .cloud import layout_cloud_band, render_cloud
 from .gantt import layout_gantt, render_gantt
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .timeline import layout_timeline, render_timeline
+from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
@@ -242,6 +243,24 @@ class _Tree:
 
 
 @dataclass
+class _Table:
+    x: float
+    y: float
+    w: float
+    columns: list[dict]
+    rows: list
+    width: float | None = None
+    title: str | None = None
+    dense: bool = False
+    header: bool | None = None
+    row_header: bool = False
+    header_h: float | None = None
+    cell_h: float | None = None
+    row_curve: dict | None = None
+    day: int | str = 1
+
+
+@dataclass
 class _Status:
     x: float
     y: float
@@ -431,6 +450,29 @@ class Diagram:
         (default) | 'right' | 'left' | 'down' | 'up' | 'org' | 'list' | 'brace' | 'fishbone' |
         'timeline'. The layout formula IS byte-identical to Node (golden-tested live)."""
         self._elements.append(_Tree(x=x, y=y, w=width, root=root, balanced=True, layout_mode=layout, sides=sides, edges_opt=edges, max_node_w=max_node_w))
+
+    def table(
+        self,
+        columns: list[dict],
+        rows: list,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        table_width: float | None = None,
+        title: str | None = None,
+        dense: bool = False,
+        header: bool | None = None,
+        row_header: bool = False,
+        header_h: float | None = None,
+        cell_h: float | None = None,
+        row_curve: dict | None = None,
+    ) -> None:
+        """lib/dsl's table(): `columns`: [{label?, flex?, bold?, mono?, align?}]. `rows`: each a
+        list of cells (str, {text,tone?,bold?,mono?,align?,mark?}) or {cells, tone?, h?}. The
+        layout formula (layout_table) IS byte-identical to Node (golden-tested live); only text
+        widths use this port's approximation. Icon cells are not supported."""
+        self._elements.append(_Table(x=x, y=y, w=width, columns=columns, rows=rows, width=table_width, title=title, dense=dense, header=header, row_header=row_header, header_h=header_h, cell_h=cell_h, row_curve=row_curve))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
@@ -643,6 +685,9 @@ class Diagram:
         if isinstance(el, _Tree):
             laid = layout_tree_band(el.root, el.x, el.y, el.w, approx_width_of, ROLES, dir_opt=el.dir_opt, max_node_w=el.max_node_w, balanced=el.balanced, layout_mode=el.layout_mode, sides=el.sides, edges_opt=el.edges_opt)
             return render_tree(laid, day=el.day)
+        if isinstance(el, _Table):
+            laid = layout_table(columns=el.columns, rows=el.rows, x=el.x, y=el.y, w=el.w, width_of=approx_width_of, roles=ROLES, width=el.width, title=el.title, dense=el.dense, header=el.header, row_header=el.row_header, header_h=el.header_h, cell_h=el.cell_h, row_curve=el.row_curve)
+            return render_table(laid, day=el.day, roles=ROLES)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

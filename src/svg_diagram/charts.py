@@ -13,6 +13,7 @@ Golden master: lib/charts.ts + lib/charts-emit.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
+from .butterfly import layout_butterfly
 from .charts_base import size_of
 from .emit_common import emoji_span, js_num, js_round
 from .heatmap import layout_heatmap
@@ -47,6 +48,8 @@ def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict
         part = layout_stacked(band["spec"], g)
     elif kind == "tornado":
         part = layout_tornado(band["spec"], g)
+    elif kind == "butterfly":
+        part = layout_butterfly(band["spec"], g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
     result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}

@@ -85,7 +85,7 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 | butterfly | ✅ | layoutButterfly/renderChartともexport済み、live golden test(sort given/left/right・leftTone/rightTone・両側バー配置)。live golden test一発通過 |
 | harvey | ✅ | layoutHarvey/renderChartともexport済み、live golden test(null未評価セル・corner・highlight列の枠・凡例の4分割円)。live golden test一発通過 |
 | bubble | ✅ | layoutBubble/renderChartともexport済み、live golden test(軸の自動拡張ループ・バブル内/外ラベル配置・サイズ凡例・閾値線)。自動拡張ループを含めてlive golden test一発通過 |
-| combo | ⬜ | Canvas基盤の上、着手しやすい |
+| combo | ✅ | layoutCombo/renderChartともexport済み、live golden test(bar+line混在・左右2軸の目盛り間隔合わせ探索・stack・凡例の行折返し・anchors)。Canvas基盤の上のchart系はこれで一通り完了(bubble/butterfly/combo/harvey/heatmap/radar/sankey/stackedBars/mekko/tornado/treemap/waterfall) |
 | pert / causalLoop / dependencyNetwork | ⬜ | semnet.ts(ネットワーク図共通基盤)経由、未調査 |
 | catplot / displot / clustermap / facet(seaborn系) | ⬜ | 優先度低 |
 

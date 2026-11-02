@@ -55,6 +55,7 @@ from .radar import radar_band
 from .sankey import sankey_band
 from .butterfly import butterfly_band
 from .bubble import bubble_band
+from .combo import combo_band
 from .harvey import harvey_band
 from .stacked import mekko_band, stacked_bars_band
 from .tornado import tornado_band
@@ -1017,6 +1018,40 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = bubble_band(points, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def combo(
+        self,
+        categories: list[str],
+        series: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        y_axis: dict | None = None,
+        y2_axis: dict | None = None,
+        values: bool | None = None,
+        stack: bool | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's combo(): bars and lines over the same categories. `series`:
+        [{label, type: 'bar'|'line', values: [...], axis?: 'left'|'right', tone?, id?}] (a
+        bar is always on the left axis; a line defaults to the right when any bar is
+        present). `y_axis`/`y2_axis` are Node's `y`/`y2` ({min?, max?, unit?, title?}),
+        renamed here since `y` is this method's own position kwarg. `stack: true` piles the
+        bar series into one column per category. The layout formula IS byte-identical to
+        Node (golden-tested live); only text widths use this port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("y", y_axis), ("y2", y2_axis), ("values", values), ("stack", stack),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = combo_band(categories, series, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

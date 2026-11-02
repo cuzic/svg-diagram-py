@@ -13,11 +13,9 @@ from __future__ import annotations
 
 import math
 
-from .catplot import SHAPES, marker_path
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, nice_scale, num_text
-from .distplot import _histogram_bins
+from .charts_base import SHAPES, Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, histogram_bins, ink_on_shade, marker_path, nice_scale, num_text
 from .emit_common import round1
 from .stats import bin_counts, bin_index, kde2d
 
@@ -84,7 +82,7 @@ def _ax(v: list[float]) -> dict:
 
 
 def _classes(v: list[float], bins: int | None) -> dict:
-    return _histogram_bins(v, bins if bins is not None else max(5, min(12, math.ceil(math.sqrt(len(v))))))
+    return histogram_bins(v, bins if bins is not None else max(5, min(12, math.ceil(math.sqrt(len(v))))))
 
 
 def multi_alt(s: dict) -> str:

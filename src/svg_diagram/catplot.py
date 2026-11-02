@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, shade_ops
+from .charts_base import SHAPES, Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text, shade_ops
 from .emit_common import js_num, round1
 from .stats import box_stats, error_bar, kde, mean_of, swarm_offsets
 
@@ -22,7 +22,6 @@ CatKind = str
 KINDS: list[str] = ["box", "violin", "strip", "swarm", "point", "bar"]
 FN: dict[str, str] = {"box": "boxplot", "violin": "violinplot", "strip": "stripplot", "swarm": "swarmplot", "point": "pointplot", "bar": "barplot"}
 NAME: dict[str, str] = {"box": "箱ひげ図", "violin": "バイオリンプロット", "strip": "ストリッププロット", "swarm": "スウォームプロット", "point": "ポイントプロット", "bar": "棒グラフ（誤差つき）"}
-SHAPES: list[str] = ["disc", "diamond", "square", "triangle"]
 
 MAX_HUES, MAX_GROUPS = 4, 24
 
@@ -138,18 +137,6 @@ def cat_alt(s: dict) -> str:
 
 
 _r1 = round1
-
-
-def marker_path(shape: str, x: float, y: float, r: float) -> str:
-    """lib/charts-cat.ts:99-110 markerPath()."""
-    a, b, cc, d = (_r1(v) for v in (x - r, x + r, y - r, y + r))
-    if shape == "diamond":
-        return f"M{js_num(_r1(x))},{js_num(cc)} L{js_num(b)},{js_num(_r1(y))} L{js_num(_r1(x))},{js_num(d)} L{js_num(a)},{js_num(_r1(y))} Z"
-    if shape == "square":
-        return f"M{js_num(a)},{js_num(cc)} H{js_num(b)} V{js_num(d)} H{js_num(a)} Z"
-    if shape == "triangle":
-        return f"M{js_num(_r1(x))},{js_num(cc)} L{js_num(b)},{js_num(d)} L{js_num(a)},{js_num(d)} Z"
-    return f"M{js_num(a)},{js_num(_r1(y))} a{js_num(r)},{js_num(r)} 0 1,0 {js_num(_r1(2 * r))},0 a{js_num(r)},{js_num(r)} 0 1,0 {js_num(_r1(-2 * r))},0 Z"
 
 
 def layout_cat(s: dict, g: dict) -> dict:

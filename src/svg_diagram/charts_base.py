@@ -93,6 +93,27 @@ def ink_on_shade(op: float) -> str:
     return "bg" if op >= 0.6 else "text"
 
 
+# lib/charts-cat.ts's own SHAPES/markerPath, hoisted here (rather than kept in catplot.py,
+# where Node's source puts them) because lib/charts-multi.ts and lib/charts-reg.ts import
+# them sideways from charts-cat.ts too — a chart-kind module (multiplot/regplot) having a
+# dependency on an unrelated chart-kind module (catplot) purely for a generic marker-drawing
+# primitive is exactly the kind of incidental coupling this shared foundation module exists
+# to avoid. Output is unaffected: this only moves where the function/constant live.
+SHAPES: list[str] = ["disc", "diamond", "square", "triangle"]
+
+
+def marker_path(shape: str, x: float, y: float, r: float) -> str:
+    """lib/charts-cat.ts:99-110 markerPath()."""
+    a, b, cc, d = (round1(v) for v in (x - r, x + r, y - r, y + r))
+    if shape == "diamond":
+        return f"M{js_num(round1(x))},{js_num(cc)} L{js_num(b)},{js_num(round1(y))} L{js_num(round1(x))},{js_num(d)} L{js_num(a)},{js_num(round1(y))} Z"
+    if shape == "square":
+        return f"M{js_num(a)},{js_num(cc)} H{js_num(b)} V{js_num(d)} H{js_num(a)} Z"
+    if shape == "triangle":
+        return f"M{js_num(round1(x))},{js_num(cc)} L{js_num(b)},{js_num(d)} L{js_num(a)},{js_num(d)} Z"
+    return f"M{js_num(a)},{js_num(round1(y))} a{js_num(r)},{js_num(r)} 0 1,0 {js_num(round1(2 * r))},0 a{js_num(r)},{js_num(r)} 0 1,0 {js_num(round1(-2 * r))},0 Z"
+
+
 def _to_precision(n: float, p: int) -> float:
     """JS `parseFloat(n.toPrecision(p))`."""
     if n == 0:
@@ -163,6 +184,37 @@ def nice_scale(lo: float, hi: float, want: int = 5) -> dict:
         ticks.append(_to_precision(min_v + i * step, 12))
         i += 1
     return {"min": _to_precision(min_v, 12), "max": _to_precision(max_v, 12), "step": step, "ticks": ticks}
+
+
+_MAX_HISTOGRAM_CLASSES = 60
+
+
+def exact_text(n: float) -> str:
+    """lib/qc.ts:9 exact()."""
+    return js_num(_to_precision(n, 12))
+
+
+def histogram_bins(values: list[float], bins: int | None = None, width: float | None = None) -> dict:
+    """lib/qc.ts:73-87 histogramBins() (only the {bins?, width?} overload; `include` is not
+    used by any of this port's callers and is not ported). Shared by distplot.py and
+    multiplot.py — hoisted here rather than left in one of them, since neither chart kind
+    owns histogram binning any more than the other."""
+    dlo, dhi = min(values), max(values)
+    want = bins if bins is not None else math.ceil(math.log2(len(values))) + 1
+    w = width if width is not None else nice_near((dhi - dlo or abs(dhi) or 1) / want)
+    lo, hi = dlo, dhi
+    start = math.floor(lo / w + 1e-9) * w
+    n = max(1, math.ceil((hi - start) / w - 1e-9))
+    if n > _MAX_HISTOGRAM_CLASSES:
+        raise ValueError(f"histogram(): {n} classes of width {exact_text(w)} (at most {_MAX_HISTOGRAM_CLASSES}): use a wider width, fewer bins, or limits closer to the data")
+    if start + n * w <= hi - 1e-9:
+        n += 1
+    edges = [_to_precision(start + i * w, 12) for i in range(n + 1)]
+    counts = [0.0] * n
+    for v in values:
+        k = min(n - 1, max(0, math.floor((v - start) / w + 1e-9)))
+        counts[k] += 1
+    return {"edges": edges, "counts": counts, "width": w}
 
 
 def check_domain(who: str, domain: tuple[float, float] | None) -> tuple[float, float] | None:

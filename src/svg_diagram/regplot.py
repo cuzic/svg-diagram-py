@@ -12,10 +12,9 @@ from __future__ import annotations
 
 import math
 
-from .catplot import SHAPES, marker_path
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import Canvas, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text
+from .charts_base import SHAPES, Canvas, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text
 from .emit_common import js_num, round1
 from .stats import lowess_fit, mean_of, poly_fit
 

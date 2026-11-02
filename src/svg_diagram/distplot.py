@@ -19,7 +19,7 @@ import math
 
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import Canvas, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, nice_near, nice_scale, num_text
+from .charts_base import Canvas, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, histogram_bins, nice_scale, num_text
 from .emit_common import js_num, round1
 from .stats import bin_counts, kde
 
@@ -27,34 +27,6 @@ KINDS: list[str] = ["hist", "kde", "ecdf", "rug"]
 DIST_FN: dict[str, str] = {"hist": "histplot", "kde": "kdeplot", "ecdf": "ecdfplot", "rug": "rugplot"}
 NAME: dict[str, str] = {"hist": "ヒストグラム", "kde": "密度曲線（KDE）", "ecdf": "経験累積分布（ECDF）", "rug": "ラグプロット"}
 STATS: list[str] = ["count", "density", "probability", "percent"]
-
-_MAX_CLASSES = 60
-
-
-def _exact(n: float) -> str:
-    """lib/qc.ts:9 exact()."""
-    return js_num(_to_precision(n, 12))
-
-
-def _histogram_bins(values: list[float], bins: int | None = None, width: float | None = None) -> dict:
-    """lib/qc.ts:73-87 histogramBins() (only the {bins?, width?} overload; `include` is not
-    used by charts-dist.ts and is not ported)."""
-    dlo, dhi = min(values), max(values)
-    want = bins if bins is not None else math.ceil(math.log2(len(values))) + 1
-    w = width if width is not None else nice_near((dhi - dlo or abs(dhi) or 1) / want)
-    lo, hi = dlo, dhi
-    start = math.floor(lo / w + 1e-9) * w
-    n = max(1, math.ceil((hi - start) / w - 1e-9))
-    if n > _MAX_CLASSES:
-        raise ValueError(f"histogram(): {n} classes of width {_exact(w)} (at most {_MAX_CLASSES}): use a wider width, fewer bins, or limits closer to the data")
-    if start + n * w <= hi - 1e-9:
-        n += 1
-    edges = [_to_precision(start + i * w, 12) for i in range(n + 1)]
-    counts = [0.0] * n
-    for v in values:
-        k = min(n - 1, max(0, math.floor((v - start) / w + 1e-9)))
-        counts[k] += 1
-    return {"edges": edges, "counts": counts, "width": w}
 
 
 def resolve_dist(who: str, data, opts: dict | None, default_kind: str) -> dict:
@@ -115,7 +87,7 @@ def resolve_dist(who: str, data, opts: dict | None, default_kind: str) -> dict:
     if "hist" in kinds:
         all_vals = [v for gr in groups for v in gr["values"]]
         try:
-            edges = _histogram_bins(all_vals, opts.get("bins"), opts.get("binWidth"))["edges"]
+            edges = histogram_bins(all_vals, opts.get("bins"), opts.get("binWidth"))["edges"]
         except ValueError as e:
             fail(who, str(e).removeprefix("histogram(): "))
 

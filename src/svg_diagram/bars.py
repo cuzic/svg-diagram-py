@@ -20,73 +20,13 @@ from .charts_base import inset_or_need
 from .charts_base import overlaps as _hit_rect
 from .charts_base import seg_hits_rect
 from .emit_common import emoji_span, js_num, js_round
+from .plane import fmt, ticks_of
 from .tokens import PALETTE, color_of
 
 SERIES: dict[str, str] = {"a": "accent", "b": "text", "c": "muted"}
 TICK, BAR, GAP, STACK_GAP = 6, 28, 18, 2
 CUM_TICKS = [0, 20, 40, 60, 80, 100]
 LINE_TONE: dict[str, str] = {"accent": "accent", "danger": "danger", "muted": "muted", "text": "text"}
-
-
-# ---------------------------------------------------------------------------------------------------------------------------
-# a small subset of lib/plane.ts: fmt()/ticksOf(), the only pieces bars() needs (plane() itself is not ported)
-# ---------------------------------------------------------------------------------------------------------------------------
-
-
-def _sig_round(n: float, p: int) -> float:
-    """Rounds `n` to `p` significant digits (JS `parseFloat(n.toPrecision(p))`)."""
-    if n == 0:
-        return 0.0
-    d = p - 1 - math.floor(math.log10(abs(n)))
-    factor = 10.0**d
-    rounded = math.floor(abs(n) * factor + 0.5) / factor
-    return rounded if n >= 0 else -rounded
-
-
-def fmt(n: float) -> str:
-    """lib/plane.ts:46 fmt()."""
-    return js_num(_sig_round(n, 3))
-
-
-def _nice_step(rng: float) -> float:
-    """lib/plane.ts:47-50 niceStep()."""
-    raw = rng / 6
-    mag = 10 ** math.floor(math.log10(raw))
-    f = raw / mag
-    if f < 1.5:
-        return mag * 1
-    if f < 3.5:
-        return mag * 2
-    if f < 7.5:
-        return mag * 5
-    return mag * 10
-
-
-def ticks_of(axis: dict, caller: str = "plane") -> list[dict]:
-    """lib/plane.ts:51-58 ticksOf() — bars() always calls this with axis = {"max": band["max"]},
-    so categories/ticks/min/step are never set in practice; the generic shape is kept anyway."""
-    if axis.get("categories"):
-        return [{"at": i + 1, "label": label} for i, label in enumerate(axis["categories"])]
-    if axis.get("ticks"):
-        return [({"at": t, "label": fmt(t)} if isinstance(t, (int, float)) else t) for t in axis["ticks"]]
-    min_v = axis.get("min", 0)
-    step = axis.get("step")
-    if step is None:
-        step = _nice_step(axis["max"] - min_v)
-    if not (step > 0) or not math.isfinite(step):
-        raise ValueError(f"{caller}(): an axis step must be a number > 0 (got {axis.get('step')})")
-    out = []
-    v, i = min_v, 0
-    while v <= axis["max"] + step * 1e-9 and i < 200:
-        out.append({"at": v, "label": fmt(v)})
-        i += 1
-        v = min_v + i * step
-    return out
-
-
-# ---------------------------------------------------------------------------------------------------------------------------
-# bars.ts
-# ---------------------------------------------------------------------------------------------------------------------------
 
 
 def _size_of(band: dict, roles: dict) -> float:

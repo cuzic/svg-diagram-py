@@ -54,6 +54,7 @@ from .bowtie import bowtie_band, layout_bowtie, render_bowtie
 from .fta import fta_band, layout_fta, render_fta
 from .bpmn import bpmn_band, layout_bpmn, render_bpmn
 from .classes import classes_band, layout_classes_band, render_classes
+from .states import flowchart_band, layout_states_band, render_states, states_band
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
@@ -413,6 +414,19 @@ class _Bpmn:
 class _Classes:
     """classDiagram() is a standalone band type ("classes"), not part of the "chart" family —
     its own layout_classes_band()/render_classes() pair (lib/classes.ts/lib/emit-figures.ts)."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _States:
+    """stateDiagram()/flowchart() are a standalone band type ("states"), not part of the
+    "chart" family — their own layout_states_band()/render_states() pair
+    (lib/states.ts/lib/emit-figures.ts)."""
 
     x: float
     y: float
@@ -1320,6 +1334,33 @@ class Diagram:
         band = classes_band(classes, relations, dir=dir, straighten=straighten, id=id)
         self._elements.append(_Classes(x=x, y=y, w=width, band=band))
 
+    def state_diagram(
+        self, states: list[dict], transitions: list[dict], *, x: float, y: float, width: float, dir: str | None = None,
+        initial: str | None = None, max_node_w: float | None = None, returns: str | None = None, straighten: bool | None = None, id: str | None = None,
+    ) -> None:
+        """lib/dsl/diagrams.ts's stateDiagram(): states (boxes) and transitions (arrows) that
+        place themselves in layers, flowing left to right (dir: 'down' for top to bottom). A
+        transition that goes back, skips a state or loops on itself is routed around the
+        others. `states`: [{id, label, sub?, tone?, shape?, final?}]. `transitions`:
+        [{from, to, label?, line?, tone?, strong?}]. A state's `icon` is NOT supported (see
+        states.py's module docstring)."""
+        band = states_band(states, transitions, dir=dir, initial=initial, max_node_w=max_node_w, returns=returns, straighten=straighten, id=id)
+        self._elements.append(_States(x=x, y=y, w=width, band=band))
+
+    def flowchart(
+        self, nodes: list[dict], edges: list[dict], *, x: float, y: float, width: float, dir: str | None = None,
+        max_node_w: float | None = None, returns: str | None = None, straighten: bool | None = None, id: str | None = None,
+    ) -> None:
+        """lib/dsl/diagrams.ts's flowchart(): steps, decisions (a diamond that holds the
+        question) and start/end pills, joined by arrows; Yes/No go on the arrows that leave
+        a decision. Places itself like state_diagram() and runs down unless `dir` says
+        otherwise; a return to an earlier node goes round the outside by default
+        (`returns: 'outer'`). `nodes`: [{id, label?, sub?, kind? ('process'(default)/
+        'decision'/'terminator'), tone?}]. `edges`: [{from, to, label?, line?, tone?,
+        strong?}]."""
+        band = flowchart_band(nodes, edges, dir=dir, max_node_w=max_node_w, returns=returns, straighten=straighten, id=id)
+        self._elements.append(_States(x=x, y=y, w=width, band=band))
+
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's plane(): a coordinate plane — axes with ticks, points, guide
         lines, dimension lines and labels, all in the plane's own units. Unlike the other
@@ -1625,6 +1666,9 @@ class Diagram:
         if isinstance(el, _Classes):
             laid = layout_classes_band(el.band, el.x, el.y, el.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
             return render_classes(laid, day=el.day)
+        if isinstance(el, _States):
+            laid = layout_states_band(el.band, el.x, el.y, el.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
+            return render_states(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

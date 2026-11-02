@@ -47,6 +47,7 @@ from .flow_shapes import (
 from .sequence import layout_sequence, render_sequence
 from .table import layout_table, render_table
 from .tree import layout_tree_band, render_tree
+from .wordart import layout_word_art, render_word_art, word_art_band
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance, run_color_of, text_color_of
 from .wrap import wrap_text
 
@@ -284,6 +285,15 @@ class _Sequence:
 
 @dataclass
 class _FlowShape:
+    x: float
+    y: float
+    cw: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _WordArt:
     x: float
     y: float
     cw: float
@@ -545,6 +555,47 @@ class Diagram:
         band = value_chain_band(support=support, primary=primary, margin=margin, titles=titles)
         self._elements.append(_FlowShape(x=x, y=y, cw=width, band=band))
 
+    def wordart(
+        self,
+        text: str,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        id: str | None = None,
+        style: str | None = None,
+        writing: str | None = None,
+        size: float | str | None = None,
+        weight: str | None = None,
+        font: str | None = None,
+        tone: str | None = None,
+        gradient: dict | None = None,
+        outline=None,
+        shadow=None,
+        glow=None,
+        bevel: bool | None = None,
+        extrude=None,
+        reflection=None,
+        plate: str | None = None,
+        spacing: float | None = None,
+        arc: float | None = None,
+        rotate: float | None = None,
+        flip: str | None = None,
+        align: str | None = None,
+        limit: float | None = None,
+    ) -> None:
+        """lib/wordart.ts's wordart(): decorated headline text (bold/outline/shadow/sticker/
+        glow/emboss/3d/gradient/reflect presets, bent along an arc, or set vertically/縦書き).
+        The layout formula IS byte-identical to Node (golden-tested live); only text widths
+        use this port's approximation."""
+        band = word_art_band(
+            text, id=id, style=style, writing=writing, size=size, weight=weight, font=font, tone=tone,
+            gradient=gradient, outline=outline, shadow=shadow, glow=glow, bevel=bevel, extrude=extrude,
+            reflection=reflection, plate=plate, spacing=spacing, arc=arc, rotate=rotate, flip=flip,
+            align=align, limit=limit,
+        )
+        self._elements.append(_WordArt(x=x, y=y, cw=width, band=band))
+
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:
         """diagram({status}): a dashed-outline pill — position is a new simplified formula, see render_status()."""
         self._elements.append(_Status(x=x, y=y, width=width, text=text, status=status, height=height, size=size))
@@ -765,6 +816,9 @@ class Diagram:
         if isinstance(el, _FlowShape):
             laid = layout_flow_shape(el.band, el.x, el.y, el.cw, approx_width_of, ROLES, "phrase")
             return render_flow_shape(laid, day=el.day)
+        if isinstance(el, _WordArt):
+            laid = layout_word_art(el.band, el.x, el.y, el.cw, approx_width_of, ROLES, "phrase")
+            return render_word_art(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

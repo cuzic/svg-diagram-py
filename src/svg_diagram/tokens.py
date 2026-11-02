@@ -112,6 +112,9 @@ FONT_STACKS: dict[str, str] = {
     "emoji": "'Noto Color Emoji','Segoe UI Emoji',sans-serif",
 }
 
+# lib/tokens.ts:251
+MIN_FONT_SIZE = 14
+
 # lib/tokens.ts:269-271, 306
 ROLES: dict[str, int] = {"title": 15, "label": 14, "body": 14, "note": 14, "banner": 16, "stat": 34, "display": 56}
 CONNECT_LABEL_SIZE = 14

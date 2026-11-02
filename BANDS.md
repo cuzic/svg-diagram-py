@@ -42,7 +42,7 @@ svg-diagram の全band種別(`lib/emit-handlers.ts`のディスパッチ表、42
 | wireframe / screens | ⬜ | 独自のflexレイアウトエンジン(844行) |
 | chevron / funnel / cycle / venn / concentric / valueChain | ✅ | layoutFlowShape/renderFlowShapeともexport済み、live golden test(6形状全て) |
 | emblem | ⬜ | lib/emblem-shapes.ts(~13形状の輪郭幾何+反復サイズ探索)が別途必要、見送り |
-| wordart | ⬜ | layoutWordArt(128行)、閉形式の可能性高い |
+| wordart | ✅ | layoutWordArt/renderWordArtともexport済み、live golden test(horizontal/vertical/arc、全プリセット・gradient/plate/flip/rotate)。grapheme分割はIntl.Segmenter未再現(コードポイント単位の近似、approx_width.pyと同方針)、uid/gradient idはNode非再現(1枚のSVG内で一意なら十分、golden比較から除外) |
 
 ## 重要な発見: states/classes は Tier 3 相当(layeredAttempt依存)
 

@@ -40,6 +40,8 @@ import {layoutTable, layoutSequence} from '../../lib/seq-table.ts';
 import {renderTable, renderSequence} from '../../lib/emit-tables.ts';
 import {chevronBand, funnelBand, cycleBand, vennBand, concentricBand, valueChainBand, layoutFlowShape} from '../../lib/flow-shapes.ts';
 import {renderFlowShape} from '../../lib/emit-figures.ts';
+import {wordartBand, layoutWordArt} from '../../lib/wordart.ts';
+import {renderWordArt} from '../../lib/emit-wordart.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -225,6 +227,12 @@ function handle(req: Req): unknown {
     }
     case 'renderFlowShape':
       return renderFlowShape(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutWordArt': {
+      const band = wordartBand(req.text as string, (req.opts ?? {}) as never);
+      return layoutWordArt(band, req.x as number, req.y as number, req.cw as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
+    }
+    case 'renderWordArt':
+      return renderWordArt(req.band as never, (req.day ?? 1) as never, (req.dim ?? false) as never);
     case 'renderStatus':
       return renderStatus({pill: {x: req.x as number, y: req.y as number, w: req.w as number, h: req.h as number}, textY: req.textY as number, text: req.text as string, status: req.status as string, size: (req.size ?? 14) as number} as never);
     case 'renderRaw':

@@ -54,6 +54,7 @@ from .heatmap import heatmap_band
 from .radar import radar_band
 from .sankey import sankey_band
 from .butterfly import butterfly_band
+from .bubble import bubble_band
 from .harvey import harvey_band
 from .stacked import mekko_band, stacked_bars_band
 from .tornado import tornado_band
@@ -984,6 +985,38 @@ class Diagram:
             if v is not None:
                 opts[k] = v
         band = harvey_band(rows, cols, values, opts)
+        self._elements.append(_Chart(x=x, y=y, w=width, band=band))
+
+    def bubble(
+        self,
+        points: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        x_axis: dict | None = None,
+        y_axis: dict | None = None,
+        size_title: str | None = None,
+        size_unit: str | None = None,
+        id: str | None = None,
+        height: float | None = None,
+        label_role: str | None = None,
+        alt: str | None = None,
+    ) -> None:
+        """lib/dsl/charts.ts's bubble(): a scatter chart whose third measure is the bubble's
+        AREA. `points`: [{label, x, y, size, tone?, id?}]. `x_axis`/`y_axis` are Node's
+        `x`/`y` ({title?, unit?, min?, max?, line?, lineLabel?}) — renamed here since `x`/`y`
+        are this method's own position kwargs. The layout formula IS byte-identical to Node
+        (golden-tested live, including the axis auto-widening loop); only text widths use
+        this port's approximation."""
+        opts: dict = {}
+        for k, v in (
+            ("x", x_axis), ("y", y_axis), ("sizeTitle", size_title), ("sizeUnit", size_unit),
+            ("id", id), ("height", height), ("labelRole", label_role), ("alt", alt), ("width", width),
+        ):
+            if v is not None:
+                opts[k] = v
+        band = bubble_band(points, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
     def status(self, text: str, *, x: float, y: float, width: float, status: str = "draft", height: float = 24, size: float = 14) -> None:

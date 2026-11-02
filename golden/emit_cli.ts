@@ -46,11 +46,13 @@ import {renderWordArt} from '../../lib/emit-wordart.ts';
 import {bars} from '../../lib/dsl/bars.ts';
 import {layoutBars} from '../../lib/bars.ts';
 import {renderBars} from '../../lib/emit-figures.ts';
-import {bowtie, faultTree} from '../../lib/dsl/diagrams.ts';
+import {bowtie, faultTree, bpmn} from '../../lib/dsl/diagrams.ts';
 import {layoutBowtie} from '../../lib/bowtie.ts';
 import {renderBowtie} from '../../lib/emit-bowtie.ts';
 import {layoutFta} from '../../lib/fta.ts';
 import {renderFta} from '../../lib/emit-fta.ts';
+import {layoutBpmn} from '../../lib/bpmn.ts';
+import {renderBpmn} from '../../lib/emit-figures.ts';
 import {heatmap, sankey, radar, treemap, waterfall, stackedBars, mekko, tornado, butterfly, harvey, bubble, combo} from '../../lib/dsl/charts.ts';
 import {catplot, boxplot, violinplot, stripplot, swarmplot, pointplot, barplot, displot, histplot, kdeplot, ecdfplot, rugplot, hist2d, jointplot, kde2d as kde2dDsl, pairplot, regplot, residplot, clustermap} from '../../lib/dsl/charts-stats.ts';
 import {quadrantBand, layoutQuadrant} from '../../lib/quadrant.ts';
@@ -340,6 +342,13 @@ function handle(req: Req): unknown {
     }
     case 'renderFta':
       return renderFta(req.band as never, (req.day ?? 1) as never, tones);
+    case 'layoutBpmn': {
+      const band = bpmn(req.lanes as never, req.nodes as never, req.flows as never, (req.opts ?? {}) as never);
+      const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: false, space: (req.space ?? 1) as number};
+      return layoutBpmn(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, env);
+    }
+    case 'renderBpmn':
+      return renderBpmn(req.band as never, (req.day ?? 1) as never, tones);
     case 'layoutLines': {
       let band: never;
       if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;

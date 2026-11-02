@@ -62,15 +62,18 @@ bpmn/fta/causeと合わせて「layered routing エンジン」をまとめて�
 |---|---|---|
 | states(flowchartを含む) | ⬜ | layeredAttempt依存。Tier2から格上げ |
 | classes (UML) | ⬜ | layeredAttempt依存。Tier2から格上げ |
-| bpmn | ⬜(再調査済み、Tier3確定) | emblem/quadrant/bowtie/ftaと同じ「過大評価」パターンを疑って再調査したが、今回は**裏付けが取れた**: `lib/bpmn.ts`(313行)は`layered-route.ts`の`layeredAttempt`ではなく`lib/graph-layout.ts`の`layoutLayered`(サイクル除去・longest-path layering・ALAP/tighten・層folding・barycenter交差削減・座標割当を含む257行)を直接呼ぶ——wrapperを経由しない分軽いが、肝心の重いアルゴリズム自体は同じで未移植。加えて`lib/orthogonal-route.ts`(97行、routeClear)も未移植。合計650行超級の投資で、bowtie/ftaのような「既存基盤に乗るだけ」の軽量ケースではない。Tier 3確定を維持 |
 | cause(CRT/FRT) | ⬜ | 最大規模。別計画で起票予定(交差削減・hop経路探索含む) |
 
-**layoutLayered()自体は移植済み(✅、下記参照)——Tier 3投資のうち最大の再利用可能な一枚を先行して切り出した。** ただしこれだけでは上記のどのbandも使えるようにはならない: states/classes/cause/pert/causalLoop/dependencyNetworkは`lib/layered-route.ts`の`layeredAttempt`(606行、layoutLayeredをラップしてlevelGapの再試行+hop経路探索を行う、未移植)経由でしか使わず、bpmnは直接呼ぶが`lib/orthogonal-route.ts`(97行、routeClear、未移植)と各band自身の呼び出しコード(測定・配色・ラベル配置)がまだ無い。したがって各bandのTier 3解消にはまだ個別の投資が要る。
+**bpmnはTier 3から外して移植済み(✅、下記参照)。** `layoutLayered`/`routeClear`という2つのアルゴリズム的前提を先行して切り出した上で、`lib/bpmn.ts`本体(313行、ノード計測・レーン/列配置・フロー経路探索・チップ/ゲートウェイラベル配置)もフル移植した。states/classes/cause/pert/causalLoop/dependencyNetworkは依然未着手: これらは`lib/layered-route.ts`の`layeredAttempt`(606行、layoutLayeredをラップしてlevelGapの再試行+hop経路探索を行う、未移植)経由でしか使わないため、bpmnの完了がこれらを直接解放するわけではない。
+
+| band | 状態 | 備考 |
+|---|---|---|
+| bpmn | ✅ | 再調査の結果、Tier 3格上げは一部誤りと判明: `lib/bpmn.ts`は`layered-route.ts`の`layeredAttempt`ではなく`lib/graph-layout.ts`の`layoutLayered`(既に移植済み)と`lib/orthogonal-route.ts`の`routeClear`(グリッド上のDijkstra探索、同じく先行移植済み)に直接依存するだけで、hop経路探索の再試行ラッパー自体は要らない。それでも本体(313行、ノードの計測・`layoutLayered`による列割当・レーンごとの行の高さ・フロー経路の試行リスト(直進/ゲートウェイ頂点/チャンネル経由/最終手段の`routeClear`探索)・条件チップの衝突回避配置・ゲートウェイラベルの空き場所探索)は大きかった。`icon`/`iconTone`(タスク上のアイコン)はicon registry自体が未移植のため対象外(box()のrenderBoxIcon・sankey()のノードアイコンと同じ理由)。`fit:'shrink'`の段階的縮小カスケードも含めてフル移植。live golden test 20件一発通過(2レーン直線・1レーンの戻り辺+ANDゲートウェイ+message flow(dashed)・自己ループ+ORゲートウェイ+戻り辺・fit:shrinkでの縮小・エラー経路7種)。`narrowTexts`/`narrowField`(fit:shrink時の「縮まりすぎた」診断、states()と共有予定)は`tree_text.py`に追加 |
 
 | 関数 | 状態 | 備考 |
 |---|---|---|
-| layoutLayered / breakCycles | ✅ | `lib/graph-layout.ts`の`layoutLayered`(257行、サイクル除去・longest-path layering・tighten/ALAP・層folding・barycenter交差削減・座標割当=relax/Brandes-Köpf)と`breakCycles`(DFSベースのサイクル検出、declared back edgeの妥当性検証含む)を`graph_layout.py`にフル移植。live golden test 34件一発通過(分岐・交差削減(transpose含む)・自己ループ・層skipダミー・2成分分離・tighten/ALAP・fold・outer lane(all/declared×near/low)・coord relax/bk・エラー経路5種)。**states/classes/bpmn/cause/pert/causalLoop/dependencyNetwork共有の最大の再利用可能基盤を先行切り出し**だが、`layeredAttempt`ラッパー(hop経路探索・levelGap再試行)と`routeClear`(直交ルーティング)は未移植のため、どのbandもまだこれだけでは動かせない |
-| routeClear | ✅ | `lib/orthogonal-route.ts`(97行、グリッド上のDijkstra探索による直交ルーティング——箱の膨張境界+ヒント線でグリッドを作り、曲がり/交差/他の経路への相乗りにコストを課す)を`orthogonal_route.py`にフル移植。bpmn()専用(他で使われていない)が、純粋な幾何アルゴリズムで自己完結。live golden test 10件一発通過(直線・縦横検出・障害物による迂回・margin/stub変更・xs/ys hint・他経路とのRIDE/CROSS・到達不能でNone・複数回の曲がり)。これでbpmn()が必要とする2つのアルゴリズム的前提(layoutLayered+routeClear)は揃ったが、`lib/bpmn.ts`本体(313行、ノード計測・レーン配置・呼び出しコード)はまだ未移植 |
+| layoutLayered / breakCycles | ✅ | `lib/graph-layout.ts`の`layoutLayered`(257行、サイクル除去・longest-path layering・tighten/ALAP・層folding・barycenter交差削減・座標割当=relax/Brandes-Köpf)と`breakCycles`(DFSベースのサイクル検出、declared back edgeの妥当性検証含む)を`graph_layout.py`にフル移植。live golden test 34件一発通過(分岐・交差削減(transpose含む)・自己ループ・層skipダミー・2成分分離・tighten/ALAP・fold・outer lane(all/declared×near/low)・coord relax/bk・エラー経路5種)。**states/classes/bpmn/cause/pert/causalLoop/dependencyNetwork共有の最大の再利用可能基盤を先行切り出し**——bpmn()はこれだけで動かせた(下記参照)が、states/classes/cause/pert/causalLoop/dependencyNetworkは`layeredAttempt`ラッパー(hop経路探索・levelGap再試行)経由でしか使わないため、これだけではまだ動かせない |
+| routeClear | ✅ | `lib/orthogonal-route.ts`(97行、グリッド上のDijkstra探索による直交ルーティング——箱の膨張境界+ヒント線でグリッドを作り、曲がり/交差/他の経路への相乗りにコストを課す)を`orthogonal_route.py`にフル移植。bpmn()専用(他で使われていない)が、純粋な幾何アルゴリズムで自己完結。live golden test 10件一発通過(直線・縦横検出・障害物による迂回・margin/stub変更・xs/ys hint・他経路とのRIDE/CROSS・到達不能でNone・複数回の曲がり)。これとlayoutLayeredでbpmn()本体(313行)も移植できた(下記参照) |
 
 **bowtie・fta は Tier 3 から外して移植済み(✅、下記参照)——当初の一括 Tier 3 分類は過大評価だった。bpmn は再調査したが今回は過大評価ではなく確定(上記参照)。states/classes/causeは`layeredAttempt`そのものに依存するため同様にTier 3確定。**
 

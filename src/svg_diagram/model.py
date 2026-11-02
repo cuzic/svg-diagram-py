@@ -52,6 +52,7 @@ from .wordart import layout_word_art, render_word_art, word_art_band
 from .bars import bars_band, layout_bars, render_bars
 from .bowtie import bowtie_band, layout_bowtie, render_bowtie
 from .fta import fta_band, layout_fta, render_fta
+from .bpmn import bpmn_band, layout_bpmn, render_bpmn
 from .charts import layout_chart, render_chart
 from .heatmap import heatmap_band
 from .radar import radar_band
@@ -387,6 +388,18 @@ class _Bowtie:
 class _Fta:
     """faultTree() is a standalone band type ("fta"), not part of the "chart" family —
     its own layout_fta()/render_fta() pair (lib/fta.ts/lib/emit-fta.ts)."""
+
+    x: float
+    y: float
+    w: float
+    band: dict
+    day: int | str = 1
+
+
+@dataclass
+class _Bpmn:
+    """bpmn() is a standalone band type ("bpmn"), not part of the "chart" family —
+    its own layout_bpmn()/render_bpmn() pair (lib/bpmn.ts/lib/emit-figures.ts)."""
 
     x: float
     y: float
@@ -1274,6 +1287,16 @@ class Diagram:
         band = fta_band(root, max_node_w=max_node_w, cut_sets=cut_sets, quant=quant, quant_period=quant_period, id=id)
         self._elements.append(_Fta(x=x, y=y, w=width, band=band))
 
+    def bpmn(self, lanes: list[dict], nodes: list[dict], flows: list[dict], *, x: float, y: float, width: float, fit: str | None = None, id: str | None = None) -> None:
+        """lib/dsl/diagrams.ts's bpmn(): a business flow in lanes, BPMN-style — tasks,
+        start/end events and gateways (xor/and/or), joined by sequence flows (solid) and
+        message flows (dashed). `lanes`: [{id, label, tone?}]. `nodes`: [{id, lane, label?,
+        sub?, kind?, tone?}]. `flows`: [{from, to, label?, line?}]. `fit: 'shrink'`: narrow
+        the figure step by step until it fits (default: raise). A task's `icon`/`iconTone`
+        are NOT supported (see bpmn.py's module docstring)."""
+        band = bpmn_band(lanes, nodes, flows, fit=fit, id=id)
+        self._elements.append(_Bpmn(x=x, y=y, w=width, band=band))
+
     def plane(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's plane(): a coordinate plane — axes with ticks, points, guide
         lines, dimension lines and labels, all in the plane's own units. Unlike the other
@@ -1573,6 +1596,9 @@ class Diagram:
         if isinstance(el, _Fta):
             laid = layout_fta(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
             return render_fta(laid, day=el.day)
+        if isinstance(el, _Bpmn):
+            laid = layout_bpmn(el.band, el.x, el.y, el.w, approx_width_of, ROLES, "phrase")
+            return render_bpmn(laid, day=el.day)
         raise TypeError(f"unknown element type {type(el)!r}")
 
     def _render_pyramid(self, el: _Pyramid) -> str:

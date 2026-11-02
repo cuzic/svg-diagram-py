@@ -53,6 +53,29 @@ def measure_node(label: str, sub: str | None, max_w: float, width_of, roles: dic
     return {"label": lab, "sub": sb, "w": max(MIN_W, math.ceil(tw + 2 * PAD_X)), "h": 2 * PAD_Y + len(lab) * line_h(L) + len(sb) * line_h(S)}
 
 
+_WS_RE = re.compile(r"\s")
+
+
+def narrow_texts(texts: list[list[str]]) -> list[str]:
+    """lib/tree.ts:38-39 narrowTexts(): the wrapped texts (each a list of lines) that broke into
+    several lines of 2.5 characters or fewer on average — what `fit: 'shrink'` squeezing a column
+    too far does (rule shrink-narrow-text). Returns the joined texts, each once. Shared by bpmn()
+    (this port) and, later, states()."""
+    out: list[str] = []
+    for lines in texts:
+        if len(lines) >= 3 and len(_WS_RE.sub("", "".join(lines))) / len(lines) <= 2.5:
+            joined = "".join(lines)
+            if joined not in out:
+                out.append(joined)
+    return out
+
+
+def narrow_field(texts: list[list[str]]) -> dict:
+    """lib/tree.ts:43 narrowField()."""
+    n = narrow_texts(texts)
+    return {"narrow": n} if n else {}
+
+
 def node_runs(r: dict, l: dict, roles: dict) -> list[dict]:
     """lib/tree.ts:73-79 nodeRuns(): the centred text runs of a node laid in rectangle r."""
     L, S = roles["body"], roles["note"]

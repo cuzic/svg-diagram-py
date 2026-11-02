@@ -79,6 +79,8 @@ import {layoutChart} from '../../lib/charts.ts';
 import {renderChart} from '../../lib/charts-emit.ts';
 import {sum, meanOf, sdOf, quantile, boxStats, tCritical95, errorBar, kde, swarmOffsets, binCounts, binIndex, polyFit, kde2d, averageLinkage, dendrogramOrder, lowessFit} from '../../lib/stats.ts';
 import type {Merge} from '../../lib/stats.ts';
+import {andClashes} from '../../lib/cause-clash.ts';
+import {causeCrossings} from '../../lib/cause-hop.ts';
 
 // Maps-to-plain-object helper: Node's layout functions return a `Map`, which JSON.stringify
 // serializes as `{}` (silently empty!) — convert to a plain object before returning so the
@@ -491,6 +493,10 @@ function handle(req: Req): unknown {
       return bandInset(req.side as never, req.items as never, req.attempt as number);
     case 'ringSide':
       return ringSide(req.loopNodes as never, req.to as never);
+    case 'andClashes':
+      return andClashes(req.edges as never, req.ands as never);
+    case 'causeCrossings':
+      return causeCrossings(req.edges as never, req.flow as never, req.band as never, req.boxes as never, req.ands as never, (req.everyRun ?? false) as boolean);
     case 'layoutLines': {
       let band: never;
       if (req.linesKind === 'lines') band = lines(req.series as never, (req.opts ?? {}) as never) as never;

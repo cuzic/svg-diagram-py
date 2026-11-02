@@ -2,8 +2,9 @@
 lib/emit-bowtie.ts's renderBowtie(). bowtie(): threats on the left, each through its
 preventive barriers, into the top event in the middle (under its hazard); out through the
 mitigating barriers to the consequences on the right. A fixed layout: no tree or layered
-routing — the ONLY auto-layout dependency is the width-narrowing cascade
-(lib/fit-width.ts's fitLayout()), ported in scope in fit_width.py (shared with fta.py).
+routing — the ONLY auto-layout dependency is the width-narrowing cascade, a narrow helper
+(`narrow_cascade_fit()`, shared with fta.py) kept separate from fit_width.py's full port of
+lib/fit-width.ts's fitLayout() (see that module's docstring).
 
 Golden master: lib/bowtie.ts + lib/emit-bowtie.ts (Node.js, svg-diagram).
 """
@@ -12,7 +13,7 @@ from __future__ import annotations
 
 from .emit_boxes import render_box_rect
 from .emit_common import arrow_path, emoji_span, js_round, snap4
-from .fit_width import fit_layout
+from .fit_width import narrow_cascade_fit
 from .tokens import PALETTE, color_of, tone_style
 from .tree_text import measure_node, node_runs
 
@@ -180,7 +181,7 @@ def layout_bowtie(band: dict, x: float, y: float, w: float, width_of, roles: dic
 
     auto = band.get("maxNodeW") == "auto"
     written = band["maxNodeW"] if isinstance(band.get("maxNodeW"), (int, float)) else None
-    fitted = fit_layout(
+    fitted = narrow_cascade_fit(
         who="bowtie()", w=w, max_node_w=written, mode="auto" if auto else "omitted",
         build=lambda max_w, floor: attempt(max_w, floor),
         fix="a wider figure (diagram({width})), fewer barriers in a row, or shorter texts",

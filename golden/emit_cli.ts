@@ -38,6 +38,7 @@ import {simplify as polySimplify, bendsOf, totalLength, crossingsOf, crossingsWi
 import {moveApart} from '../../lib/route-apart.ts';
 import {headCrossings, searchRoute} from '../../lib/route-search.ts';
 import {gapFor, stubOf, laneStepOf, elbows, corridorLoad, layoutWithLanes, routeLayered, layeredAttempt} from '../../lib/layered-route.ts';
+import {splitByHeight, splitWidest} from '../../lib/fit-split.ts';
 import {layoutHanging, layoutBrace, layoutFishbone, layoutTimelineMap, mirror} from '../../lib/map-layouts.ts';
 import {layoutTreeBand, measureNode, nodeRuns} from '../../lib/tree.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
@@ -286,6 +287,14 @@ function handle(req: Req): unknown {
       };
       const a = layeredAttempt(req.nodes as never, req.edges as never, (req.layoutOpts ?? {}) as never, attemptOpts as never);
       return {routes: mapToObj(a.routes), score: a.score, size: a.size, fits: a.fits, loose: a.loose, asided: a.asided ?? null};
+    }
+    case 'splitByHeight': {
+      const lay = layoutLayered(req.nodes as never, req.edges as never, (req.opts ?? {}) as never);
+      return splitByHeight(lay, req.budget as number) ?? null;
+    }
+    case 'splitWidest': {
+      const lay = layoutLayered(req.nodes as never, req.edges as never, (req.opts ?? {}) as never);
+      return splitWidest(lay) ?? null;
     }
     case 'layoutHanging':
       return treeLayoutToPlain(layoutHanging(req.root as never, {rowFirst: req.rowFirst, gap: req.gap, indent: req.indent, rowGap: req.rowGap}));

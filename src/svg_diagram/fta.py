@@ -5,7 +5,7 @@ it, down to basic events (circle), undeveloped events (diamond) and house events
 An event and the gate under it are one "compound node" laid out by lib/graph-layout.ts's
 layoutTree() (a pure tree: a repeated event is drawn again, never joined) — already
 ported in graph_layout.py for mindmap/tree. The only other auto-layout dependency is the
-width-narrowing cascade (fit_width.py, shared with bowtie.py).
+width-narrowing cascade, `fit_width.py`'s `narrow_cascade_fit()` (shared with bowtie.py).
 
 NOT ported: ftaIds() (used only by the DSL layer to pre-validate connect() targets; this
 port's anchors already come from layoutFta()'s own `anchors` list, same as every other
@@ -25,7 +25,7 @@ from .badge import pill_svg
 from .charts_base import _to_precision as to_precision
 from .emit_boxes import render_box_rect
 from .emit_common import emoji_span, js_num, js_round, snap4
-from .fit_width import fit_layout
+from .fit_width import narrow_cascade_fit
 from .fta_analysis import SHARED_LIMIT, fta_var, minimal_cut_sets, single_points, top_probability
 from .graph_layout import layout_tree
 from .tokens import PALETTE, color_of, tone_style
@@ -327,7 +327,7 @@ def layout_fta(band: dict, x: float, y: float, w: float, width_of, roles: dict, 
 
     auto = band.get("maxNodeW") == "auto"
     written = band["maxNodeW"] if isinstance(band.get("maxNodeW"), (int, float)) else None
-    fitted = fit_layout(
+    fitted = narrow_cascade_fit(
         who="faultTree()", w=w, max_node_w=written, mode="auto" if auto else "omitted",
         build=lambda max_w, floor: attempt(max_w, floor),
         fix="a wider figure (diagram({width})), or a smaller tree",

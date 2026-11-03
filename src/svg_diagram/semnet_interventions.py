@@ -38,15 +38,6 @@ def _clamp(v: float, lo: float, hi: float) -> float:
     return min(hi, max(lo, v))
 
 
-def _dedupe(values: list[float]) -> list[float]:
-    """Matches a JS `new Set([...])`'s iteration order: first occurrence, in insertion order."""
-    seen: list[float] = []
-    for v in values:
-        if v not in seen:
-            seen.append(v)
-    return seen
-
-
 def plan_interventions(c: Canvas, items: list[dict], positions: dict[str, dict], side_of: Callable[[dict], str]) -> dict:
     """lib/semnet-interventions.ts:25-70 planInterventions(): boxes in order of where their
     targets are, pushed apart by GAP (forwards, then back from the end), each with one arrow
@@ -127,10 +118,11 @@ def plan_interventions(c: Canvas, items: list[dict], positions: dict[str, dict],
                 lo2, hi2 = max(bu0 + 10, t["u0"] + 6), min(bu1 - 10, t["u1"] - 6)
                 cands: list[list[tuple[float, float]]] = []
                 if lo2 <= hi2:
-                    for u in _dedupe([_clamp(tc, lo2, hi2), (lo2 + hi2) / 2, lo2, hi2]):
+                    # matches a JS `new Set([...])`'s iteration order: first occurrence, in insertion order
+                    for u in dict.fromkeys([_clamp(tc, lo2, hi2), (lo2 + hi2) / 2, lo2, hi2]):
                         cands.append([(u, e), (u, n)])
                 s0 = _clamp(tc, bu0 + 10, bu1 - 10)
-                for en in _dedupe([_clamp(tc, t["u0"] + 6, t["u1"] - 6), t["u0"] + 8, t["u1"] - 8]):
+                for en in dict.fromkeys([_clamp(tc, t["u0"] + 6, t["u1"] - 6), t["u0"] + 8, t["u1"] - 8]):
                     cands.append([(s0, e), (s0, m), (en, m), (en, n)])
                 hit_name = ""
                 ok_path: list[dict] | None = None

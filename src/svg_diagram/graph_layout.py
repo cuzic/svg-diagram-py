@@ -523,7 +523,7 @@ def layout_layered(nodes: list[dict], edges: list[dict], opts: dict | None = Non
         for n in nodes:
             members[layer[n["id"]]].append(n)
 
-        def used(ns: list[dict], dummies: int) -> float:
+        def used(ns: list[dict], dummies: float) -> float:
             return sum(across(n["size"]) for n in ns) + gap * (max(0, len(ns) - 1) + dummies)
 
         rows_of: list[list[list[dict]]] = []
@@ -788,12 +788,24 @@ def layout_layered(nodes: list[dict], edges: list[dict], opts: dict | None = Non
 
     lows = [c for c in outers if low_side(c)]
     highs = [c for c in outers if not low_side(c)]
-    low_shift = (outer_opt["gap"] + (len(lows) - 1) * outer_opt["step"] + 2) if lows else 0.0
-    for k, c in enumerate(lows):
-        lane_of[c["index"]] = low_shift - outer_opt["gap"] - k * outer_opt["step"]
-    for k, c in enumerate(highs):
-        lane_of[c["index"]] = low_shift + hi + outer_opt["gap"] + k * outer_opt["step"]
-    hi = low_shift + hi + ((outer_opt["gap"] + (len(highs) - 1) * outer_opt["step"] + 2) if highs else 0.0)
+    # lows/highs are only non-empty when outers is (filtered from it), and a chain only ever
+    # gets "outer": True while outer_opt is truthy (see where "outer" is set above) — outer_opt
+    # itself is never reassigned after that, so it is still truthy wherever lows/highs is used
+    # below (each use is itself guarded by "if lows"/"if highs").
+    if lows:
+        assert outer_opt is not None
+        low_shift = outer_opt["gap"] + (len(lows) - 1) * outer_opt["step"] + 2
+        for k, c in enumerate(lows):
+            lane_of[c["index"]] = low_shift - outer_opt["gap"] - k * outer_opt["step"]
+    else:
+        low_shift = 0.0
+    if highs:
+        assert outer_opt is not None
+        for k, c in enumerate(highs):
+            lane_of[c["index"]] = low_shift + hi + outer_opt["gap"] + k * outer_opt["step"]
+        hi = low_shift + hi + outer_opt["gap"] + (len(highs) - 1) * outer_opt["step"] + 2
+    else:
+        hi = low_shift + hi
 
     def centre(node_id: str) -> dict:
         s = slots[node_id]

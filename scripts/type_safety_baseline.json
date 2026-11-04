@@ -13,7 +13,6 @@
     "src/svg_diagram/fit_width.py": 1,
     "src/svg_diagram/flow_shapes.py": 1,
     "src/svg_diagram/fta.py": 1,
-    "src/svg_diagram/graph_layout.py": 10,
     "src/svg_diagram/layered_route.py": 2,
     "src/svg_diagram/model.py": 1,
     "src/svg_diagram/model_shapes.py": 3,
@@ -34,7 +33,7 @@
     "src/svg_diagram/wrap.py": 1,
     "tests/test_clustermap.py": 1
   },
-  "error_count_total": 70,
+  "error_count_total": 60,
   "known_types": 517,
   "unknown_types": 434
 }

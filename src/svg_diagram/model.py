@@ -213,7 +213,7 @@ def _edge_point(box: Box, side: str) -> dict:
 class Diagram(ShapesMixin, FlowShapesMixin, ProcessMixin, ChartsMixin, StatsMixin, NetworksMixin, PlaneMixin):
     """spec section 4: ``Diagram(width, height)``, ``.box(...)``, ``.arrow(start, end)``, ``.save(path)``."""
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: float, height: float):
         if width <= 0 or height <= 0:
             raise ValueError(f"Diagram(width, height) must both be positive (got {width}, {height})")
         self.width = width

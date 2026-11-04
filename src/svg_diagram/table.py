@@ -10,7 +10,7 @@ from __future__ import annotations
 from .atoms import split_atoms
 from .emit_common import snap4
 from .tokens import CELL_MARKS, PALETTE, resolve_box_style, text_color_of
-from .wrap import wrap_atoms
+from .wrap import WrapMode, wrap_atoms
 
 LH = 1.4
 TBL_PAD_X, TBL_PAD_Y, TBL_PAD_Y_DENSE = 12, 8, 4
@@ -20,7 +20,7 @@ def line_h(size: float) -> float:
     return size * LH
 
 
-def _wrap(text: str, size: float, weight: int, max_w: float, width_of, mode: str) -> list[str]:
+def _wrap(text: str, size: float, weight: int, max_w: float, width_of, mode: WrapMode) -> list[str]:
     return wrap_atoms(split_atoms(text), max_width=max(20, max_w), atom_width=lambda a: width_of(a, size, weight, "sans"), mode=mode)
 
 
@@ -53,7 +53,7 @@ def cell_of(cell, col: dict | None = None) -> dict:
     return out
 
 
-def layout_table(*, columns: list[dict], rows: list, x: float, y: float, w: float, width_of, roles: dict, mode: str = "phrase", width: float | None = None, title: str | None = None, dense: bool = False, header: bool | None = None, row_header: bool = False, header_h: float | None = None, cell_h: float | None = None, row_curve: dict | None = None) -> dict:
+def layout_table(*, columns: list[dict], rows: list, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode = "phrase", width: float | None = None, title: str | None = None, dense: bool = False, header: bool | None = None, row_header: bool = False, header_h: float | None = None, cell_h: float | None = None, row_curve: dict | None = None) -> dict:
     """lib/seq-table.ts:151-216 layoutTable()."""
     tw = min(w, width if width is not None else w)
     left = x + (w - tw) / 2
@@ -116,6 +116,7 @@ def layout_table(*, columns: list[dict], rows: list, x: float, y: float, w: floa
         laid_rows.append(row_of(columns, True))
     for i, r in enumerate(rows):
         cells = r["cells"] if isinstance(r, dict) and "cells" in r else r
+        assert isinstance(cells, list)  # a row is a list of cells directly, or {cells: [...], ...}
         row_tone = r.get("tone") if isinstance(r, dict) and "cells" in r else None
         row_h_override = r.get("h") if isinstance(r, dict) and "cells" in r else None
         laid_rows.append(row_of(cells, False, row_tone, row_h_override, bool(row_curve) and row_curve.get("row") == i))

@@ -130,6 +130,7 @@ def move_apart(routes: dict[int, list[dict]], edges: dict[int, dict], rects: dic
                     c = "x" if vertical else "y"
 
                     def keeps(m: int, min_len: float) -> bool:
+                        assert r is not None  # this closure only runs within the "if r is None: continue"-guarded loop body
                         r0, r1, t0, t1 = r[m], r[m + 1], t[m], t[m + 1]
                         before, after = r1[c] - r0[c], t1[c] - t0[c]
                         return before == 0 or (_sign(before) == _sign(after) and abs(after) >= min_len)

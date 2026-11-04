@@ -29,7 +29,7 @@ class _Pyramid:
     x: float
     y: float
     layers: list[str]
-    width: float | None = None
+    width: float
     layer_height: float = 76
     apex_ratio: float = 0.3
     day: int | str = 1
@@ -247,6 +247,7 @@ class _WordArt:
 
 class ShapesMixin:
     _elements: list[object]
+    width: float
 
     def pyramid(self, layers: list[str], *, x: float, y: float, width: float | None = None, layer_height: float = 76, apex_ratio: float = 0.3) -> None:
         """lib/dsl/figures.ts's pyramid(): layers bottom-to-top, >= 2. The per-layer geometry

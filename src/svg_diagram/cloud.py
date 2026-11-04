@@ -15,7 +15,7 @@ from .emit_boxes import render_box_rect
 from .emit_common import arrow_path, emoji_span, js_round, snap4
 from .tokens import PALETTE, color_of, tone_style
 from .tree_text import measure_node, node_runs
-from .wrap import wrap_text
+from .wrap import WrapMode, wrap_text
 
 KEYS = ["a", "b", "c", "d", "d2"]
 LETTER = {"a": "A", "b": "B", "c": "C", "d": "D", "d2": "D'"}
@@ -40,7 +40,7 @@ def _numbering(assumptions: list[dict]) -> tuple[dict, list[int]]:
     return chip, [i + 1 for i in range(len(assumptions))]
 
 
-def layout_cloud_band(*, boxes: dict, x: float, y: float, w: float, width_of, roles: dict, wrap_mode: str = "phrase", max_node_w: float | None = None, assumptions: list[dict] | None = None, conflict_label: str | None = None) -> dict:
+def layout_cloud_band(*, boxes: dict, x: float, y: float, w: float, width_of, roles: dict, wrap_mode: WrapMode = "phrase", max_node_w: float | None = None, assumptions: list[dict] | None = None, conflict_label: str | None = None) -> dict:
     """lib/toc.ts:365-449 layoutCloudBand()."""
     assumptions = assumptions or []
     s = roles["note"]
@@ -159,7 +159,7 @@ def layout_cloud_band(*, boxes: dict, x: float, y: float, w: float, width_of, ro
         ty = y + fig_h + LIST_GAP
         for i, a in enumerate(assumptions):
             out["texts"].append({"text": f"{i + 1}.", "x": x0, "y": ty + s, "size": s, "bold": False, "muted": False, "anchor": "start"})
-            parts = [(a["text"], None)]
+            parts: list[tuple[str, str | None]] = [(a["text"], None)]
             if a.get("injection"):
                 parts.append((_injection_text(a["injection"]), "accent"))
             for text, tone in parts:

@@ -33,10 +33,13 @@ def layout_people(*, cols: int, size: float, gap: float, total: int, count: int,
     rows = math.ceil(total / cols)
     gw = cols * size + (cols - 1) * gap
     gh = rows * size + (rows - 1) * gap
-    side_size_role = roles.get((side or {}).get("size", "stat"), roles.get("stat")) if side else None
+    side_size_role = roles.get((side or {}).get("size", "stat"), roles["stat"]) if side else None
     v = side_size_role
     n = roles["note"]
-    vw = text_width(width_of, side["value"], v, 700) if side else 0
+    vw = 0
+    if side:
+        assert v is not None  # side_size_role is set to a real roles[...] size whenever side is truthy
+        vw = text_width(width_of, side["value"], v, 700)
     lw = text_width(width_of, side["label"], n, 400) if side and side.get("label") else 0
     tw = max(vw, lw)
     w = gw + SIDE_GAP + tw if side else gw
@@ -53,6 +56,7 @@ def layout_people(*, cols: int, size: float, gap: float, total: int, count: int,
     texts = []
     h = gh
     if side:
+        assert v is not None  # side_size_role is set to a real roles[...] size whenever side is truthy
         th = v * 1.2 + (6 + n * 1.4 if side.get("label") else 0)
         h = max(gh, th)
         top = y + (h - th) / 2

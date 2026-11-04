@@ -314,8 +314,9 @@ def _route_once(
                 mean[g] = mean[g] / cnt
 
         def key_of(en: dict) -> float:
-            if en["end"] == 1 and group_of and group_of(en["edge"]) is not None:
-                return mean[group_of(en["edge"])]
+            g = group_of(en["edge"]) if en["end"] == 1 and group_of else None
+            if g is not None:
+                return mean[g]
             return en["other"]
 
         # NOT decomposable into a per-element sort key: the second tie-break term reads `p.end` only and unconditionally subtracts
@@ -567,10 +568,11 @@ def _route_once(
 
         def undo() -> None:
             for end in (0, 1):
-                if was[end] is None:
+                w = was[end]
+                if w is None:
                     port_of.pop(f"{i}:{end}", None)
                 else:
-                    port_of[f"{i}:{end}"] = was[end]
+                    port_of[f"{i}:{end}"] = w
 
         return undo
 

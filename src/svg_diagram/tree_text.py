@@ -11,7 +11,7 @@ import math
 import re
 
 from .atoms import split_atoms, text_width
-from .wrap import longest_unit_width, wrap_text
+from .wrap import WrapMode, longest_unit_width, wrap_text
 
 PAD_X, PAD_Y, MIN_W = 14, 8, 88
 KEEP_WORDS_CAP = 240
@@ -33,7 +33,7 @@ def katakana_width(text: str, width_of, size: float, weight: int) -> float:
     return widest
 
 
-def measure_node(label: str, sub: str | None, max_w: float, width_of, roles: dict, mode: str, floor: bool, keep_words_cap: float | None = None, keep_words: bool | None = None) -> dict:
+def measure_node(label: str, sub: str | None, max_w: float, width_of, roles: dict, mode: WrapMode, floor: bool, keep_words_cap: float | None = None, keep_words: bool | None = None) -> dict:
     """lib/tree.ts:55-70 measureNode()."""
     L, S = roles["body"], roles["note"]
     inner = max_w - 2 * PAD_X

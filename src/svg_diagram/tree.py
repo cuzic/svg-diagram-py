@@ -22,6 +22,7 @@ from .graph_layout import layout_balanced, layout_tree
 from .map_layouts import layout_brace, layout_fishbone, layout_hanging, layout_timeline_map, mirror
 from .tokens import PALETTE, color_of, tone_style
 from .tree_text import measure_node, node_runs
+from .wrap import WrapMode
 
 # lib/tree.ts:13 — tree.ts's OWN GAP/LEVEL_GAP, distinct from graph-layout.ts's defaults
 # (24/40): layoutTreeBand always passes these explicitly, so graph-layout.ts's own fallback
@@ -52,7 +53,7 @@ def layout_tree_band(
     width_of,
     roles: dict,
     *,
-    wrap_mode: str = "phrase",
+    wrap_mode: WrapMode = "phrase",
     dir_opt: str | None = None,
     max_node_w: float | None = None,
     balanced: bool = False,
@@ -182,7 +183,7 @@ def layout_tree_band(
         out["texts"].extend(node_runs(r, l, roles))
         out["labelBoxes"].append({"label": n["label"], **r})
     for e in tree["edges"]:
-        entry = {"points": [{"x": p["x"] + dx, "y": p["y"] + dy} for p in e["points"]]}
+        entry: dict = {"points": [{"x": p["x"] + dx, "y": p["y"] + dy} for p in e["points"]]}
         if e.get("curve"):
             entry["curve"] = e["curve"]
         if e.get("bold"):

@@ -16,6 +16,7 @@ from .emit_common import arrow_path, emoji_span, js_round, snap4
 from .fit_width import narrow_cascade_fit
 from .tokens import PALETTE, color_of, tone_style
 from .tree_text import measure_node, node_runs
+from .wrap import WrapMode
 
 COL_GAP, BUS_GAP, ROW_GAP, KNOT_R, STEM, TOP_MIN_W, TOP_MAX_LINES = 32, 56, 20, 14, 14, 150, 3
 
@@ -75,7 +76,7 @@ def _col_widths(rows: list[list[dict]]) -> list[float]:
     return [max((r[k]["lines"]["w"] if k < len(r) else 0) for r in rows) for k in range(n)]
 
 
-def _place(band: dict, max_w: float, width_of, roles: dict, mode: str, floor: bool) -> dict:
+def _place(band: dict, max_w: float, width_of, roles: dict, mode: WrapMode, floor: bool) -> dict:
     """lib/bowtie.ts:80-142 place()."""
 
     def measure(label: str, role: str, cap: float = max_w) -> dict:
@@ -148,6 +149,7 @@ def _place(band: dict, max_w: float, width_of, roles: dict, mode: str, floor: bo
                 edges.append({"points": [{"x": prev["x"] + prev["w"], "y": cy}, {"x": p["x"], "y": cy}], "arrow": True})
             prev = p
             px += lw[k] + COL_GAP
+        assert prev is not None  # left's rows always start with the threat's own label, so row is never empty
         end, ye = prev, entry(cy)
         edges.append({"points": dedupe([{"x": end["x"] + end["w"], "y": cy}, {"x": bus_l, "y": cy}, {"x": bus_l, "y": ye}, {"x": top_x, "y": ye}]), "arrow": True})
     for i, row in enumerate(right):
@@ -171,7 +173,7 @@ def _place(band: dict, max_w: float, width_of, roles: dict, mode: str, floor: bo
     return {"w": total_w, "h": big_h, "nodes": nodes, "edges": edges, "knot": knot}
 
 
-def layout_bowtie(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: str) -> dict:
+def layout_bowtie(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode) -> dict:
     """lib/bowtie.ts:44-76 layoutBowtie()."""
     bowtie_check({"hazard": band.get("hazard"), "top": band["event"], "threats": band["threats"], "consequences": band["consequences"]})
 

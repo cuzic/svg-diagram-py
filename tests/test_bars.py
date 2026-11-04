@@ -24,6 +24,9 @@ LAYOUT_CASES = [
     {"data": [{"label": "A", "value": 5}, {"label": "B", "value": 9}, {"label": "C", "value": 2}], "opts": {"dir": "v", "edges": ["a", "b", "c", "d"], "hideZero": True}, "w": 400},
     {"data": [{"label": "A", "value": 10}, {"label": "B", "value": 25}], "opts": {"plotInset": [60, 60]}, "w": 600},
     {"data": [{"label": "A", "value": 10}, {"label": "B", "value": 25}], "opts": {"grid": False, "baseline": False}, "w": 600},
+    # non-integer values >= 1000 with no valueFormat: exercises valueNum()'s toPrecision(whole) branch
+    # (bars.py's _value_num -> _to_precision; this branch had a dormant NameError, see commit fixing it)
+    {"data": [{"label": "A", "value": 1234.5}, {"label": "B", "value": 9876.25}], "opts": {"max": 20000}, "w": 700},
 ]
 
 _PY_KW = {"dir": "direction", "max": "max_value", "labelRole": "label_role", "barRatio": "bar_ratio", "hideZero": "hide_zero", "plotInset": "plot_inset", "valueFormat": "value_format"}

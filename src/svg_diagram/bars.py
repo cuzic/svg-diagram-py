@@ -25,6 +25,7 @@ import math
 from dataclasses import dataclass
 
 from .atoms import text_width
+from .charts_base import _to_precision as to_precision
 from .charts_base import inset_or_need
 from .charts_base import overlaps as _hit_rect
 from .charts_base import seg_hits_rect
@@ -117,7 +118,7 @@ def _value_num(v: float, f) -> str:
         return f"{v:.{int(f)}f}"
     whole = math.floor(math.log10(abs(v))) + 1 if abs(v) >= 1 else 0
     if 3 < whole <= 21:
-        return js_num(_sig_round(v, whole))
+        return js_num(to_precision(v, whole))
     return fmt(v)
 
 

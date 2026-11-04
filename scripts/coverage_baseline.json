@@ -421,9 +421,9 @@
       "percent_covered": 89.34010152284264
     },
     "src/svg_diagram/wordart_vertical.py": {
-      "missing_lines": 27,
+      "missing_lines": 2,
       "num_statements": 98,
-      "percent_covered": 72.44897959183673
+      "percent_covered": 97.95918367346938
     },
     "src/svg_diagram/wrap.py": {
       "missing_lines": 23,
@@ -431,6 +431,6 @@
       "percent_covered": 85.80246913580247
     }
   },
-  "missing_lines_total": 1524,
-  "percent_covered": 90.84189652064178
+  "missing_lines_total": 1499,
+  "percent_covered": 90.99212787693047
 }

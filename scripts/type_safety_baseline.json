@@ -23,7 +23,6 @@
     "src/svg_diagram/plane.py": 3,
     "src/svg_diagram/quadrant.py": 4,
     "src/svg_diagram/route_apart.py": 2,
-    "src/svg_diagram/route_search.py": 31,
     "src/svg_diagram/sequence.py": 1,
     "src/svg_diagram/states.py": 1,
     "src/svg_diagram/table.py": 2,
@@ -35,7 +34,7 @@
     "src/svg_diagram/wrap.py": 1,
     "tests/test_clustermap.py": 1
   },
-  "error_count_total": 101,
+  "error_count_total": 70,
   "known_types": 517,
   "unknown_types": 434
 }

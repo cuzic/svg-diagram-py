@@ -162,10 +162,10 @@ def search_route(
     def left(i: int, j: int) -> float:
         return abs(xg - X[i]) + abs(yg - Y[j])
 
-    heap: list[list[float]] = []
+    heap: list[tuple[float, int]] = []
 
     def push(c: float, k: int) -> None:
-        heap.append([c, k])
+        heap.append((c, k))
         i = len(heap) - 1
         while i > 0:
             p = (i - 1) >> 1
@@ -174,7 +174,7 @@ def search_route(
             heap[p], heap[i] = heap[i], heap[p]
             i = p
 
-    def pop() -> list[float]:
+    def pop() -> tuple[float, int]:
         top = heap[0]
         last = heap.pop()
         if heap:

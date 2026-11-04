@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import math
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .charts_base import overlaps
 from .emit_common import emoji_span, js_num, js_round, snap4
 from .tokens import PALETTE, text_color_of
@@ -177,7 +177,7 @@ def bez(a: dict, c1: dict, c2: dict, b: dict, t: float) -> dict:
     }
 
 
-def layout_plane(band: dict, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def layout_plane(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict) -> dict:
     """lib/plane.ts:99-367 layoutPlane()."""
     size = _size_of(band, roles)
     g = _geom_of(band, roles)

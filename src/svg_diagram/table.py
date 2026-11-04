@@ -7,7 +7,7 @@ Golden master: lib/seq-table.ts + lib/emit-tables.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .atoms import split_atoms
+from .atoms import WidthOf, split_atoms
 from .emit_common import snap4
 from .tokens import CELL_MARKS, PALETTE, resolve_box_style, text_color_of
 from .wrap import WrapMode, wrap_atoms
@@ -20,7 +20,7 @@ def line_h(size: float) -> float:
     return size * LH
 
 
-def _wrap(text: str, size: float, weight: int, max_w: float, width_of, mode: WrapMode) -> list[str]:
+def _wrap(text: str, size: float, weight: int, max_w: float, width_of: WidthOf, mode: WrapMode) -> list[str]:
     return wrap_atoms(split_atoms(text), max_width=max(20, max_w), atom_width=lambda a: width_of(a, size, weight, "sans"), mode=mode)
 
 
@@ -53,7 +53,7 @@ def cell_of(cell, col: dict | None = None) -> dict:
     return out
 
 
-def layout_table(*, columns: list[dict], rows: list, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode = "phrase", width: float | None = None, title: str | None = None, dense: bool = False, header: bool | None = None, row_header: bool = False, header_h: float | None = None, cell_h: float | None = None, row_curve: dict | None = None) -> dict:
+def layout_table(*, columns: list[dict], rows: list, x: float, y: float, w: float, width_of: WidthOf, roles: dict, mode: WrapMode = "phrase", width: float | None = None, title: str | None = None, dense: bool = False, header: bool | None = None, row_header: bool = False, header_h: float | None = None, cell_h: float | None = None, row_curve: dict | None = None) -> dict:
     """lib/seq-table.ts:151-216 layoutTable()."""
     tw = min(w, width if width is not None else w)
     left = x + (w - tw) / 2

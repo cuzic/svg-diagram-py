@@ -425,7 +425,7 @@ def layout_cat(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def cat_band(who: str, data, opts: dict | None = None, kind: str | None = None) -> ChartBand:
+def cat_band(who: str, data: list | dict, opts: dict | None = None, kind: str | None = None) -> ChartBand:
     """lib/charts-dsl.ts's catBand() + the catplot()/boxplot()/.../barplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_cat(who, data, opts, kind if kind is not None else "box")

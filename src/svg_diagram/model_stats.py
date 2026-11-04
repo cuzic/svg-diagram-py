@@ -20,7 +20,7 @@ from .regplot import reg_band
 class StatsMixin:
     _elements: list[Renderable]
 
-    def catplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def catplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """lib/dsl/charts-stats.ts's catplot(): seaborn's categorical plots from raw values —
         boxplot/violinplot/stripplot/swarmplot/pointplot/barplot, one or several layers
         (`opts.kind`, a kind or a list of kinds drawn in order). `data`: a list of
@@ -33,43 +33,43 @@ class StatsMixin:
         band = cat_band("catplot", data, opts)
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def boxplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def boxplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn boxplot(): quartiles, whiskers at 1.5 IQR, outliers as rings. See
         catplot() for `data`/`opts` (kind is fixed to 'box')."""
         band = cat_band("boxplot", data, opts, kind="box")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def violinplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def violinplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn violinplot(): a kernel density estimate mirrored around each group, with
         its quartiles inside. See catplot() for `data`/`opts` (kind is fixed to 'violin')."""
         band = cat_band("violinplot", data, opts, kind="violin")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def stripplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def stripplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn stripplot(): every value as a point, spread sideways without a pattern.
         See catplot() for `data`/`opts` (kind is fixed to 'strip')."""
         band = cat_band("stripplot", data, opts, kind="strip")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def swarmplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def swarmplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn swarmplot(): every value as a point, laid out so that none touch. See
         catplot() for `data`/`opts` (kind is fixed to 'swarm')."""
         band = cat_band("swarmplot", data, opts, kind="swarm")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def pointplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def pointplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn pointplot(): the mean of each group with its error bar, joined by a line
         per hue. See catplot() for `data`/`opts` (kind is fixed to 'point')."""
         band = cat_band("pointplot", data, opts, kind="point")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def barplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def barplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn barplot(): the mean of each group as a bar from 0, with its error bar.
         See catplot() for `data`/`opts` (kind is fixed to 'bar')."""
         band = cat_band("barplot", data, opts, kind="bar")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def displot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def displot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """lib/dsl/charts-stats.ts's displot(): seaborn's distribution plots from raw values —
         histplot/kdeplot/ecdfplot/rugplot, one or several layers (`opts.kind`). `data`: a
         list of numbers, a list of {label, values} groups (up to 4), or {label: values, ...}.
@@ -81,25 +81,25 @@ class StatsMixin:
         band = dist_band("displot", data, opts, "hist")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def histplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def histplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn histplot(): round class widths shared by the groups. See displot() for
         `data`/`opts` (kind is fixed to 'hist')."""
         band = dist_band("histplot", data, opts, "hist")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def kdeplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def kdeplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn kdeplot(): a Gaussian KDE with Scott's bandwidth, filled under the curve.
         See displot() for `data`/`opts` (kind is fixed to 'kde')."""
         band = dist_band("kdeplot", data, opts, "kde")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def ecdfplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def ecdfplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn ecdfplot(): the share of values at or below x, as a step line. See
         displot() for `data`/`opts` (kind is fixed to 'ecdf')."""
         band = dist_band("ecdfplot", data, opts, "ecdf")
         self._elements.append(_Chart(x=x, y=y, w=width, band=band))
 
-    def rugplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
+    def rugplot(self, data: list | dict, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """seaborn rugplot(): a tick for every value. See displot() for `data`/`opts` (kind
         is fixed to 'rug')."""
         band = dist_band("rugplot", data, opts, "rug")

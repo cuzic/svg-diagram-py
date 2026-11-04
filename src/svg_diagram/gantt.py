@@ -10,7 +10,7 @@ import datetime
 import math
 import re
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_common import emoji_span, js_round, snap4
 from .timeline import timeline_day, ticks_of
 from .tokens import PALETTE
@@ -113,7 +113,7 @@ def _mondays(from_: float, to: float) -> list[float]:
     return out
 
 
-def layout_gantt(*, rows: list[dict], x: float, y: float, w: float, width_of, roles: dict, from_: str | None = None, to: str | None = None, today: str | None = None, today_label: str | None = None, extend_to_today: bool = False) -> dict:
+def layout_gantt(*, rows: list[dict], x: float, y: float, w: float, width_of: WidthOf, roles: dict, from_: str | None = None, to: str | None = None, today: str | None = None, today_label: str | None = None, extend_to_today: bool = False) -> dict:
     """lib/gantt.ts:82-194 layoutGantt()."""
     s = roles["note"]
     tasks = _tasks_of(rows)

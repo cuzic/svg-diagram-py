@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_common import emoji_span, escape_attr, js_round
 from .tokens import PALETTE, color_of, text_color_of, tone_style
 
@@ -28,7 +28,7 @@ def _ceil4(v: float) -> float:
     return math.ceil(v / 4) * 4
 
 
-def layout_people(*, cols: int, size: float, gap: float, total: int, count: int, count2: int = 0, x: float, y: float, cw: float, width_of, align: str | None = None, side: dict | None = None, roles: dict) -> dict:
+def layout_people(*, cols: int, size: float, gap: float, total: int, count: int, count2: int = 0, x: float, y: float, cw: float, width_of: WidthOf, align: str | None = None, side: dict | None = None, roles: dict) -> dict:
     """lib/people.ts:23-42 layoutPeople()."""
     rows = math.ceil(total / cols)
     gw = cols * size + (cols - 1) * gap
@@ -70,7 +70,7 @@ def layout_people(*, cols: int, size: float, gap: float, total: int, count: int,
     return {"x": left, "y": y, "w": w, "h": h, "size": size, "icons": icons, "texts": texts}
 
 
-def layout_dots(*, r: float, dots: list[dict], zones: list[dict], min_val: float, max_val: float, x: float, y: float, cw: float, width_of, width: float | None = None, low_label: str | None = None, high_label: str | None = None, height: float | None = None, roles: dict) -> dict:
+def layout_dots(*, r: float, dots: list[dict], zones: list[dict], min_val: float, max_val: float, x: float, y: float, cw: float, width_of: WidthOf, width: float | None = None, low_label: str | None = None, high_label: str | None = None, height: float | None = None, roles: dict) -> dict:
     """lib/people.ts:50-97 layoutDots(). (`min_val`/`max_val` — not `min`/`max` — to avoid
     shadowing the builtins this function needs internally.)"""
     s = roles["note"]

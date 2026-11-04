@@ -24,7 +24,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .charts_base import _to_precision as to_precision
 from .charts_base import inset_or_need
 from .charts_base import overlaps as _hit_rect
@@ -197,7 +197,7 @@ def slots_of(data: list[BarDatum]) -> dict:
     return {"slots": slots, "count": count}
 
 
-def _put_text(out: dict, s: float, text: str, x: float, y: float, anchor: str, fill: str, width_of, bold: bool = False, background: str | None = None, bar: int | None = None) -> None:
+def _put_text(out: dict, s: float, text: str, x: float, y: float, anchor: str, fill: str, width_of: WidthOf, bold: bool = False, background: str | None = None, bar: int | None = None) -> None:
     """lib/bars.ts:157-164 putText()."""
     text_obj: dict = {"text": text, "x": x, "y": y, "anchor": anchor, "fill": fill, "size": s, "bold": bold}
     if bar is not None:
@@ -233,7 +233,7 @@ def _add_bar(out: dict, d: BarDatum, r: dict) -> dict:
     return bar
 
 
-def _vline_rows(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, s: float, width_of, values: list[dict]) -> dict:
+def _vline_rows(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, s: float, width_of: WidthOf, values: list[dict]) -> dict:
     """lib/bars.ts:79-93 vlineRows()."""
     count = slots_of(band.data)["count"]
     slot = (plot_r - plot_l) / count
@@ -267,7 +267,7 @@ def _vline_rows(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, s: 
     return {"rows": rows, "at": at_list}
 
 
-def _vertical_values(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, plot_b: float, s: float, width_of, slots: list[int], slot: float, bw: float, y_of) -> list[dict | None]:
+def _vertical_values(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, plot_b: float, s: float, width_of: WidthOf, slots: list[int], slot: float, bw: float, y_of) -> list[dict | None]:
     """lib/bars.ts:98-133 verticalValues()."""
     cum_segs: list[dict] = []
     if band.cumulative is not None:
@@ -347,14 +347,14 @@ def _vertical_values(band: BarsBand, plot_l: float, plot_r: float, plot_t: float
     return out
 
 
-def layout_bars(band: BarsBand, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def layout_bars(band: BarsBand, x: float, y: float, w: float, width_of: WidthOf, roles: dict) -> dict:
     """lib/bars.ts:186-188 layoutBars()."""
     if band.dir == "v":
         return _layout_vertical(band, x, y, w, width_of, roles)
     return _layout_horizontal(band, x, y, w, width_of, roles)
 
 
-def _layout_horizontal(band: BarsBand, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def _layout_horizontal(band: BarsBand, x: float, y: float, w: float, width_of: WidthOf, roles: dict) -> dict:
     """lib/bars.ts:190-244 layoutHorizontal()."""
     f = _flags(band)
     s = _size_of(band, roles)
@@ -437,7 +437,7 @@ def _layout_horizontal(band: BarsBand, x: float, y: float, w: float, width_of, r
     return out
 
 
-def _layout_vertical(band: BarsBand, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def _layout_vertical(band: BarsBand, x: float, y: float, w: float, width_of: WidthOf, roles: dict) -> dict:
     """lib/bars.ts:246-317 layoutVertical()."""
     f = _flags(band)
     s = _size_of(band, roles)

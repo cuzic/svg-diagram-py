@@ -7,7 +7,7 @@ Golden master: lib/seq-table.ts + lib/emit-tables.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .atoms import split_atoms, text_width
+from .atoms import WidthOf, split_atoms, text_width
 from .emit_common import snap4
 from .tokens import PALETTE, resolve_box_style, text_color_of
 from .wrap import WrapMode, wrap_atoms
@@ -20,11 +20,11 @@ def line_h(size: float) -> float:
     return size * LH
 
 
-def _wrap(text: str, size: float, weight: int, max_w: float, width_of, mode: WrapMode) -> list[str]:
+def _wrap(text: str, size: float, weight: int, max_w: float, width_of: WidthOf, mode: WrapMode) -> list[str]:
     return wrap_atoms(split_atoms(text), max_width=max(20, max_w), atom_width=lambda a: width_of(a, size, weight, "sans"), mode=mode)
 
 
-def _text_w(text: str, size: float, weight: int, width_of) -> float:
+def _text_w(text: str, size: float, weight: int, width_of: WidthOf) -> float:
     return text_width(width_of, text, size, weight, "sans")
 
 
@@ -51,7 +51,7 @@ def prepare_sequence(actors: list[dict], steps: list[dict], numbered: bool = Tru
     return out
 
 
-def layout_sequence(*, actors: list[dict], steps: list[dict], x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode = "phrase", numbered: bool = True) -> dict:
+def layout_sequence(*, actors: list[dict], steps: list[dict], x: float, y: float, w: float, width_of: WidthOf, roles: dict, mode: WrapMode = "phrase", numbered: bool = True) -> dict:
     """lib/seq-table.ts:59-135 layoutSequence()."""
     prepared_steps = prepare_sequence(actors, steps, numbered)
     n = len(actors)

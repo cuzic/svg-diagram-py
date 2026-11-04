@@ -449,7 +449,7 @@ def js_num_r1(v: float) -> str:
     return js_num(_r1(v))
 
 
-def multi_band(who: str, mode: str, data, opts: dict | None = None) -> ChartBand:
+def multi_band(who: str, mode: str, data: dict, opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts's multiBand() + the hist2d()/jointplot()/kde2d()/pairplot() DSL
     wrappers."""
     opts = opts or {}

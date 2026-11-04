@@ -21,7 +21,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_boxes import render_box_rect
 from .emit_common import _sign, emoji_span, js_num, js_round, snap4
 from .fit_width import fit_layout
@@ -59,7 +59,7 @@ def _flip(k: str | None) -> bool:
     return k in ("inherit", "implement")
 
 
-def layout_classes_band(band: dict, x: float, y: float, w: float, width_of, roles: dict, env: dict, height_budget: float | None = None) -> dict:
+def layout_classes_band(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, env: dict, height_budget: float | None = None) -> dict:
     """lib/classes.ts:27-150 layoutClassesBand()."""
     B, S = roles["body"], roles["note"]
     ids: set[str] = set()

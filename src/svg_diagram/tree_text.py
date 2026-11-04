@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 import re
 
-from .atoms import split_atoms, text_width
+from .atoms import WidthOf, split_atoms, text_width
 from .wrap import WrapMode, longest_unit_width, wrap_text
 
 PAD_X, PAD_Y, MIN_W = 14, 8, 88
@@ -24,7 +24,7 @@ def line_h(size: float) -> int:
     return js_round(size * 1.4)
 
 
-def katakana_width(text: str, width_of, size: float, weight: int) -> float:
+def katakana_width(text: str, width_of: WidthOf, size: float, weight: int) -> float:
     """lib/tree.ts:47-50 katakanaWidth()."""
     widest = 0.0
     for run in _KATAKANA_RE.findall(text):
@@ -33,7 +33,7 @@ def katakana_width(text: str, width_of, size: float, weight: int) -> float:
     return widest
 
 
-def measure_node(label: str, sub: str | None, max_w: float, width_of, roles: dict, mode: WrapMode, floor: bool, keep_words_cap: float | None = None, keep_words: bool | None = None) -> dict:
+def measure_node(label: str, sub: str | None, max_w: float, width_of: WidthOf, roles: dict, mode: WrapMode, floor: bool, keep_words_cap: float | None = None, keep_words: bool | None = None) -> dict:
     """lib/tree.ts:55-70 measureNode()."""
     L, S = roles["body"], roles["note"]
     inner = max_w - 2 * PAD_X

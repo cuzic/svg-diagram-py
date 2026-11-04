@@ -13,6 +13,8 @@ Golden master: lib/charts.ts + lib/charts-emit.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
+from .atoms import WidthOf
+
 from .bubble import layout_bubble
 from .butterfly import layout_butterfly
 from .catplot import layout_cat
@@ -36,7 +38,7 @@ from .treemap import layout_treemap
 from .waterfall import layout_waterfall
 
 
-def layout_chart(band: ChartBand, x: float, y: float, w: float, width_of, roles: dict, wrap: str = "phrase") -> dict:
+def layout_chart(band: ChartBand, x: float, y: float, w: float, width_of: WidthOf, roles: dict, wrap: str = "phrase") -> dict:
     """lib/charts.ts:96-124 layoutChart()."""
     size = size_of(band.label_role, roles)
     width = band.width if band.width is not None else w

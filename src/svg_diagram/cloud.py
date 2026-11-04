@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_boxes import render_box_rect
 from .emit_common import arrow_path, emoji_span, js_round, snap4
 from .tokens import PALETTE, color_of, tone_style
@@ -40,7 +40,7 @@ def _numbering(assumptions: list[dict]) -> tuple[dict, list[int]]:
     return chip, [i + 1 for i in range(len(assumptions))]
 
 
-def layout_cloud_band(*, boxes: dict, x: float, y: float, w: float, width_of, roles: dict, wrap_mode: WrapMode = "phrase", max_node_w: float | None = None, assumptions: list[dict] | None = None, conflict_label: str | None = None) -> dict:
+def layout_cloud_band(*, boxes: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, wrap_mode: WrapMode = "phrase", max_node_w: float | None = None, assumptions: list[dict] | None = None, conflict_label: str | None = None) -> dict:
     """lib/toc.ts:365-449 layoutCloudBand()."""
     assumptions = assumptions or []
     s = roles["note"]

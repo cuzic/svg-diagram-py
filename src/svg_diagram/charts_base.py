@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 from typing import NoReturn, NotRequired, TypedDict
 
-from .atoms import split_atoms, text_width
+from .atoms import WidthOf, split_atoms, text_width
 from .emit_common import js_num, js_round, round1
 from .wrap import WrapMode, wrap_atoms
 
@@ -411,7 +411,7 @@ class Canvas:
 
     mode: WrapMode
 
-    def __init__(self, x: float, y: float, w: float, h: float, size: float, width_of, mode: WrapMode) -> None:
+    def __init__(self, x: float, y: float, w: float, h: float, size: float, width_of: WidthOf, mode: WrapMode) -> None:
         self.x, self.y, self.w, self.h, self.size, self.width_of, self.mode = x, y, w, h, size, width_of, mode
         self.items: list[dict] = []
         self.boxes: list[dict] = []

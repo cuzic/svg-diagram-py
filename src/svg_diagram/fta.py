@@ -20,7 +20,7 @@ from __future__ import annotations
 import itertools
 import math
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .badge import pill_svg
 from .charts_base import _to_precision as to_precision
 from .emit_boxes import render_box_rect
@@ -276,7 +276,7 @@ BADGE_GAP, BADGE_PAD_X, BADGE_H = 6, 10, 22
 STEM, GATE_W, GATE_H, MARK_W, MARK_H, COND_MARK_W, COND_MARK_H, COND_GAP, GAP, LEVEL_GAP = 10, 40, 36, 26, 26, 40, 24, 22, 24, 36
 
 
-def layout_fta(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode, space: float = 1) -> dict:
+def layout_fta(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, mode: WrapMode, space: float = 1) -> dict:
     """lib/fta.ts:215-313 layoutFta()."""
     root = fta_resolve(band["root"])["root"]
     single = fta_single_points(root) if band.get("cutSets") else set()

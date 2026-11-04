@@ -10,7 +10,7 @@ from __future__ import annotations
 import datetime
 import re
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_common import emoji_span, js_round, snap4
 from .tokens import PALETTE, color_of
 
@@ -103,7 +103,7 @@ def _remaining_label(remaining, now_at: str, deadline_at: str) -> str:
     return remaining if isinstance(remaining, str) else remaining_text(now_at, deadline_at)
 
 
-def layout_timeline(*, now: dict, deadline: dict, marks: list[dict] | None, from_: str, to: str, span: str | None, remaining, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def layout_timeline(*, now: dict, deadline: dict, marks: list[dict] | None, from_: str, to: str, span: str | None, remaining, x: float, y: float, w: float, width_of: WidthOf, roles: dict) -> dict:
     """lib/timeline.ts:80-168 layoutTimeline() (date-based branch only)."""
     marks = marks or []
     s = roles["note"]

@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 import re
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_boxes import render_box_rect
 from .emit_common import _sign, emoji_span, js_num, js_round, line_attrs, snap4
 from .fit_width import plan_fit
@@ -145,7 +145,7 @@ def flowchart_band(
     return _states_band_of(items, edges, flavor="flowchart", dir=dir, initial=None, max_node_w=max_node_w, returns=returns, straighten=straighten, id=id)
 
 
-def layout_states_band(band: dict, x: float, y: float, w: float, width_of, roles: dict, env: dict, height_budget: float | None = None) -> dict:
+def layout_states_band(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, env: dict, height_budget: float | None = None) -> dict:
     """lib/states.ts:39-48 layoutStatesBand()."""
     out = _layout_states_band_at(band, x, y, w, width_of, roles, env, height_budget)
     if "noFit" in out:
@@ -164,7 +164,7 @@ def layout_states_band(band: dict, x: float, y: float, w: float, width_of, roles
     return normal
 
 
-def _layout_states_band_at(band: dict, x: float, y: float, w: float, width_of, roles: dict, env: dict, height_budget: float | None = None) -> dict:
+def _layout_states_band_at(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, env: dict, height_budget: float | None = None) -> dict:
     """lib/states.ts:50-250 layoutStatesBandAt()."""
     S = roles["note"]
     words = states_words(band.get("flavor"))

@@ -11,7 +11,7 @@ from __future__ import annotations
 import math
 import re
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_common import emoji_span, js_num, js_round, snap4
 from .tokens import MIN_FONT_SIZE, color_of
 from .wordart_look import REFLECTION_SHARE, figure_transform, gradient_of, ink_reach, paint_layers, resolve_look, size_of
@@ -249,7 +249,7 @@ def translate_item(it: dict, dx: float, dy: float) -> dict:
     raise ValueError(k)
 
 
-def layout_word_art(b: dict, x: float, y: float, cw: float, width_of, roles: dict, mode: str) -> dict:
+def layout_word_art(b: dict, x: float, y: float, cw: float, width_of: WidthOf, roles: dict, mode: str) -> dict:
     """lib/wordart-layout.ts:128-151 layoutWordArt()."""
     opts = b["opts"]
     size = size_of(opts.get("size"), roles)

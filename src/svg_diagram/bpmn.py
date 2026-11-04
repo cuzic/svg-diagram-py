@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import math
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_common import _sign, emoji_span, js_num, js_round, snap4
 from .graph_layout import layout_layered
 from .orthogonal_route import route_clear
@@ -81,7 +81,7 @@ SHRINK_STEPS: list[dict] = [
 ]
 
 
-def layout_bpmn(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: str = "phrase", space: float = 1) -> dict:
+def layout_bpmn(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, mode: str = "phrase", space: float = 1) -> dict:
     """lib/bpmn.ts:42-46 layoutBpmn()."""
     env = {"wrap": mode, "keepWords": False, "space": space}
     steps = SHRINK_STEPS if band.get("fit") == "shrink" else SHRINK_STEPS[:1]
@@ -94,7 +94,7 @@ def layout_bpmn(band: dict, x: float, y: float, w: float, width_of, roles: dict,
     return result
 
 
-def _layout_bpmn_at(band: dict, x: float, y: float, w: float, width_of, roles: dict, env: dict, metrics: dict, final: bool) -> dict | None:
+def _layout_bpmn_at(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, env: dict, metrics: dict, final: bool) -> dict | None:
     """lib/bpmn.ts:50-312 layoutBpmnAt()."""
     label_col, task_max, flow_room = metrics["labelCol"], metrics["taskMax"], metrics["flowRoom"]
     col_gap = js_round(metrics["colGap"] * env.get("space", 1))

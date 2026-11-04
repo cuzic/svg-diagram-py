@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .tokens import MIN_FONT_SIZE
 
 COLUMN_PITCH = 1.4  # lib/wordart-vertical.ts:12
@@ -76,7 +76,7 @@ def tcy_size(size: float) -> float:
     return min(size, max(MIN_FONT_SIZE, js_round(size * 0.8)))
 
 
-def vertical_columns(text: str, size: float, weight: float, width_of, *, limit: float | None = None, spacing: float = 0, font: str = "sans") -> list[dict]:
+def vertical_columns(text: str, size: float, weight: float, width_of: WidthOf, *, limit: float | None = None, spacing: float = 0, font: str = "sans") -> list[dict]:
     """lib/wordart-vertical.ts:73-116 verticalColumns(). Returns a list of
     {"cells": [{"token", "top", "len"}, ...], "len"} — columns[0] is the rightmost."""
     from .emit_common import js_round

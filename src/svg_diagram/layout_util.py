@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import math
 
+from .atoms import WidthOf
 from .emit_common import js_round
 
 # ---- geometry constants (lib/layout-util.ts:9-47) --------------------------------------
@@ -199,7 +200,7 @@ def row_child_geometry(band: dict, content_width: float) -> dict:
     return {"widths": widths, "xOffsets": x_offsets}
 
 
-def stamp_chip_w(width_of, text: str, note_size: float) -> float:
+def stamp_chip_w(width_of: WidthOf, text: str, note_size: float) -> float:
     """lib/layout-util.ts:46 stampChipW()."""
     from .atoms import text_width
 

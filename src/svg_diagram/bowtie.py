@@ -11,6 +11,8 @@ Golden master: lib/bowtie.ts + lib/emit-bowtie.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
+from .atoms import WidthOf
+
 from .emit_boxes import render_box_rect
 from .emit_common import arrow_path, emoji_span, js_round, snap4
 from .fit_width import narrow_cascade_fit
@@ -76,7 +78,7 @@ def _col_widths(rows: list[list[dict]]) -> list[float]:
     return [max((r[k]["lines"]["w"] if k < len(r) else 0) for r in rows) for k in range(n)]
 
 
-def _place(band: dict, max_w: float, width_of, roles: dict, mode: WrapMode, floor: bool) -> dict:
+def _place(band: dict, max_w: float, width_of: WidthOf, roles: dict, mode: WrapMode, floor: bool) -> dict:
     """lib/bowtie.ts:80-142 place()."""
 
     def measure(label: str, role: str, cap: float = max_w) -> dict:
@@ -173,7 +175,7 @@ def _place(band: dict, max_w: float, width_of, roles: dict, mode: WrapMode, floo
     return {"w": total_w, "h": big_h, "nodes": nodes, "edges": edges, "knot": knot}
 
 
-def layout_bowtie(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode) -> dict:
+def layout_bowtie(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, mode: WrapMode) -> dict:
     """lib/bowtie.ts:44-76 layoutBowtie()."""
     bowtie_check({"hazard": band.get("hazard"), "top": band["event"], "threats": band["threats"], "consequences": band["consequences"]})
 

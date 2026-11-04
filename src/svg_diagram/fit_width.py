@@ -17,6 +17,8 @@ Golden master: lib/fit-width.ts + lib/fit-split.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import math
 
 from .emit_common import js_round
@@ -59,7 +61,7 @@ def _lex_less(a: dict, b: dict) -> bool:
     return a["crossings"] < b["crossings"] or (a["crossings"] == b["crossings"] and a["bends"] < b["bends"])
 
 
-def fit_width(w: float, attempts: list[dict], mode: str, height_budget: float | None = None, width_of=None) -> dict:
+def fit_width(w: float, attempts: list[dict], mode: str, height_budget: float | None = None, width_of: Callable[[dict], float] | None = None) -> dict:
     """lib/fit-width.ts:44-61 fitWidth(). Runs the attempts in order. `mode='first'` stops at
     the first that fits `w` (the rest are not run); `'best'` runs them all and keeps the best
     of those that fit `w` and the height budget. `attempts`: [{"label", "run": () -> R,

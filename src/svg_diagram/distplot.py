@@ -288,7 +288,7 @@ def layout_dist(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def dist_band(who: str, data, opts: dict | None, kind: str) -> ChartBand:
+def dist_band(who: str, data: list | dict, opts: dict | None, kind: str) -> ChartBand:
     """lib/charts-dsl.ts's distBand() + the displot()/histplot()/.../rugplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_dist(who, data, opts, kind)

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 
-from .atoms import text_width
+from .atoms import WidthOf, text_width
 from .emit_common import emoji_span, escape_attr, js_num, js_round, round1
 from .layout_util import grid_columns
 from .tokens import PALETTE, color_of, tone_style
@@ -379,7 +379,7 @@ class _Grow(Exception):
         self.why = why
 
 
-def layout_quadrant(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode) -> dict:
+def layout_quadrant(band: dict, x: float, y: float, w: float, width_of: WidthOf, roles: dict, mode: WrapMode) -> dict:
     """lib/quadrant.ts:424-758 layoutQuadrant()."""
     size, t_size = roles["note"], roles["title"]
     line_n, line_t = size + 4, t_size + 5

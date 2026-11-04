@@ -95,12 +95,15 @@ def _geom_of(band: dict, roles: dict) -> float:
 
 
 def stage_edges(stages: list, min_v: float, max_v: float) -> list[float]:
-    """lib/plane.ts:41-45 stageEdges()."""
+    """lib/plane.ts:41-45 stageEdges(). Node's `tos.map(Number)` turns a `to`-less stage's
+    `undefined` into `NaN` rather than raising (`Number(undefined)` is `NaN` in JS); mixing
+    `to`-having and `to`-less stages is not really a supported/tested shape, but this at
+    least matches Node's own (silently broken, not crashing) behavior for it."""
     n = len(stages)
     tos = [None if isinstance(st, str) else st.get("to") for st in stages[:-1]]
     if all(t is None for t in tos):
         return [min_v + (max_v - min_v) * i / n for i in range(n + 1)]
-    return [min_v, *(float(t) for t in tos), max_v]
+    return [min_v, *(float(t) if t is not None else math.nan for t in tos), max_v]
 
 
 def monotone_curves(p: list[dict]) -> list[list[dict]]:
@@ -734,7 +737,9 @@ def plane_band(opts: dict) -> dict:
             if any(not isinstance(t, (int, float)) or not math.isfinite(t) for t in inner):
                 raise ValueError("plane(): when a stage says where it ends (`to`), every stage but the last must")
             for i, t in enumerate(inner):
+                assert isinstance(t, (int, float))  # every element of inner was checked finite int/float above
                 prev = inner[i - 1] if i else min_v
+                assert isinstance(prev, (int, float))
                 if t <= prev or t >= opts["x"]["max"]:
                     raise ValueError("plane(): stage `to` values must increase and stay inside the x axis")
     for p in opts.get("points") or []:

@@ -1,0 +1,436 @@
+{
+  "by_file": {
+    "src/svg_diagram/__init__.py": {
+      "missing_lines": 0,
+      "num_statements": 3,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/approx_width.py": {
+      "missing_lines": 1,
+      "num_statements": 33,
+      "percent_covered": 96.96969696969697
+    },
+    "src/svg_diagram/atoms.py": {
+      "missing_lines": 0,
+      "num_statements": 28,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/badge.py": {
+      "missing_lines": 3,
+      "num_statements": 46,
+      "percent_covered": 93.47826086956522
+    },
+    "src/svg_diagram/bars.py": {
+      "missing_lines": 65,
+      "num_statements": 533,
+      "percent_covered": 87.8048780487805
+    },
+    "src/svg_diagram/bowtie.py": {
+      "missing_lines": 10,
+      "num_statements": 174,
+      "percent_covered": 94.25287356321839
+    },
+    "src/svg_diagram/bpmn.py": {
+      "missing_lines": 77,
+      "num_statements": 471,
+      "percent_covered": 83.65180467091295
+    },
+    "src/svg_diagram/bubble.py": {
+      "missing_lines": 14,
+      "num_statements": 198,
+      "percent_covered": 92.92929292929293
+    },
+    "src/svg_diagram/butterfly.py": {
+      "missing_lines": 11,
+      "num_statements": 105,
+      "percent_covered": 89.52380952380952
+    },
+    "src/svg_diagram/catplot.py": {
+      "missing_lines": 33,
+      "num_statements": 340,
+      "percent_covered": 90.29411764705883
+    },
+    "src/svg_diagram/cause_clash.py": {
+      "missing_lines": 0,
+      "num_statements": 32,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/cause_hop.py": {
+      "missing_lines": 1,
+      "num_statements": 111,
+      "percent_covered": 99.09909909909909
+    },
+    "src/svg_diagram/charts.py": {
+      "missing_lines": 5,
+      "num_statements": 112,
+      "percent_covered": 95.53571428571429
+    },
+    "src/svg_diagram/charts_base.py": {
+      "missing_lines": 40,
+      "num_statements": 389,
+      "percent_covered": 89.7172236503856
+    },
+    "src/svg_diagram/classes.py": {
+      "missing_lines": 9,
+      "num_statements": 261,
+      "percent_covered": 96.55172413793103
+    },
+    "src/svg_diagram/cloud.py": {
+      "missing_lines": 6,
+      "num_statements": 161,
+      "percent_covered": 96.27329192546584
+    },
+    "src/svg_diagram/clustermap.py": {
+      "missing_lines": 5,
+      "num_statements": 134,
+      "percent_covered": 96.26865671641791
+    },
+    "src/svg_diagram/combo.py": {
+      "missing_lines": 40,
+      "num_statements": 336,
+      "percent_covered": 88.0952380952381
+    },
+    "src/svg_diagram/distplot.py": {
+      "missing_lines": 24,
+      "num_statements": 235,
+      "percent_covered": 89.7872340425532
+    },
+    "src/svg_diagram/emblem_shapes.py": {
+      "missing_lines": 2,
+      "num_statements": 81,
+      "percent_covered": 97.53086419753086
+    },
+    "src/svg_diagram/emit.py": {
+      "missing_lines": 0,
+      "num_statements": 12,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/emit_boxes.py": {
+      "missing_lines": 2,
+      "num_statements": 103,
+      "percent_covered": 98.05825242718447
+    },
+    "src/svg_diagram/emit_common.py": {
+      "missing_lines": 1,
+      "num_statements": 102,
+      "percent_covered": 99.01960784313725
+    },
+    "src/svg_diagram/figures.py": {
+      "missing_lines": 0,
+      "num_statements": 51,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/fit_split.py": {
+      "missing_lines": 0,
+      "num_statements": 41,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/fit_width.py": {
+      "missing_lines": 38,
+      "num_statements": 188,
+      "percent_covered": 79.7872340425532
+    },
+    "src/svg_diagram/flow_nodes.py": {
+      "missing_lines": 1,
+      "num_statements": 77,
+      "percent_covered": 98.7012987012987
+    },
+    "src/svg_diagram/flow_shapes.py": {
+      "missing_lines": 41,
+      "num_statements": 576,
+      "percent_covered": 92.88194444444444
+    },
+    "src/svg_diagram/fta.py": {
+      "missing_lines": 45,
+      "num_statements": 372,
+      "percent_covered": 87.90322580645162
+    },
+    "src/svg_diagram/fta_analysis.py": {
+      "missing_lines": 0,
+      "num_statements": 141,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/gantt.py": {
+      "missing_lines": 42,
+      "num_statements": 287,
+      "percent_covered": 85.36585365853658
+    },
+    "src/svg_diagram/graph_layout.py": {
+      "missing_lines": 43,
+      "num_statements": 670,
+      "percent_covered": 93.58208955223881
+    },
+    "src/svg_diagram/harvey.py": {
+      "missing_lines": 12,
+      "num_statements": 153,
+      "percent_covered": 92.15686274509804
+    },
+    "src/svg_diagram/heatmap.py": {
+      "missing_lines": 14,
+      "num_statements": 172,
+      "percent_covered": 91.86046511627907
+    },
+    "src/svg_diagram/layered_route.py": {
+      "missing_lines": 43,
+      "num_statements": 718,
+      "percent_covered": 94.01114206128133
+    },
+    "src/svg_diagram/layout_util.py": {
+      "missing_lines": 13,
+      "num_statements": 158,
+      "percent_covered": 91.77215189873418
+    },
+    "src/svg_diagram/legend.py": {
+      "missing_lines": 2,
+      "num_statements": 33,
+      "percent_covered": 93.93939393939394
+    },
+    "src/svg_diagram/lines.py": {
+      "missing_lines": 43,
+      "num_statements": 239,
+      "percent_covered": 82.00836820083683
+    },
+    "src/svg_diagram/map_layouts.py": {
+      "missing_lines": 17,
+      "num_statements": 201,
+      "percent_covered": 91.54228855721394
+    },
+    "src/svg_diagram/model.py": {
+      "missing_lines": 13,
+      "num_statements": 234,
+      "percent_covered": 94.44444444444444
+    },
+    "src/svg_diagram/model_charts.py": {
+      "missing_lines": 0,
+      "num_statements": 92,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/model_flow_shapes.py": {
+      "missing_lines": 0,
+      "num_statements": 39,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/model_networks.py": {
+      "missing_lines": 0,
+      "num_statements": 16,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/model_plane.py": {
+      "missing_lines": 0,
+      "num_statements": 48,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/model_process.py": {
+      "missing_lines": 0,
+      "num_statements": 94,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/model_shapes.py": {
+      "missing_lines": 1,
+      "num_statements": 236,
+      "percent_covered": 99.57627118644068
+    },
+    "src/svg_diagram/model_shared.py": {
+      "missing_lines": 0,
+      "num_statements": 8,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/model_stats.py": {
+      "missing_lines": 0,
+      "num_statements": 67,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/multiplot.py": {
+      "missing_lines": 17,
+      "num_statements": 377,
+      "percent_covered": 95.49071618037135
+    },
+    "src/svg_diagram/orthogonal_route.py": {
+      "missing_lines": 2,
+      "num_statements": 143,
+      "percent_covered": 98.6013986013986
+    },
+    "src/svg_diagram/people_dots.py": {
+      "missing_lines": 7,
+      "num_statements": 140,
+      "percent_covered": 95.0
+    },
+    "src/svg_diagram/plane.py": {
+      "missing_lines": 96,
+      "num_statements": 616,
+      "percent_covered": 84.41558441558442
+    },
+    "src/svg_diagram/polyline_metrics.py": {
+      "missing_lines": 0,
+      "num_statements": 64,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/quadrant.py": {
+      "missing_lines": 74,
+      "num_statements": 710,
+      "percent_covered": 89.5774647887324
+    },
+    "src/svg_diagram/radar.py": {
+      "missing_lines": 9,
+      "num_statements": 204,
+      "percent_covered": 95.58823529411765
+    },
+    "src/svg_diagram/regplot.py": {
+      "missing_lines": 16,
+      "num_statements": 203,
+      "percent_covered": 92.11822660098522
+    },
+    "src/svg_diagram/render_html.py": {
+      "missing_lines": 0,
+      "num_statements": 6,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/route_apart.py": {
+      "missing_lines": 10,
+      "num_statements": 117,
+      "percent_covered": 91.45299145299145
+    },
+    "src/svg_diagram/route_search.py": {
+      "missing_lines": 7,
+      "num_statements": 204,
+      "percent_covered": 96.56862745098039
+    },
+    "src/svg_diagram/sankey.py": {
+      "missing_lines": 20,
+      "num_statements": 226,
+      "percent_covered": 91.15044247787611
+    },
+    "src/svg_diagram/semnet.py": {
+      "missing_lines": 29,
+      "num_statements": 154,
+      "percent_covered": 81.16883116883118
+    },
+    "src/svg_diagram/semnet_analysis.py": {
+      "missing_lines": 6,
+      "num_statements": 114,
+      "percent_covered": 94.73684210526316
+    },
+    "src/svg_diagram/semnet_causal.py": {
+      "missing_lines": 12,
+      "num_statements": 215,
+      "percent_covered": 94.4186046511628
+    },
+    "src/svg_diagram/semnet_common.py": {
+      "missing_lines": 6,
+      "num_statements": 142,
+      "percent_covered": 95.77464788732394
+    },
+    "src/svg_diagram/semnet_interventions.py": {
+      "missing_lines": 10,
+      "num_statements": 117,
+      "percent_covered": 91.45299145299145
+    },
+    "src/svg_diagram/semnet_ring.py": {
+      "missing_lines": 15,
+      "num_statements": 147,
+      "percent_covered": 89.79591836734694
+    },
+    "src/svg_diagram/sequence.py": {
+      "missing_lines": 21,
+      "num_statements": 143,
+      "percent_covered": 85.31468531468532
+    },
+    "src/svg_diagram/stacked.py": {
+      "missing_lines": 29,
+      "num_statements": 233,
+      "percent_covered": 87.55364806866953
+    },
+    "src/svg_diagram/states.py": {
+      "missing_lines": 64,
+      "num_statements": 460,
+      "percent_covered": 86.08695652173913
+    },
+    "src/svg_diagram/states_words.py": {
+      "missing_lines": 0,
+      "num_statements": 5,
+      "percent_covered": 100.0
+    },
+    "src/svg_diagram/stats.py": {
+      "missing_lines": 9,
+      "num_statements": 261,
+      "percent_covered": 96.55172413793103
+    },
+    "src/svg_diagram/table.py": {
+      "missing_lines": 17,
+      "num_statements": 165,
+      "percent_covered": 89.6969696969697
+    },
+    "src/svg_diagram/timeline.py": {
+      "missing_lines": 21,
+      "num_statements": 210,
+      "percent_covered": 90.0
+    },
+    "src/svg_diagram/toc.py": {
+      "missing_lines": 113,
+      "num_statements": 593,
+      "percent_covered": 80.94435075885329
+    },
+    "src/svg_diagram/toc_analysis.py": {
+      "missing_lines": 1,
+      "num_statements": 36,
+      "percent_covered": 97.22222222222223
+    },
+    "src/svg_diagram/tokens.py": {
+      "missing_lines": 1,
+      "num_statements": 68,
+      "percent_covered": 98.52941176470588
+    },
+    "src/svg_diagram/tornado.py": {
+      "missing_lines": 19,
+      "num_statements": 155,
+      "percent_covered": 87.74193548387096
+    },
+    "src/svg_diagram/tree.py": {
+      "missing_lines": 20,
+      "num_statements": 168,
+      "percent_covered": 88.0952380952381
+    },
+    "src/svg_diagram/tree_text.py": {
+      "missing_lines": 7,
+      "num_statements": 54,
+      "percent_covered": 87.03703703703704
+    },
+    "src/svg_diagram/treemap.py": {
+      "missing_lines": 25,
+      "num_statements": 246,
+      "percent_covered": 89.83739837398375
+    },
+    "src/svg_diagram/verify_base.py": {
+      "missing_lines": 2,
+      "num_statements": 48,
+      "percent_covered": 95.83333333333333
+    },
+    "src/svg_diagram/waterfall.py": {
+      "missing_lines": 25,
+      "num_statements": 242,
+      "percent_covered": 89.6694214876033
+    },
+    "src/svg_diagram/wordart.py": {
+      "missing_lines": 26,
+      "num_statements": 287,
+      "percent_covered": 90.94076655052265
+    },
+    "src/svg_diagram/wordart_look.py": {
+      "missing_lines": 21,
+      "num_statements": 197,
+      "percent_covered": 89.34010152284264
+    },
+    "src/svg_diagram/wordart_vertical.py": {
+      "missing_lines": 27,
+      "num_statements": 98,
+      "percent_covered": 72.44897959183673
+    },
+    "src/svg_diagram/wrap.py": {
+      "missing_lines": 23,
+      "num_statements": 162,
+      "percent_covered": 85.80246913580247
+    }
+  },
+  "missing_lines_total": 1524,
+  "percent_covered": 90.84189652064178
+}

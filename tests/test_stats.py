@@ -46,7 +46,7 @@ def test_error_bar(node_golden, kind):
 
 
 def test_kde(node_golden):
-    grid = [i for i in range(11)]
+    grid: list[float] = [i for i in range(11)]
     node_result = node_golden.call({"kind": "stats", "fn": "kde", "args": [XS, grid]})
     py_result = stats.kde(XS, grid)
     assert py_result["bw"] == pytest.approx(node_result["bw"])
@@ -54,14 +54,14 @@ def test_kde(node_golden):
 
 
 def test_swarm_offsets(node_golden):
-    at = [10, 12, 11, 50, 51, 90]
+    at: list[float] = [10, 12, 11, 50, 51, 90]
     node_result = node_golden.call({"kind": "stats", "fn": "swarmOffsets", "args": [at, 8, 100]})
     py_result = stats.swarm_offsets(at, 8, 100)
     assert py_result == pytest.approx(node_result)
 
 
 def test_bin_counts_and_index(node_golden):
-    edges = [0, 2, 4, 6, 8, 10]
+    edges: list[float] = [0, 2, 4, 6, 8, 10]
     assert stats.bin_counts(XS, edges) == node_golden.call({"kind": "stats", "fn": "binCounts", "args": [XS, edges]})
     for v in XS:
         assert stats.bin_index(v, edges) == node_golden.call({"kind": "stats", "fn": "binIndex", "args": [v, edges]})
@@ -80,12 +80,13 @@ def test_poly_fit(node_golden, order):
     if node_result["halfValues"] is None:
         assert r.half is None
     else:
+        assert r.half is not None
         assert [r.half(x) for x in probe] == pytest.approx(node_result["halfValues"])
 
 
 def test_kde2d(node_golden):
-    gx = [0, 2, 4, 6, 8]
-    gy = [0, 2, 4, 6, 8]
+    gx: list[float] = [0, 2, 4, 6, 8]
+    gy: list[float] = [0, 2, 4, 6, 8]
     node_result = node_golden.call({"kind": "stats", "fn": "kde2d", "args": [XS, YS, gx, gy]})
     py_result = stats.kde2d(XS, YS, gx, gy)
     assert py_result["bwx"] == pytest.approx(node_result["bwx"])

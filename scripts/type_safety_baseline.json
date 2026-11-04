@@ -1,6 +1,6 @@
 {
   "ambiguous_types": 6,
-  "completeness_score": 0.5350052246603971,
+  "completeness_score": 0.5402298850574713,
   "error_count_by_file": {
     "src/svg_diagram/bowtie.py": 2,
     "src/svg_diagram/bpmn.py": 1,
@@ -26,7 +26,6 @@
     "src/svg_diagram/route_search.py": 31,
     "src/svg_diagram/sequence.py": 1,
     "src/svg_diagram/states.py": 1,
-    "src/svg_diagram/stats.py": 7,
     "src/svg_diagram/table.py": 2,
     "src/svg_diagram/toc.py": 2,
     "src/svg_diagram/tree.py": 1,
@@ -34,10 +33,9 @@
     "src/svg_diagram/treemap.py": 1,
     "src/svg_diagram/wordart_vertical.py": 1,
     "src/svg_diagram/wrap.py": 1,
-    "tests/test_clustermap.py": 1,
-    "tests/test_stats.py": 7
+    "tests/test_clustermap.py": 1
   },
-  "error_count_total": 115,
-  "known_types": 512,
-  "unknown_types": 439
+  "error_count_total": 101,
+  "known_types": 517,
+  "unknown_types": 434
 }

@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import functools
 import math
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 
-def _g(a: list[float], i: int) -> float:
+def _g(a: Sequence[float], i: int) -> float:
     return a[i] if 0 <= i < len(a) else math.nan
 
 
@@ -128,7 +129,11 @@ def swarm_offsets(at: list[float], d: float, max_off: float) -> list[float] | No
             dx = math.sqrt(d * d - (pu - u) ** 2)
             cands.append(po + dx)
             cands.append(po - dx)
-        cands.sort(key=functools.cmp_to_key(lambda a, b: (abs(a) - abs(b)) or (b - a)))
+        def _nearest_cmp(a: float, b: float) -> int:
+            d = (abs(a) - abs(b)) or (b - a)
+            return (d > 0) - (d < 0)
+
+        cands.sort(key=functools.cmp_to_key(_nearest_cmp))
         off = next((x for x in cands if all(math.hypot(pu - u, po - x) >= d - 1e-6 for pu, po in near)), None)
         if off is None or abs(off) > max_off:
             return None
@@ -161,9 +166,9 @@ class PolyFit:
     coef: list[float]
     r2: float
     n: int
-    at: "callable"  # type: ignore[name-defined]
+    at: Callable[[float], float]
     rss: float
-    half: "callable | None" = None  # type: ignore[name-defined]
+    half: Callable[[float], float] | None = None
 
 
 def poly_fit(xs: list[float], ys: list[float], order: int) -> PolyFit:
@@ -211,12 +216,14 @@ def poly_fit(xs: list[float], ys: list[float], order: int) -> PolyFit:
     s = math.sqrt(rss / df) if df > 0 else math.nan
     t = t_critical_95(df)
 
-    half = None
+    half: Callable[[float], float] | None = None
     if df > 0:
-        def half(x: float) -> float:  # noqa: F811
+        def _half(x: float) -> float:
             v = row(x)
             inner = sum(vi * sum(q * _g(v, j) for j, q in enumerate(inv[i])) for i, vi in enumerate(v))
             return t * s * math.sqrt(max(0.0, inner))
+
+        half = _half
 
     return PolyFit(order=order, coef=beta, r2=(1 - rss / tss if tss > 0 else 1), n=n, at=at, rss=rss, half=half)
 
@@ -249,7 +256,7 @@ def average_linkage(data: list[list[float]]) -> list[Merge]:
     with the smaller indices, so the same data always gives the same tree."""
     n = len(data)
 
-    def dist(a: list[float], b: float) -> float:
+    def dist(a: list[float], b: list[float]) -> float:
         return math.sqrt(sum((v - _g(b, i)) ** 2 for i, v in enumerate(a)))
 
     live: dict[int, int] = {i: 1 for i in range(n)}  # id -> size
@@ -273,6 +280,7 @@ def average_linkage(data: list[list[float]]) -> list[Merge]:
                 if v < bd - 1e-12:
                     bd = v
                     best = (ix, iy)
+        assert best is not None  # >= 2 live ids remain at every step < n - 1, and the first pair compared always beats bd=inf
         a, b = best
         sa, sb = live[a], live[b]
         node_id = n + step

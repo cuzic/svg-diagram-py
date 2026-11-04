@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, thin_ticks
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, thin_ticks
 from .emit_common import js_num, js_round, round1
 
 BAR_TONES = ("accent", "text", "muted")
@@ -394,11 +394,9 @@ def layout_combo(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def combo_band(categories: list[str], series: list[dict], opts: dict | None = None) -> dict:
+def combo_band(categories: list[str], series: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:126-129 comboBand() + lib/dsl/charts.ts's combo()."""
     opts = opts or {}
     spec = resolve_combo(categories, series, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else combo_alt(spec)
-    band: dict = {"type": "chart", "kind": "combo", "spec": spec, "alt": alt, "ids": [x["id"] for x in spec["series"] if x.get("id")]}
-    band.update(common_chart_opts("combo", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="combo", spec=spec, alt=alt, **common_chart_opts("combo", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

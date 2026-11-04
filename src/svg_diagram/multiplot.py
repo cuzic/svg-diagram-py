@@ -15,7 +15,7 @@ import math
 
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import SHAPES, Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, histogram_bins, ink_on_shade, marker_path, nice_scale, num_text
+from .charts_base import SHAPES, Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, histogram_bins, ink_on_shade, marker_path, nice_scale, num_text
 from .emit_common import round1
 from .stats import bin_counts, bin_index, kde2d
 
@@ -449,12 +449,10 @@ def js_num_r1(v: float) -> str:
     return js_num(_r1(v))
 
 
-def multi_band(who: str, mode: str, data, opts: dict | None = None) -> dict:
+def multi_band(who: str, mode: str, data, opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts's multiBand() + the hist2d()/jointplot()/kde2d()/pairplot() DSL
     wrappers."""
     opts = opts or {}
     spec = resolve_multi(who, mode, data, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else multi_alt(spec)
-    band: dict = {"type": "chart", "kind": "multiplot", "spec": spec, "alt": alt, "ids": []}
-    band.update(common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="multiplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

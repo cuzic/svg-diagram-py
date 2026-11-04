@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 
 from .atoms import text_width
-from .charts_base import check_ids, check_text, common_chart_opts, fail, finite_num, num_text
+from .charts_base import ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, num_text
 from .semnet_analysis import analyze_critical_path
 from .semnet_causal import causal_texts
 from .semnet_common import arrow, direction, head_box, network_canvas, node_box, path_of, place_edge_label, straighten_of, validate_nodes
@@ -221,20 +221,16 @@ def layout_dependency(s: dict, g: dict) -> dict:
 def pert_band(
     tasks: list[dict], *, direction: str | None = None, unit: str | None = None, compact: bool | None = None, straighten: bool | None = None, alt: str | None = None,
     id: str | None = None, width: float | None = None, height: float | None = None, label_role: str | None = None, reveal: int | None = None, until: int | None = None,
-) -> dict:
+) -> ChartBand:
     """lib/semnet-dsl.ts:7 pertBand()."""
     spec = resolve_pert(tasks, direction_=direction, unit=unit, compact=compact, straighten=straighten, id=id)
-    band: dict = {"type": "chart", "kind": "pert", "spec": spec, "alt": alt or pert_alt(spec), "ids": [t["id"] for t in tasks]}
-    band.update(common_chart_opts("pert", id=id, width=width, height=height, label_role=label_role, reveal=reveal, until=until))
-    return band
+    return ChartBand(kind="pert", spec=spec, alt=alt or pert_alt(spec), **common_chart_opts("pert", id=id, width=width, height=height, label_role=label_role, reveal=reveal, until=until))
 
 
 def dependency_band(
     nodes: list[dict], edges: list[dict], *, direction: str | None = None, node_kinds: dict | None = None, edge_types: dict | None = None, straighten: bool | None = None, alt: str | None = None,
     id: str | None = None, width: float | None = None, height: float | None = None, label_role: str | None = None, reveal: int | None = None, until: int | None = None,
-) -> dict:
+) -> ChartBand:
     """lib/semnet-dsl.ts:9 dependencyBand()."""
     spec = resolve_dependency(nodes, edges, direction_=direction, node_kinds=node_kinds, edge_types=edge_types, straighten=straighten, id=id)
-    band: dict = {"type": "chart", "kind": "dependency", "spec": spec, "alt": alt or dependency_alt(spec), "ids": [n["id"] for n in nodes]}
-    band.update(common_chart_opts("dependencyNetwork", id=id, width=width, height=height, label_role=label_role, reveal=reveal, until=until))
-    return band
+    return ChartBand(kind="dependency", spec=spec, alt=alt or dependency_alt(spec), **common_chart_opts("dependencyNetwork", id=id, width=width, height=height, label_role=label_role, reveal=reveal, until=until))

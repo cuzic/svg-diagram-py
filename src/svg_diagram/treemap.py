@@ -15,7 +15,7 @@ Golden master: lib/charts-treemap.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_round, round1
 
@@ -295,7 +295,7 @@ def layout_treemap(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def treemap_band(tree, opts: dict | None = None) -> dict:
+def treemap_band(tree, opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:76-82 treemapBand() + lib/dsl/charts.ts's treemap()."""
     opts = opts or {}
     spec = resolve_treemap(tree, opts)
@@ -310,6 +310,4 @@ def treemap_band(tree, opts: dict | None = None) -> dict:
     for n in spec["nodes"]:
         walk(n)
     alt = opts.get("alt") if opts.get("alt") is not None else treemap_alt(spec)
-    band: dict = {"type": "chart", "kind": "treemap", "spec": spec, "alt": alt, "ids": ids}
-    band.update(common_chart_opts("treemap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="treemap", spec=spec, alt=alt, **common_chart_opts("treemap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

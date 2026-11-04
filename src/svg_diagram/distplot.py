@@ -19,7 +19,7 @@ import math
 
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import Canvas, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, histogram_bins, nice_scale, num_text
+from .charts_base import Canvas, ChartBand, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, histogram_bins, nice_scale, num_text
 from .emit_common import js_num, round1
 from .stats import bin_counts, kde
 
@@ -287,11 +287,9 @@ def layout_dist(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def dist_band(who: str, data, opts: dict | None, kind: str) -> dict:
+def dist_band(who: str, data, opts: dict | None, kind: str) -> ChartBand:
     """lib/charts-dsl.ts's distBand() + the displot()/histplot()/.../rugplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_dist(who, data, opts, kind)
     alt = opts.get("alt") if opts.get("alt") is not None else dist_alt(spec)
-    band: dict = {"type": "chart", "kind": "distplot", "spec": spec, "alt": alt, "ids": [g["id"] for g in spec["groups"] if g.get("id")]}
-    band.update(common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="distplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

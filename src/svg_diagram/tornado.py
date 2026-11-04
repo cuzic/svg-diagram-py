@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import Canvas, check_domain, check_ids, check_inset, check_text, common_chart_opts, fail, finite_num, inset_or_need, num_text, thin_ticks, value_scale
+from .charts_base import Canvas, ChartBand, check_domain, check_ids, check_inset, check_text, common_chart_opts, fail, finite_num, inset_or_need, num_text, thin_ticks, value_scale
 from .emit_common import round1
 
 
@@ -197,11 +197,9 @@ def layout_tornado(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def tornado_band(items: list[dict], opts: dict | None = None) -> dict:
+def tornado_band(items: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts's tornadoBand() + lib/dsl/charts.ts's tornado()."""
     opts = opts or {}
     spec = resolve_tornado(items, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else tornado_alt(spec)
-    band: dict = {"type": "chart", "kind": "tornado", "spec": spec, "alt": alt, "ids": [i["id"] for i in spec["items"] if i.get("id")]}
-    band.update(common_chart_opts("tornado", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="tornado", spec=spec, alt=alt, **common_chart_opts("tornado", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

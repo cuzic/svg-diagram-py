@@ -10,7 +10,7 @@ Golden master: lib/charts-cluster.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
 from .emit_common import js_num, round1
 from .stats import average_linkage, dendrogram_order
 
@@ -169,11 +169,9 @@ def _swap_coords(seg: str) -> str:
     return re.sub(r"(-?[\d.]+),(-?[\d.]+)", r"\2,\1", seg)
 
 
-def cluster_band(rows: list[str], cols: list[str], values: list[list[float]], opts: dict | None = None) -> dict:
+def cluster_band(rows: list[str], cols: list[str], values: list[list[float]], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts's clusterBand() + the clustermap() DSL wrapper."""
     opts = opts or {}
     spec = resolve_cluster(rows, cols, values, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else cluster_alt(spec)
-    band: dict = {"type": "chart", "kind": "clustermap", "spec": spec, "alt": alt, "ids": []}
-    band.update(common_chart_opts("clustermap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="clustermap", spec=spec, alt=alt, **common_chart_opts("clustermap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

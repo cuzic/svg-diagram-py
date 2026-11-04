@@ -14,7 +14,7 @@ import math
 
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import SHAPES, Canvas, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text
+from .charts_base import SHAPES, Canvas, ChartBand, _to_precision, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text
 from .emit_common import js_num, round1
 from .stats import lowess_fit, mean_of, poly_fit
 
@@ -252,11 +252,9 @@ def layout_reg(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def reg_band(who: str, resid: bool, data: dict, opts: dict | None = None) -> dict:
+def reg_band(who: str, resid: bool, data: dict, opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts's regBand() + the regplot()/residplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_reg(who, resid, data, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else reg_alt(spec)
-    band: dict = {"type": "chart", "kind": "regplot", "spec": spec, "alt": alt, "ids": []}
-    band.update(common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="regplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

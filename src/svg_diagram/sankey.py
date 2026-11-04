@@ -15,7 +15,7 @@ Golden master: lib/charts-sankey.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .charts_base import Canvas, check_text, common_chart_opts, fail, finite_num, num_text
+from .charts_base import Canvas, ChartBand, check_text, common_chart_opts, fail, finite_num, num_text
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_num, js_round, round1
 
@@ -288,11 +288,9 @@ def layout_sankey(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def sankey_band(nodes: list, links: list[dict], opts: dict | None = None) -> dict:
+def sankey_band(nodes: list, links: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:84-88 sankeyBand() + lib/dsl/charts.ts's sankey()."""
     opts = opts or {}
     spec = resolve_sankey(nodes, links, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else sankey_alt(spec)
-    band: dict = {"type": "chart", "kind": "sankey", "spec": spec, "alt": alt, "ids": [n["id"] for n in spec["nodes"]]}
-    band.update(common_chart_opts("sankey", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="sankey", spec=spec, alt=alt, **common_chart_opts("sankey", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

@@ -7,6 +7,7 @@ from __future__ import annotations
 import pytest
 
 from svg_diagram.charts import layout_chart, render_chart
+from svg_diagram.charts_base import ChartBand
 from svg_diagram.semnet_analysis import analyze_causal_loops
 from svg_diagram.semnet_causal import band_inset, causal_band, causal_texts, check_ring, loop_names, resolve_causal, ring_side, sign_text
 
@@ -77,7 +78,7 @@ def _round_segs(segs: list[dict] | None) -> list[dict] | None:
     return [{k: round(v, 9) for k, v in seg.items()} for seg in segs]
 
 
-def _band(case: dict) -> dict:
+def _band(case: dict) -> ChartBand:
     opts = case["opts"]
     return causal_band(
         case["nodes"], case["links"],

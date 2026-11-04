@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, overlaps, thin_ticks
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, nice_scale, num_text, overlaps, thin_ticks
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_num, js_round, round1
 
@@ -261,11 +261,9 @@ def layout_bubble(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def bubble_band(points: list[dict], opts: dict | None = None) -> dict:
+def bubble_band(points: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:116-119 bubbleBand() + lib/dsl/charts.ts's bubble()."""
     opts = opts or {}
     spec = resolve_bubble(points, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else bubble_alt(spec)
-    band: dict = {"type": "chart", "kind": "bubble", "spec": spec, "alt": alt, "ids": [p["id"] for p in points if p.get("id")]}
-    band.update(common_chart_opts("bubble", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="bubble", spec=spec, alt=alt, **common_chart_opts("bubble", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

@@ -21,7 +21,7 @@ from .distplot import layout_dist
 from .multiplot import layout_multi
 from .regplot import layout_reg
 from .clustermap import layout_cluster
-from .charts_base import size_of
+from .charts_base import ChartBand, size_of
 from .semnet import layout_dependency, layout_pert
 from .semnet_causal import layout_causal
 from .emit_common import emoji_span, js_num, js_round
@@ -36,61 +36,61 @@ from .treemap import layout_treemap
 from .waterfall import layout_waterfall
 
 
-def layout_chart(band: dict, x: float, y: float, w: float, width_of, roles: dict, wrap: str = "phrase") -> dict:
+def layout_chart(band: ChartBand, x: float, y: float, w: float, width_of, roles: dict, wrap: str = "phrase") -> dict:
     """lib/charts.ts:96-124 layoutChart()."""
-    size = size_of(band.get("labelRole"), roles)
-    width = band.get("width") if band.get("width") is not None else w
+    size = size_of(band.label_role, roles)
+    width = band.width if band.width is not None else w
     width = min(w, width)
     left = x + (w - width) / 2
-    g = {"x": left, "y": y, "w": width, "height": band.get("height"), "size": size, "widthOf": width_of, "wrap": wrap}
-    kind = band["kind"]
+    g = {"x": left, "y": y, "w": width, "height": band.height, "size": size, "widthOf": width_of, "wrap": wrap}
+    kind = band.kind
     if kind == "heatmap":
-        part = layout_heatmap(band["spec"], g)
+        part = layout_heatmap(band.spec, g)
     elif kind == "sankey":
-        part = layout_sankey(band["spec"], g)
+        part = layout_sankey(band.spec, g)
     elif kind == "radar":
-        part = layout_radar(band["spec"], g)
+        part = layout_radar(band.spec, g)
     elif kind == "treemap":
-        part = layout_treemap(band["spec"], g)
+        part = layout_treemap(band.spec, g)
     elif kind == "waterfall":
-        part = layout_waterfall(band["spec"], g)
+        part = layout_waterfall(band.spec, g)
     elif kind == "stacked":
-        part = layout_stacked(band["spec"], g)
+        part = layout_stacked(band.spec, g)
     elif kind == "tornado":
-        part = layout_tornado(band["spec"], g)
+        part = layout_tornado(band.spec, g)
     elif kind == "butterfly":
-        part = layout_butterfly(band["spec"], g)
+        part = layout_butterfly(band.spec, g)
     elif kind == "harvey":
-        part = layout_harvey(band["spec"], g)
+        part = layout_harvey(band.spec, g)
     elif kind == "bubble":
-        part = layout_bubble(band["spec"], g)
+        part = layout_bubble(band.spec, g)
     elif kind == "combo":
-        part = layout_combo(band["spec"], g)
+        part = layout_combo(band.spec, g)
     elif kind == "catplot":
-        part = layout_cat(band["spec"], g)
+        part = layout_cat(band.spec, g)
     elif kind == "distplot":
-        part = layout_dist(band["spec"], g)
+        part = layout_dist(band.spec, g)
     elif kind == "multiplot":
-        part = layout_multi(band["spec"], g)
+        part = layout_multi(band.spec, g)
     elif kind == "regplot":
-        part = layout_reg(band["spec"], g)
+        part = layout_reg(band.spec, g)
     elif kind == "clustermap":
-        part = layout_cluster(band["spec"], g)
+        part = layout_cluster(band.spec, g)
     elif kind == "pert":
-        part = layout_pert(band["spec"], g)
+        part = layout_pert(band.spec, g)
     elif kind == "dependency":
-        part = layout_dependency(band["spec"], g)
+        part = layout_dependency(band.spec, g)
     elif kind == "causal":
-        part = layout_causal(band["spec"], g)
+        part = layout_causal(band.spec, g)
     else:
         raise NotImplementedError(f"layout_chart(): {kind!r} is not supported by this port yet")
-    result = {"type": "chart", "kind": kind, "alt": band["alt"], "size": size, "x": left, "y": y, "w": width, **part}
-    if band.get("id") is not None:
-        result["id"] = band["id"]
-    if band.get("reveal") is not None:
-        result["reveal"] = band["reveal"]
-    if band.get("until") is not None:
-        result["until"] = band["until"]
+    result = {"type": "chart", "kind": kind, "alt": band.alt, "size": size, "x": left, "y": y, "w": width, **part}
+    if band.id is not None:
+        result["id"] = band.id
+    if band.reveal is not None:
+        result["reveal"] = band.reveal
+    if band.until is not None:
+        result["until"] = band.until
     return result
 
 

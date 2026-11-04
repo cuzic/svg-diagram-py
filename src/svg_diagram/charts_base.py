@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from dataclasses import dataclass
 
 from .atoms import split_atoms, text_width
 from .emit_common import js_num, js_round, round1
@@ -287,8 +288,9 @@ def size_of(label_role: str | None, roles: dict) -> float:
 
 def common_chart_opts(who: str, *, id: str | None = None, width: float | None = None, height: float | None = None, label_role: str | None = None, reveal: int | None = None, until: int | None = None) -> dict:
     """lib/charts-dsl.ts:41-48 common() — the band fields every chart kind's *Band()
-    constructor shares (id/width/height/labelRole/reveal/until). `scope` (spotlight) is not
-    ported, consistent with the rest of this port."""
+    constructor shares (id/width/height/labelRole/reveal/until), as kwargs ready to splat
+    into a ChartBand (see below) alongside that caller's own kind/spec/alt. `scope`
+    (spotlight) is not ported, consistent with the rest of this port."""
     if label_role is not None and label_role not in ("note", "banner", "stat"):
         fail(who, f"labelRole must be note, banner or stat (got {label_role})")
     for k, v in (("width", width), ("height", height)):
@@ -302,12 +304,37 @@ def common_chart_opts(who: str, *, id: str | None = None, width: float | None = 
     if height is not None:
         out["height"] = height
     if label_role is not None:
-        out["labelRole"] = label_role
+        out["label_role"] = label_role
     if reveal is not None:
         out["reveal"] = reveal
     if until is not None:
         out["until"] = until
     return out
+
+
+@dataclass(frozen=True)
+class ChartBand:
+    """lib/charts-dsl.ts's shared ChartBand envelope: every chart kind's own *_band()
+    function (heatmap_band(), sankey_band(), ..., pert_band(), causal_band(), ...) builds one
+    of these — common_chart_opts() already validates id/width/height/labelRole before this is
+    constructed, so this dataclass adds no further checking of its own, just the fields every
+    kind shares, plus its own `kind` (what layout_chart() dispatches on) and `spec` (that
+    kind's own shape, still a plain dict — see each file's resolve_X() for it).
+
+    Not a JSON boundary: layout_chart()'s *return* value (LaidOutChart) is the one that
+    crosses into Node's golden CLI as JSON (see charts.py's render_chart() for why that one
+    stays a dict); a ChartBand never leaves the Python process.
+    """
+
+    kind: str
+    spec: dict
+    alt: str
+    id: str | None = None
+    width: float | None = None
+    height: float | None = None
+    label_role: str | None = None
+    reveal: int | None = None
+    until: int | None = None
 
 
 class Canvas:

@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import Canvas, check_domain, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text, shade_ops, value_scale
+from .charts_base import Canvas, ChartBand, check_domain, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text, shade_ops, value_scale
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_round, round1
 
@@ -271,22 +271,20 @@ def layout_stacked(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def stacked_band(who: str, columns: list[dict], mode: str, opts: dict) -> dict:
+def stacked_band(who: str, columns: list[dict], mode: str, opts: dict) -> ChartBand:
     """lib/charts-dsl.ts:66-69 stackedBand()."""
     spec = resolve_stacked(who, columns, mode, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else stacked_alt(spec)
-    band: dict = {"type": "chart", "kind": "stacked", "spec": spec, "alt": alt, "ids": [c["id"] for c in columns if c.get("id")]}
-    band.update(common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="stacked", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
 
 
-def stacked_bars_band(columns: list[dict], opts: dict | None = None) -> dict:
+def stacked_bars_band(columns: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/dsl/charts.ts's stackedBars()."""
     opts = opts or {}
     return stacked_band("stackedBars", columns, "percent" if opts.get("percent") else "stacked", opts)
 
 
-def mekko_band(columns: list[dict], opts: dict | None = None) -> dict:
+def mekko_band(columns: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/dsl/charts.ts's mekko()."""
     opts = opts or {}
     return stacked_band("mekko", columns, "mekko", opts)

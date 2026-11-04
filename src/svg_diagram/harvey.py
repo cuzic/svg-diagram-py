@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num
 from .emit_common import js_num, js_round, round1
 
 
@@ -186,11 +186,9 @@ def layout_harvey(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def harvey_band(rows: list, cols: list[str], values: list[list], opts: dict | None = None) -> dict:
+def harvey_band(rows: list, cols: list[str], values: list[list], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:131-134 harveyBand() + lib/dsl/charts.ts's harvey()."""
     opts = opts or {}
     spec = resolve_harvey(rows, cols, values, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else harvey_alt(spec)
-    band: dict = {"type": "chart", "kind": "harvey", "spec": spec, "alt": alt, "ids": [i for i in spec["rowIds"] if i]}
-    band.update(common_chart_opts("harvey", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="harvey", spec=spec, alt=alt, **common_chart_opts("harvey", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

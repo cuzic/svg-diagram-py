@@ -10,7 +10,7 @@ import math
 from collections.abc import Callable
 
 from .atoms import text_width
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail
 from .semnet_analysis import analyze_causal_loops
 from .semnet_common import (
     arrow,
@@ -103,12 +103,10 @@ def causal_band(
     nodes: list[dict], links: list[dict], *,
     direction: str | None = None, interventions: list | None = None, layout: str | None = None, straighten: bool | None = None, alt: str | None = None,
     id: str | None = None, width: float | None = None, height: float | None = None, label_role: str | None = None, reveal: int | None = None, until: int | None = None,
-) -> dict:
+) -> ChartBand:
     """lib/semnet-dsl.ts:8 causalBand()."""
     spec = resolve_causal(nodes, links, direction_=direction, interventions=interventions, layout=layout, straighten=straighten, id=id)
-    band: dict = {"type": "chart", "kind": "causal", "spec": spec, "alt": alt or causal_alt(spec), "ids": [n["id"] for n in nodes] + [v["id"] for v in spec["interventions"]]}
-    band.update(common_chart_opts("causalLoop", id=id, width=width, height=height, label_role=label_role, reveal=reveal, until=until))
-    return band
+    return ChartBand(kind="causal", spec=spec, alt=alt or causal_alt(spec), **common_chart_opts("causalLoop", id=id, width=width, height=height, label_role=label_role, reveal=reveal, until=until))
 
 
 def loop_names(loops: list[dict]) -> list[str]:

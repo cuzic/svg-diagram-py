@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import SHAPES, Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text, shade_ops
+from .charts_base import SHAPES, Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text, shade_ops
 from .emit_common import js_num, round1
 from .stats import box_stats, error_bar, kde, mean_of, swarm_offsets
 
@@ -424,11 +424,9 @@ def layout_cat(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def cat_band(who: str, data, opts: dict | None = None, kind: str | None = None) -> dict:
+def cat_band(who: str, data, opts: dict | None = None, kind: str | None = None) -> ChartBand:
     """lib/charts-dsl.ts's catBand() + the catplot()/boxplot()/.../barplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_cat(who, data, opts, kind if kind is not None else "box")
     alt = opts.get("alt") if opts.get("alt") is not None else cat_alt(spec)
-    band: dict = {"type": "chart", "kind": "catplot", "spec": spec, "alt": alt, "ids": [g["id"] for g in spec["groups"] if g.get("id")]}
-    band.update(common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="catplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

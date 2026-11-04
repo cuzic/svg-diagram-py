@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, check_text, common_chart_opts, decimals_in, fail, finite_num, ink_on_shade, nice_near, nice_up, num_text, shade_ops
+from .charts_base import Canvas, ChartBand, check_text, common_chart_opts, decimals_in, fail, finite_num, ink_on_shade, nice_near, nice_up, num_text, shade_ops
 from .charts_base import _to_precision as to_precision
 from .emit_common import round1
 
@@ -206,11 +206,9 @@ def layout_heatmap(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def heatmap_band(rows: list[str], cols: list[str], values: list[list[float | None]], opts: dict | None = None) -> dict:
+def heatmap_band(rows: list[str], cols: list[str], values: list[list[float | None]], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:61-64 heatmapBand() + lib/dsl/charts.ts:125-127 heatmap()."""
     opts = opts or {}
     spec = resolve_heatmap(rows, cols, values, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else heatmap_alt(spec)
-    band: dict = {"type": "chart", "kind": "heatmap", "spec": spec, "alt": alt, "ids": []}
-    band.update(common_chart_opts("heatmap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="heatmap", spec=spec, alt=alt, **common_chart_opts("heatmap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

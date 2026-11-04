@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import Canvas, check_domain, check_ids, check_inset, check_text, common_chart_opts, fail, finite_num, inset_or_need, num_text, signed_text, thin_ticks, value_scale
+from .charts_base import Canvas, ChartBand, check_domain, check_ids, check_inset, check_text, common_chart_opts, fail, finite_num, inset_or_need, num_text, signed_text, thin_ticks, value_scale
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_round, round1
 
@@ -287,11 +287,9 @@ def _layout_waterfall_h(spec: dict, g: dict) -> dict:
     return c.done()
 
 
-def waterfall_band(steps: list[dict], opts: dict | None = None) -> dict:
+def waterfall_band(steps: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:51-54 waterfallBand() + lib/dsl/charts.ts's waterfall()."""
     opts = opts or {}
     spec = resolve_waterfall(steps, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else waterfall_alt(spec)
-    band: dict = {"type": "chart", "kind": "waterfall", "spec": spec, "alt": alt, "ids": [s["id"] for s in steps if s.get("id")]}
-    band.update(common_chart_opts("waterfall", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="waterfall", spec=spec, alt=alt, **common_chart_opts("waterfall", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

@@ -14,6 +14,7 @@ from .bars import BarsBand, bars_band, layout_bars, render_bars
 from .bubble import bubble_band
 from .butterfly import butterfly_band
 from .charts import layout_chart, render_chart
+from .charts_base import ChartBand
 from .combo import combo_band
 from .harvey import harvey_band
 from .heatmap import heatmap_band
@@ -48,7 +49,7 @@ class _Chart:
     x: float
     y: float
     w: float
-    band: dict
+    band: ChartBand
     day: int | str = 1
 
     def render(self) -> str:

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, num_text
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, num_text
 from .emit_common import round1
 
 
@@ -145,10 +145,8 @@ def layout_butterfly(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def butterfly_band(rows: list[dict], opts: dict) -> dict:
+def butterfly_band(rows: list[dict], opts: dict) -> ChartBand:
     """lib/charts-dsl.ts:121-124 butterflyBand() + lib/dsl/charts.ts's butterfly()."""
     spec = resolve_butterfly(rows, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else butterfly_alt(spec)
-    band: dict = {"type": "chart", "kind": "butterfly", "spec": spec, "alt": alt, "ids": [r["id"] for r in spec["rows"] if r.get("id")]}
-    band.update(common_chart_opts("butterfly", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="butterfly", spec=spec, alt=alt, **common_chart_opts("butterfly", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

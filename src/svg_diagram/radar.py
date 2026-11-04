@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, check_ids, check_text, common_chart_opts, fail, finite_num, nice_near, nice_scale, num_text, overlaps
+from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, nice_near, nice_scale, num_text, overlaps
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_num, js_round, round1
 
@@ -264,11 +264,9 @@ def layout_radar(s: dict, g: dict) -> dict:
     return c.done()
 
 
-def radar_band(axes: list[str], series: list[dict], opts: dict | None = None) -> dict:
+def radar_band(axes: list[str], series: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:71-74 radarBand() + lib/dsl/charts.ts's radar()."""
     opts = opts or {}
     spec = resolve_radar(axes, series, opts)
     alt = opts.get("alt") if opts.get("alt") is not None else radar_alt(spec)
-    band: dict = {"type": "chart", "kind": "radar", "spec": spec, "alt": alt, "ids": [s["id"] for s in series if s.get("id")]}
-    band.update(common_chart_opts("radar", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
-    return band
+    return ChartBand(kind="radar", spec=spec, alt=alt, **common_chart_opts("radar", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

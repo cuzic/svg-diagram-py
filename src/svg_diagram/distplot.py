@@ -72,7 +72,8 @@ def resolve_dist(who: str, data, opts: dict | None, default_kind: str) -> dict:
     if "kde" in kinds and "hist" not in kinds and stat != "density":
         fail(who, f"a density curve alone is a density (stat: '{stat}' needs bars to be a count of; add 'hist' to kind)")
     element = opts.get("element") or "bars"
-    bw = opts.get("bw") if opts.get("bw") is not None else 1
+    opt_bw = opts.get("bw")
+    bw = opt_bw if opt_bw is not None else 1
     if element not in ("bars", "step"):
         fail(who, f"element must be bars or step (got {opts.get('element')!r})")
     if not (bw > 0) or not math.isfinite(bw):

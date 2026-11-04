@@ -75,8 +75,9 @@ def _axis_range(s: dict, k: str) -> dict:
     a = s[k]
     vals = [p[k] for p in s["points"]]
     ref = [] if a.get("line") is None else [a["line"]]
-    lo = a.get("min") if a.get("min") is not None else min(vals + ref)
-    hi = a.get("max") if a.get("max") is not None else max(vals + ref)
+    a_min, a_max = a.get("min"), a.get("max")
+    lo = a_min if a_min is not None else min(vals + ref)
+    hi = a_max if a_max is not None else max(vals + ref)
     return {"lo": lo, "hi": hi}
 
 

@@ -62,7 +62,8 @@ def resolve_cluster(rows: list[str], cols: list[str], values: list[list[float]],
 
     row_tree = None if opts.get("rows") is False else tree(shade)
     col_tree = None if opts.get("cols") is False else tree(_transpose(shade))
-    spec: dict = {"rows": list(rows), "cols": list(cols), "values": v, "unit": opts.get("unit") or "", "showValues": opts.get("values") if opts.get("values") is not None else True, "shade": shade}
+    opt_values = opts.get("values")
+    spec: dict = {"rows": list(rows), "cols": list(cols), "values": v, "unit": opts.get("unit") or "", "showValues": opt_values if opt_values is not None else True, "shade": shade}
     if scale:
         spec["scale"] = scale
     if row_tree:

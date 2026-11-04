@@ -85,8 +85,9 @@ def lines_opts(series: list[dict], opts: dict | None = None) -> dict:
             x["label"] = opts["x"]["label"]
     else:
         xo = opts.get("x") or {}
-        sc = nice_scale(xo.get("min") if xo.get("min") is not None else min(xs_all), xo.get("max") if xo.get("max") is not None else max(xs_all), 6)
-        x = {"min": xo.get("min") if xo.get("min") is not None else sc["min"], "max": xo.get("max") if xo.get("max") is not None else sc["max"]}
+        xo_min, xo_max = xo.get("min"), xo.get("max")
+        sc = nice_scale(xo_min if xo_min is not None else min(xs_all), xo_max if xo_max is not None else max(xs_all), 6)
+        x = {"min": xo_min if xo_min is not None else sc["min"], "max": xo_max if xo_max is not None else sc["max"]}
         if xo.get("step") is not None:
             x["step"] = xo["step"]
         elif xo.get("ticks") is None:
@@ -96,8 +97,9 @@ def lines_opts(series: list[dict], opts: dict | None = None) -> dict:
         if xo.get("label") is not None:
             x["label"] = xo["label"]
     yo = opts.get("y") or {}
-    ysc = nice_scale(yo.get("min") if yo.get("min") is not None else min([0, *ys_all]), yo.get("max") if yo.get("max") is not None else max(ys_all), 5)
-    y: dict = {"min": yo.get("min") if yo.get("min") is not None else ysc["min"], "max": yo.get("max") if yo.get("max") is not None else ysc["max"]}
+    yo_min, yo_max = yo.get("min"), yo.get("max")
+    ysc = nice_scale(yo_min if yo_min is not None else min([0, *ys_all]), yo_max if yo_max is not None else max(ys_all), 5)
+    y: dict = {"min": yo_min if yo_min is not None else ysc["min"], "max": yo_max if yo_max is not None else ysc["max"]}
     if yo.get("step") is not None:
         y["step"] = yo["step"]
     elif yo.get("ticks") is None:

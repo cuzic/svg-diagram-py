@@ -110,7 +110,8 @@ def resolve_look(opts: dict, size: float) -> dict:
         grad = p.get("gradient") if opts.get("tone") is None else None
     rot = opts.get("rotate", 0)
     flip = opts.get("flip")
-    fill = opts.get("tone") if opts.get("tone") is not None else p.get("tone")
+    opt_tone = opts.get("tone")
+    fill = opt_tone if opt_tone is not None else p["tone"]  # every PRESETS entry sets "tone"
 
     def apart(tone: str, dflt: str) -> str:
         if tone == dflt:

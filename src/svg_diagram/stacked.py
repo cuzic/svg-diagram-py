@@ -219,8 +219,8 @@ def layout_stacked(s: dict, g: dict) -> dict:
             v = k["values"][si]
             if not (v > 0):
                 continue
-            f0 = acc / scale["max"] if s["mode"] == "stacked" else acc / top
-            f1 = (acc + v) / scale["max"] if s["mode"] == "stacked" else (acc + v) / top
+            f0 = acc / scale["max"] if scale is not None else acc / top
+            f1 = (acc + v) / scale["max"] if scale is not None else (acc + v) / top
             acc += v
             y1, y0 = y_of(f1), y_of(f0)
             full = y0 - y1
@@ -251,9 +251,9 @@ def layout_stacked(s: dict, g: dict) -> dict:
             else:
                 beside.append({"text": whole, "x": xs[ci] + widths[ci] + 8, "y": c.mid(cy), "key": key, "left": f"{nm} {short}（{k['label']}）"})
         if k.get("id"):
-            yv = k["total"] / scale["max"] if s["mode"] == "stacked" else 1
+            yv = k["total"] / scale["max"] if scale is not None else 1
             c.anchors.append({"id": k["id"], "x": xs[ci], "y": y_of(yv), "w": widths[ci], "h": y_of(0) - y_of(yv)})
-        if s["mode"] == "stacked":
+        if scale is not None:
             c.text(f"{num_text(k['total'])}{s['unit']}", xs[ci] + widths[ci] / 2, y_of(k["total"] / scale["max"]) - 7, "middle", "text", {"bold": True, "of": k.get("id") or f"#{ci}"})
 
     for b in beside:

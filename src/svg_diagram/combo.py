@@ -138,8 +138,9 @@ def _scale_of(s: dict, axis: str, want: int = 5) -> dict:
     v = _vals(s, axis)
     has_bar = axis == "left" and any(x["type"] == "bar" for x in s["series"])
     top = _totals(s) if (s["stack"] and has_bar) else []
-    lo = ax.get("min") if ax.get("min") is not None else min(v + ([0] if has_bar else []))
-    hi = ax.get("max") if ax.get("max") is not None else max(v + top + ([0] if has_bar else []))
+    ax_min, ax_max = ax.get("min"), ax.get("max")
+    lo = ax_min if ax_min is not None else min(v + ([0] if has_bar else []))
+    hi = ax_max if ax_max is not None else max(v + top + ([0] if has_bar else []))
     return nice_scale(lo, hi, want)
 
 
@@ -216,6 +217,7 @@ def layout_combo(s: dict, g: dict) -> dict:
         return y_bot - (v - sl["min"]) / (sl["max"] - sl["min"]) * (y_bot - y_top)
 
     def y_r(v: float) -> float:
+        assert sr is not None  # only called via y_of() for a "right"-axis series, which implies has_right
         return y_bot - (v - sr["min"]) / (sr["max"] - sr["min"]) * (y_bot - y_top)
 
     def y_of(x: dict):

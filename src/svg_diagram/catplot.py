@@ -324,6 +324,7 @@ def layout_cat(s: dict, g: dict) -> dict:
 
             def _violin(x: dict, gi: int, hi: int, k: float) -> None:
                 d = dens[gi][hi]
+                assert d is not None  # draw() only calls this for a series item that isn't None, same index dens was built from
                 own = of(gi)
                 norm = top_d if s["scale"] == "area" else max(d["density"])
                 half = [q / norm * bw / 2 for q in d["density"]]

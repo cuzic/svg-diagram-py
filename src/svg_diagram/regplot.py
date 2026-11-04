@@ -25,14 +25,16 @@ def resolve_reg(who: str, resid: bool, data: dict, opts: dict | None) -> dict:
     check_ids(who, [], opts.get("id"))
     if data is None or not isinstance(data, dict) or "x" not in data or "y" not in data:
         fail(who, "needs columns: {x: [..], y: [..]}")
-    order = opts.get("order") if opts.get("order") is not None else 1
+    opt_order = opts.get("order")
+    order = opt_order if opt_order is not None else 1
     lowess = bool(opts.get("lowess"))
-    frac = opts.get("frac") if opts.get("frac") is not None else 2 / 3
+    opt_frac = opts.get("frac")
+    frac = opt_frac if opt_frac is not None else 2 / 3
     if not (0 < frac <= 1):
         fail(who, f"frac must be a number in (0, 1] (got {opts.get('frac')})")
     if lowess and not resid and opts.get("stats"):
         fail(who, "stats (an equation and R²) needs a polynomial fit: it is not defined for lowess")
-    if lowess and not resid and opts.get("order") is not None:
+    if lowess and not resid and opt_order is not None:
         fail(who, "order and lowess are two ways to draw the curve: give one")
     if order not in (1, 2, 3):
         fail(who, f"order must be 1, 2 or 3 (got {opts.get('order')})")

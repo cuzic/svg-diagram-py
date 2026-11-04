@@ -184,7 +184,8 @@ def layout_plane(band: dict, x: float, y: float, w: float, width_of, roles: dict
     def tw(s: str, weight: int = 400) -> float:
         return text_width(width_of, s, size, weight)
 
-    width = min(w, band.get("width") if band.get("width") is not None else w)
+    opt_width = band.get("width")
+    width = min(w, opt_width if opt_width is not None else w)
     left = x + (w - width) / 2
     h = band["height"]
     x_min = band["x"].get("min") or 0

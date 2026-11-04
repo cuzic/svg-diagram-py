@@ -176,7 +176,7 @@ def layout_multi(s: dict, g: dict) -> dict:
             d += f"L{at(edges[-1], 0)[1:]}"
             c.path(d, {"fill": "none", "stroke": tone(k), "sw": 2, "dash": DASH[k] or None})
 
-    def grid_and_ticks(rect: dict, xs: dict | None, ys: dict | None, xt: bool, yt: bool, y_right: bool = False):
+    def grid_and_ticks(rect: dict, xs: dict, ys: dict, xt: bool, yt: bool, y_right: bool = False):
         def sx(v: float) -> float:
             return rect["l"] + (v - xs["min"]) / (xs["max"] - xs["min"]) * (rect["r"] - rect["l"])
 
@@ -206,10 +206,10 @@ def layout_multi(s: dict, g: dict) -> dict:
         if plot_r - plot_l < 120 or plot_b - plot_t < 120:
             fail(who, "the figure is too small (raise width / height)")
 
-        def sx(v: float) -> float:
+        def sx_k(v: float) -> float:
             return plot_l + (v - d["xs"]["min"]) / (d["xs"]["max"] - d["xs"]["min"]) * (plot_r - plot_l)
 
-        def sy(v: float) -> float:
+        def sy_k(v: float) -> float:
             return plot_b - (v - d["ys"]["min"]) / (d["ys"]["max"] - d["ys"]["min"]) * (plot_b - plot_t)
 
         def lvl(v: float) -> int:
@@ -228,24 +228,24 @@ def layout_multi(s: dict, g: dict) -> dict:
                 while k + 1 <= 60 and lvl(zr[k + 1]) == level:
                     k += 1
                 if level > 0:
-                    x0 = max(plot_l, sx(d["gx"][i]) - dx / 2)
-                    x1 = min(plot_r, sx(d["gx"][k]) + dx / 2)
-                    y0 = max(plot_t, sy(gyj) - dy / 2)
-                    y1 = min(plot_b, sy(gyj) + dy / 2)
+                    x0 = max(plot_l, sx_k(d["gx"][i]) - dx / 2)
+                    x1 = min(plot_r, sx_k(d["gx"][k]) + dx / 2)
+                    y0 = max(plot_t, sy_k(gyj) - dy / 2)
+                    y1 = min(plot_b, sy_k(gyj) + dy / 2)
                     c.rect(_r1(x0), _r1(y0), _r1(x1 - x0) + 0.4, _r1(y1 - y0) + 1.2, {"fill": "accent", "op": op_of(level)})
                 i = k + 1
         for t in d["xs"]["ticks"]:
-            c.line(sx(t), plot_b, sx(t), plot_b + 6, {"stroke": "border"})
-            c.text(num_text(t), sx(t), plot_b + size + 14, "middle", "muted")
+            c.line(sx_k(t), plot_b, sx_k(t), plot_b + 6, {"stroke": "border"})
+            c.text(num_text(t), sx_k(t), plot_b + size + 14, "middle", "muted")
         for t in d["ys"]["ticks"]:
-            c.line(plot_l - 6, sy(t), plot_l, sy(t), {"stroke": "border"})
-            c.text(num_text(t), plot_l - 10, c.mid(sy(t)), "end", "muted")
+            c.line(plot_l - 6, sy_k(t), plot_l, sy_k(t), {"stroke": "border"})
+            c.text(num_text(t), plot_l - 10, c.mid(sy_k(t)), "end", "muted")
         for f in LEVELS:
             th = f * d["max"]
             segs: list[str] = []
 
             def P(i: int, j: int) -> dict:
-                return {"x": sx(d["gx"][i]), "y": sy(d["gy"][j]), "v": d["z"][j][i]}
+                return {"x": sx_k(d["gx"][i]), "y": sy_k(d["gy"][j]), "v": d["z"][j][i]}
 
             def lerp(a: dict, b: dict) -> str:
                 t = (th - a["v"]) / (b["v"] - a["v"])
@@ -275,7 +275,7 @@ def layout_multi(s: dict, g: dict) -> dict:
         c.text("低", lgx + 30, c.mid(plot_t + size + 10 + 5 * 22 + 9), "start", "text")
         if len(s["x"]) <= 400:
             for i, xv in enumerate(s["x"]):
-                c.path(marker_path("disc", sx(xv), sy(s["y"][i]), 2), {"fill": "text", "op": 0.5})
+                c.path(marker_path("disc", sx_k(xv), sy_k(s["y"][i]), 2), {"fill": "text", "op": 0.5})
     elif s["mode"] == "hist2d":
         gd = _grid2d(s)
         bx, by, cells = gd["bx"], gd["by"], gd["cells"]
@@ -291,10 +291,10 @@ def layout_multi(s: dict, g: dict) -> dict:
         if plot_r - plot_l < 120 or plot_b - plot_t < 120:
             fail(who, "the figure is too small (raise width / height)")
 
-        def sx(v: float) -> float:
+        def sx_h(v: float) -> float:
             return plot_l + (v - xs["min"]) / (xs["max"] - xs["min"]) * (plot_r - plot_l)
 
-        def sy(v: float) -> float:
+        def sy_h(v: float) -> float:
             return plot_b - (v - ys["min"]) / (ys["max"] - ys["min"]) * (plot_b - plot_t)
 
         def thin(ticks: list[float], px, size_fn) -> set[float]:
@@ -303,14 +303,14 @@ def layout_multi(s: dict, g: dict) -> dict:
             k = max(1, math.ceil(w / pitch))
             return {t for i, t in enumerate(ticks) if i % k == 0}
 
-        show_x = thin(xs["ticks"], sx, lambda t: c.tw(num_text(t)))
-        show_y = thin(ys["ticks"], sy, lambda _t: size + 2)
+        show_x = thin(xs["ticks"], sx_h, lambda t: c.tw(num_text(t)))
+        show_y = thin(ys["ticks"], sy_h, lambda _t: size + 2)
         for t in xs["ticks"]:
             if t in show_x:
-                c.text(num_text(t), sx(t), plot_b + size + 14, "middle", "muted")
+                c.text(num_text(t), sx_h(t), plot_b + size + 14, "middle", "muted")
         for t in ys["ticks"]:
             if t in show_y:
-                c.text(num_text(t), plot_l - 8, c.mid(sy(t)), "end", "muted")
+                c.text(num_text(t), plot_l - 8, c.mid(sy_h(t)), "end", "muted")
         if s["yLabel"]:
             c.text(s["yLabel"], plot_l - 4, g["y"] + size + 2, "start", "muted", {"bold": True})
         if s["xLabel"]:
@@ -319,8 +319,8 @@ def layout_multi(s: dict, g: dict) -> dict:
             for i, q in enumerate(rw):
                 if q <= 0:
                     continue
-                x0, x1 = sx(bx["edges"][i]), sx(bx["edges"][i + 1])
-                y1, y0 = sy(by["edges"][j]), sy(by["edges"][j + 1])
+                x0, x1 = sx_h(bx["edges"][i]), sx_h(bx["edges"][i + 1])
+                y1, y0 = sy_h(by["edges"][j]), sy_h(by["edges"][j + 1])
                 op = _r1(0.12 + 0.78 * q / max_c)
                 ink = ink_on_shade(op)
                 host = c.rect(_r1(x0), _r1(y0), _r1(x1 - x0), _r1(y1 - y0), {"fill": "accent", "op": op, "stroke": "bg", "sw": 1, "solid": f"the cell {i + 1},{j + 1}"})
@@ -349,12 +349,12 @@ def layout_multi(s: dict, g: dict) -> dict:
             fail(who, "the figure is too small (raise width / height)")
         if s["yLabel"]:
             c.text(s["yLabel"], g["x"], g["y"] + legend_h + size + 2, "start", "muted", {"bold": True})
-        sx, sy = grid_and_ticks({"l": main_l, "r": main_r, "t": main_t, "b": main_b}, xs, ys, True, True)
+        sx_j, sy_j = grid_and_ticks({"l": main_l, "r": main_r, "t": main_t, "b": main_b}, xs, ys, True, True)
         c.line(main_l, main_b, main_r, main_b, {"stroke": "text"})
         c.line(main_l, main_t, main_l, main_b, {"stroke": "text"})
         if s["xLabel"]:
             c.text(s["xLabel"], (main_l + main_r) / 2, main_b + 2 * size + 26, "middle", "muted", {"bold": True})
-        dots(sx, sy, s["x"], s["y"], 3.5)
+        dots(sx_j, sy_j, s["x"], s["y"], 3.5)
         top, top_b, right = g["y"] + head_h, main_t - 8, main_r + 8
 
         def pergroup(v: list[float], edges: list[float], k: int) -> list[float]:
@@ -366,9 +366,9 @@ def layout_multi(s: dict, g: dict) -> dict:
             for k in range(kk):
                 v = [q for i, q in enumerate(vals) if s["gi"][i] == k]
                 if not horizontal:
-                    hist(v, edges, lambda e, h: f"M{js_num_r1(sx(e))},{js_num_r1(top_b - h * (top_b - top))}", hmax, k)
+                    hist(v, edges, lambda e, h: f"M{js_num_r1(sx_j(e))},{js_num_r1(top_b - h * (top_b - top))}", hmax, k)
                 else:
-                    hist(v, edges, lambda e, h: f"M{js_num_r1(right + h * mh)},{js_num_r1(sy(e))}", hmax, k)
+                    hist(v, edges, lambda e, h: f"M{js_num_r1(right + h * mh)},{js_num_r1(sy_j(e))}", hmax, k)
         for m in marks:
             c.marks.append({"x": m["x"] - 4, "y": m["y"] - 4, "w": 8, "h": 8})
     else:
@@ -402,19 +402,19 @@ def layout_multi(s: dict, g: dict) -> dict:
                     per = [bin_counts([v for n, v in enumerate(vals) if s["gi"][n] == q], edges) for q in range(kk)]
                     hmax = max(c_ for row in per for c_ in row)
 
-                    def sx(v: float, l=l, r=r, sci=sci) -> float:
+                    def sx_d(v: float, l=l, r=r, sci=sci) -> float:
                         return l + (v - sci["min"]) / (sci["max"] - sci["min"]) * (r - l)
 
                     for tk in sci["ticks"]:
-                        c.line(sx(tk), t, sx(tk), b, {"stroke": "border"})
+                        c.line(sx_d(tk), t, sx_d(tk), b, {"stroke": "border"})
                     for q in range(kk):
-                        hist([v for n, v in enumerate(vals) if s["gi"][n] == q], edges, lambda e, h, sx=sx, t=t, b=b: f"M{js_num_r1(sx(e))},{js_num_r1(b - h * (b - t) * 0.92)}", hmax, q)
+                        hist([v for n, v in enumerate(vals) if s["gi"][n] == q], edges, lambda e, h, sx_d=sx_d, t=t, b=b: f"M{js_num_r1(sx_d(e))},{js_num_r1(b - h * (b - t) * 0.92)}", hmax, q)
                     c.line(l, b, r, b, {"stroke": "text"})
                 else:
-                    sx, sy = grid_and_ticks({"l": l, "r": r, "t": t, "b": b}, scales[j], scales[i], False, False)
+                    sx_o, sy_o = grid_and_ticks({"l": l, "r": r, "t": t, "b": b}, scales[j], scales[i], False, False)
                     c.line(l, b, r, b, {"stroke": "border"})
                     c.line(l, t, l, b, {"stroke": "border"})
-                    dots(sx, sy, s["vars"][j]["values"], s["vars"][i]["values"], 2.5)
+                    dots(sx_o, sy_o, s["vars"][j]["values"], s["vars"][i]["values"], 2.5)
         for j in range(k_n):
             l, r = left + j * cell, left + j * cell + cell - pad_x
             last = top + (k_n - 1) * side + side - pad_y
@@ -427,16 +427,16 @@ def layout_multi(s: dict, g: dict) -> dict:
             t, b = top + i * side, top + i * side + side - pad_y
             sci = scales[i]
 
-            def sy(v: float, b=b, t=t, sci=sci) -> float:
+            def sy_lbl(v: float, b=b, t=t, sci=sci) -> float:
                 return b - (v - sci["min"]) / (sci["max"] - sci["min"]) * (b - t)
 
             if i == 0 and k_n > 1 and not s["corner"]:
                 r = left + (k_n - 1) * cell + cell - pad_x
                 for tk in scales[0]["ticks"]:
-                    c.text(num_text(tk), r + 8, c.mid(sy(tk)), "start", "muted")
+                    c.text(num_text(tk), r + 8, c.mid(sy_lbl(tk)), "start", "muted")
             elif i > 0:
                 for tk in sci["ticks"]:
-                    c.text(num_text(tk), left - 8, c.mid(sy(tk)), "end", "muted")
+                    c.text(num_text(tk), left - 8, c.mid(sy_lbl(tk)), "end", "muted")
         for m in marks:
             c.marks.append({"x": m["x"] - 3, "y": m["y"] - 3, "w": 6, "h": 6})
 

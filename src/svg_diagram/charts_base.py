@@ -409,6 +409,12 @@ class TextOpts(TypedDict):
 class Canvas:
     """lib/charts-base.ts:114-190 Canvas."""
 
+    x: float
+    y: float
+    w: float
+    h: float
+    size: float
+    width_of: WidthOf
     mode: WrapMode
 
     def __init__(self, x: float, y: float, w: float, h: float, size: float, width_of: WidthOf, mode: WrapMode) -> None:

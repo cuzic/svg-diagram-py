@@ -15,7 +15,7 @@ Golden master: lib/charts-sankey.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .charts_base import Canvas, ChartBand, check_text, common_chart_opts, fail, finite_num, num_text
+from .charts_base import Canvas, ChartBand, PathOpts, check_text, common_chart_opts, fail, finite_num, num_text
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_num, js_round, round1
 
@@ -258,7 +258,7 @@ def layout_sankey(s: dict, g: dict) -> dict:
 
         d = f"M{p(x0)},{p(y0)} C{p(xm)},{p(y0)} {p(xm)},{p(y1)} {p(x1)},{p(y1)} L{p(x1)},{p(y1 + t)} C{p(xm)},{p(y1 + t)} {p(xm)},{p(y0 + t)} {p(x0)},{p(y0 + t)} Z"
         tone = r["l"]["tone"]
-        path_opts: dict = {"of": [r["l"]["from"], r["l"]["to"]], "fill": "accent" if tone == "accent" else tone, "op": 0.22}
+        path_opts: PathOpts = {"of": [r["l"]["from"], r["l"]["to"]], "fill": "accent" if tone == "accent" else tone, "op": 0.22}
         if tone == "danger":
             path_opts["stroke"] = "danger"
             path_opts["sw"] = 2

@@ -11,7 +11,7 @@ import json
 import math
 import re
 from dataclasses import dataclass
-from typing import NoReturn
+from typing import NoReturn, NotRequired, TypedDict
 
 from .atoms import split_atoms, text_width
 from .emit_common import js_num, js_round, round1
@@ -340,6 +340,72 @@ class ChartBand:
     until: int | None = None
 
 
+class RectOpts(TypedDict):
+    """What Canvas.rect() reads from its `o`. `fill`/`id`/`solid` are read via direct
+    subscript (`o["fill"]`) in rect() itself, so they're required here too — a call site
+    missing one was already a guaranteed KeyError before this type existed."""
+
+    fill: str
+    op: NotRequired[float | None]
+    stroke: NotRequired[str]
+    sw: NotRequired[float]
+    dash: NotRequired[str | None]
+    of: NotRequired[str | None]
+    id: NotRequired[str | None]
+    solid: NotRequired[str]
+
+
+class PathOpts(TypedDict):
+    """What Canvas.path() reads from its `o` (`fill` is read via direct subscript, so it's
+    required)."""
+
+    fill: str
+    op: NotRequired[float | None]
+    stroke: NotRequired[str]
+    sw: NotRequired[float]
+    dash: NotRequired[str | None]
+    of: NotRequired[str | list[str] | None]
+    soft: NotRequired[bool]
+
+
+class LineOpts(TypedDict):
+    """What Canvas.line() reads from its `o` (`stroke` is read via direct subscript, so it's
+    required)."""
+
+    stroke: str
+    sw: NotRequired[float]
+    dash: NotRequired[str | None]
+    of: NotRequired[str | None]
+    soft: NotRequired[bool]
+    avoid: NotRequired[bool]
+
+
+class StrokeOpts(TypedDict):
+    """The `{stroke, dash}` fragment many chart files build once per series/tone and spread
+    into a RectOpts/PathOpts/LineOpts literal alongside their own other keys."""
+
+    stroke: str
+    dash: NotRequired[str | None]
+
+
+class ArrowOpts(LineOpts):
+    """lib/semnet-common.ts's arrow(): a LineOpts plus the one extra key arrow() itself reads
+    before forwarding the rest to Canvas.line() — `edge` is never passed on to Canvas."""
+
+    edge: NotRequired[dict]
+
+
+class TextOpts(TypedDict):
+    """What Canvas.text()/place()/lines() read from their shared `o` — all optional, since
+    `text()`/`lines()` default it to `{}` and `place()` passes it straight through."""
+
+    plate: NotRequired[bool]
+    bold: NotRequired[bool]
+    of: NotRequired[str | None]
+    on: NotRequired[dict]
+    host: NotRequired[int]
+
+
 class Canvas:
     """lib/charts-base.ts:114-190 Canvas."""
 
@@ -366,47 +432,70 @@ class Canvas:
     def mid(self, cy: float) -> float:
         return js_round(cy + self.size * 0.36)
 
-    def rect(self, x: float, y: float, w: float, h: float, o: dict) -> int:
-        item = {"k": "rect", "x": x, "y": y, "w": w, "h": h, "fill": o["fill"]}
-        if o.get("op") is not None:
-            item["op"] = o["op"]
-        if o.get("stroke"):
-            item["stroke"] = o["stroke"]
-        if o.get("sw"):
-            item["sw"] = o["sw"]
-        if o.get("dash"):
-            item["dash"] = o["dash"]
-        if o.get("of"):
-            item["of"] = o["of"]
+    def rect(self, x: float, y: float, w: float, h: float, o: RectOpts) -> int:
+        item: dict = {"k": "rect", "x": x, "y": y, "w": w, "h": h, "fill": o["fill"]}
+        op = o.get("op")
+        if op is not None:
+            item["op"] = op
+        stroke = o.get("stroke")
+        if stroke:
+            item["stroke"] = stroke
+        sw = o.get("sw")
+        if sw:
+            item["sw"] = sw
+        dash = o.get("dash")
+        if dash:
+            item["dash"] = dash
+        of = o.get("of")
+        if of:
+            item["of"] = of
         self.items.append(item)
-        if o.get("id"):
-            self.anchors.append({"id": o["id"], "x": x, "y": y, "w": w, "h": h})
-        if o.get("solid") is not None:
-            box = {"x": x, "y": y, "w": w, "h": h, "label": o["solid"]}
-            if o.get("id"):
-                box["id"] = o["id"]
+        id_ = o.get("id")
+        if id_:
+            self.anchors.append({"id": id_, "x": x, "y": y, "w": w, "h": h})
+        solid = o.get("solid")
+        if solid is not None:
+            box: dict = {"x": x, "y": y, "w": w, "h": h, "label": solid}
+            if id_:
+                box["id"] = id_
             self.solids.append(box)
             return len(self.solids) - 1
         return -1
 
-    def path(self, d: str, o: dict) -> None:
-        item = {"k": "path", "d": d, "fill": o["fill"]}
-        if o.get("op") is not None:
-            item["op"] = o["op"]
-        if o.get("stroke"):
-            item["stroke"] = o["stroke"]
-        if o.get("sw"):
-            item["sw"] = o["sw"]
-        if o.get("dash"):
-            item["dash"] = o["dash"]
-        if o.get("of"):
-            item["of"] = o["of"]
+    def path(self, d: str, o: PathOpts) -> None:
+        item: dict = {"k": "path", "d": d, "fill": o["fill"]}
+        op = o.get("op")
+        if op is not None:
+            item["op"] = op
+        stroke = o.get("stroke")
+        if stroke:
+            item["stroke"] = stroke
+        sw = o.get("sw")
+        if sw:
+            item["sw"] = sw
+        dash = o.get("dash")
+        if dash:
+            item["dash"] = dash
+        of = o.get("of")
+        if of:
+            item["of"] = of
         if o.get("soft"):
             item["soft"] = True
         self.items.append(item)
 
-    def line(self, x1: float, y1: float, x2: float, y2: float, o: dict) -> None:
-        self.path(f"M{js_num(round1(x1))},{js_num(round1(y1))} L{js_num(round1(x2))},{js_num(round1(y2))}", {"fill": "none", "stroke": o["stroke"], "sw": o.get("sw", 2), "dash": o.get("dash"), "of": o.get("of"), "soft": o.get("soft")})
+    def line(self, x1: float, y1: float, x2: float, y2: float, o: LineOpts) -> None:
+        path_opts: PathOpts = {"fill": "none", "stroke": o["stroke"]}
+        sw = o.get("sw")
+        path_opts["sw"] = sw if sw is not None else 2
+        dash = o.get("dash")
+        if dash is not None:
+            path_opts["dash"] = dash
+        of = o.get("of")
+        if of is not None:
+            path_opts["of"] = of
+        if o.get("soft"):
+            path_opts["soft"] = True
+        self.path(f"M{js_num(round1(x1))},{js_num(round1(y1))} L{js_num(round1(x2))},{js_num(round1(y2))}", path_opts)
         if o.get("avoid"):
             self.segs.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2})
 
@@ -416,27 +505,31 @@ class Canvas:
             item["of"] = of
         self.items.append(item)
 
-    def text(self, s: str, x: float, base: float, anchor: str, fill: str, o: dict | None = None) -> dict:
+    def text(self, s: str, x: float, base: float, anchor: str, fill: str, o: TextOpts | None = None) -> dict:
         o = o or {}
         x, base = js_round(x), js_round(base)
+        bold = o.get("bold", False)
+        of = o.get("of")
         if o.get("plate"):
-            p = self.box_of(s, x, base, anchor, o.get("bold", False))
+            p = self.box_of(s, x, base, anchor, bold)
             self.items.append({"k": "rect", "x": p["x"] - 2, "y": p["y"], "w": p["w"] + 4, "h": p["h"], "fill": "bg"})
-        item = {"k": "text", "s": s, "x": x, "y": base, "anchor": anchor, "fill": fill, "size": self.size}
-        if o.get("bold"):
+        item: dict = {"k": "text", "s": s, "x": x, "y": base, "anchor": anchor, "fill": fill, "size": self.size}
+        if bold:
             item["bold"] = True
-        if o.get("of"):
-            item["of"] = o["of"]
+        if of:
+            item["of"] = of
         self.items.append(item)
-        b = {"label": s, **self.box_of(s, x, base, anchor, o.get("bold", False))}
-        if o.get("on") is not None:
-            b["on"] = o["on"]
+        b: dict = {"label": s, **self.box_of(s, x, base, anchor, bold)}
+        on = o.get("on")
+        if on is not None:
+            b["on"] = on
         if o.get("plate"):
             b["plate"] = True
-        if o.get("host") is not None and o["host"] >= 0:
-            b["host"] = o["host"]
-        if o.get("of"):
-            b["of"] = o["of"]
+        host = o.get("host")
+        if host is not None and host >= 0:
+            b["host"] = host
+        if of:
+            b["of"] = of
         self.boxes.append(b)
         return b
 
@@ -451,7 +544,7 @@ class Canvas:
             return False
         return plated or not any(seg_hits_rect(sg, {"x": b["x"] - 1, "y": b["y"], "w": b["w"] + 2, "h": b["h"]}) for sg in self.segs)
 
-    def place(self, s: str, cands: list[dict], fill: str, o: dict | None = None) -> dict | None:
+    def place(self, s: str, cands: list[dict], fill: str, o: TextOpts | None = None) -> dict | None:
         o = o or {}
         for c in cands:
             if self.free(self.box_of(s, js_round(c["x"]), js_round(c["y"]), c["anchor"], o.get("bold", False)), o.get("host", -1), 0, bool(o.get("plate"))):
@@ -461,7 +554,7 @@ class Canvas:
     def wrap(self, s: str, max_w: float, bold: bool = False) -> list[str]:
         return wrap_atoms(split_atoms(s), max_width=max(20, max_w), atom_width=lambda a: text_width(self.width_of, a, self.size, 700 if bold else 400), mode=self.mode)
 
-    def lines(self, ls: list[str], x: float, base: float, anchor: str, fill: str, o: dict | None = None) -> None:
+    def lines(self, ls: list[str], x: float, base: float, anchor: str, fill: str, o: TextOpts | None = None) -> None:
         o = o or {}
         for i, l in enumerate(ls):
             self.text(l, x, base + i * js_round(self.size * 1.25), anchor, fill, o)

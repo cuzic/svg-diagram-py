@@ -15,7 +15,7 @@ Golden master: lib/charts-treemap.ts + lib/charts-dsl.ts (Node.js, svg-diagram).
 
 from __future__ import annotations
 
-from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
+from .charts_base import Canvas, ChartBand, RectOpts, check_ids, check_text, common_chart_opts, fail, finite_num, ink_on_shade, num_text
 from .charts_base import _to_precision as to_precision
 from .emit_common import js_round, round1
 
@@ -271,7 +271,7 @@ def layout_treemap(s: dict, g: dict) -> dict:
                 leaf_no += 1
             solid_tone = n.get("tone")
             op = None if solid_tone else shade_of(q["gi"])
-            rect_opts: dict = {"fill": solid_tone or "accent", "id": node_id, "of": key, "solid": node_id if node_id is not None else f'cell "{n["label"]}"'}
+            rect_opts: RectOpts = {"fill": solid_tone or "accent", "id": node_id, "of": key, "solid": node_id if node_id is not None else f'cell "{n["label"]}"'}
             if op is not None:
                 rect_opts["op"] = op
             host = c.rect(q["x"], q["y"], q["w"], q["h"], rect_opts)

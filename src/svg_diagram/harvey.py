@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num
+from .charts_base import Canvas, ChartBand, PathOpts, check_ids, check_text, common_chart_opts, fail, finite_num
 from .emit_common import js_num, js_round, round1
 
 
@@ -95,12 +95,12 @@ def _ball(c: Canvas, cx: float, cy: float, r: float, q: int, of: str | None = No
     def f(v: float) -> str:
         return js_num(js_round(v * 10) / 10)
 
-    outline: dict = {"fill": "bg", "stroke": "text", "sw": 2}
+    outline: PathOpts = {"fill": "bg", "stroke": "text", "sw": 2}
     if of:
         outline["of"] = of
     c.path(f"M{f(cx - r)},{f(cy)} a{js_num(r)},{js_num(r)} 0 1,0 {js_num(2 * r)},0 a{js_num(r)},{js_num(r)} 0 1,0 {js_num(-2 * r)},0 Z", outline)
     if q > 0:
-        fill: dict = {"fill": "text", "stroke": "text", "sw": 2}
+        fill: PathOpts = {"fill": "text", "stroke": "text", "sw": 2}
         if of:
             fill["of"] = of
         c.path(harvey_wedge(cx, cy, r, q), fill)

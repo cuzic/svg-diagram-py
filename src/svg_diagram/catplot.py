@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import math
 
-from .charts_base import SHAPES, Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text, shade_ops
+from .charts_base import SHAPES, Canvas, ChartBand, LineOpts, PathOpts, RectOpts, check_ids, check_text, common_chart_opts, fail, finite_num, marker_path, nice_scale, num_text, shade_ops
 from .emit_common import js_num, round1
 from .stats import box_stats, error_bar, kde, mean_of, swarm_offsets
 
@@ -222,11 +222,11 @@ def layout_cat(s: dict, g: dict) -> dict:
     def of(gi: int) -> str:
         return grp(gi).get("id") or f"#{gi}"
 
-    def rect_ku(k0: float, k1: float, u0: float, u1: float, o: dict) -> int:
+    def rect_ku(k0: float, k1: float, u0: float, u1: float, o: RectOpts) -> int:
         a, b = P(k0, u0), P(k1, u1)
         return c.rect(_r1(min(a["x"], b["x"])), _r1(min(a["y"], b["y"])), _r1(abs(b["x"] - a["x"])), _r1(abs(b["y"] - a["y"])), o)
 
-    def line_ku(k0: float, u0: float, k1: float, u1: float, o: dict) -> None:
+    def line_ku(k0: float, u0: float, k1: float, u1: float, o: LineOpts) -> None:
         a, b = P(k0, u0), P(k1, u1)
         c.line(a["x"], a["y"], b["x"], b["y"], o)
 
@@ -287,7 +287,7 @@ def layout_cat(s: dict, g: dict) -> dict:
     pts = "strip" in s["kinds"] or "swarm" in s["kinds"]
     marks: list[dict] = []
 
-    def dot(shape: str, p: dict, r: float, o: dict) -> None:
+    def dot(shape: str, p: dict, r: float, o: PathOpts) -> None:
         c.path(marker_path(shape, p["x"], p["y"], r), o)
         marks.append(p)
 

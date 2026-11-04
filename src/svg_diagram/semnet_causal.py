@@ -10,7 +10,7 @@ import math
 from collections.abc import Callable
 
 from .atoms import text_width
-from .charts_base import Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail
+from .charts_base import ArrowOpts, Canvas, ChartBand, check_ids, check_text, common_chart_opts, fail
 from .semnet_analysis import analyze_causal_loops
 from .semnet_common import (
     arrow,
@@ -203,7 +203,7 @@ def layout_causal(s: dict, g: dict) -> dict:
     edges: list[dict] = []
     for i, e in enumerate(s["links"]):
         p = path_of(paths, i, e, positions)
-        opts: dict = {"stroke": "text", "dash": None}
+        opts: ArrowOpts = {"stroke": "text", "dash": None}
         if s["layout"] != "ring":
             opts["edge"] = e
         arrow(c, p, opts)

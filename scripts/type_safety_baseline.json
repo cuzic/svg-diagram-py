@@ -1,8 +1,8 @@
 {
   "ambiguous_types": 6,
-  "completeness_score": 0.5416666666666666,
+  "completeness_score": 0.5650916104146577,
   "error_count_by_file": {},
   "error_count_total": 0,
-  "known_types": 520,
-  "unknown_types": 434
+  "known_types": 586,
+  "unknown_types": 445
 }

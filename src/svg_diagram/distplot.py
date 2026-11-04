@@ -19,7 +19,7 @@ import math
 
 from .charts_base import CHART_DASH as DASH
 from .charts_base import CHART_TONES as TONES
-from .charts_base import Canvas, ChartBand, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, histogram_bins, nice_scale, num_text
+from .charts_base import Canvas, ChartBand, StrokeOpts, check_ids, check_range, check_text, common_chart_opts, fail, finite_num, histogram_bins, nice_scale, num_text
 from .emit_common import js_num, round1
 from .stats import bin_counts, kde
 
@@ -224,7 +224,7 @@ def layout_dist(s: dict, g: dict) -> dict:
     def pt(x: float, y: float) -> str:
         return f"{js_num(r1(x_of(x)))},{js_num(r1(y_of(y)))}"
 
-    def stroke(i: int) -> dict:
+    def stroke(i: int) -> StrokeOpts:
         return {"stroke": TONES[i], "dash": DASH[i] or None}
 
     def fill_of(i: int) -> str:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 
-from .charts_base import Canvas, check_ids, check_text, fail, overlaps
+from .charts_base import ArrowOpts, Canvas, LineOpts, TextOpts, check_ids, check_text, fail, overlaps
 from .emit_common import js_num, js_round
 from .layered_route import layered_attempt
 
@@ -43,11 +43,17 @@ def _r(n: float) -> float:
     return js_round(n * 10) / 10
 
 
-def arrow(c: Canvas, points: list[dict], opts: dict, mark: bool = True) -> None:
+def arrow(c: Canvas, points: list[dict], opts: ArrowOpts, mark: bool = True) -> None:
     """lib/semnet-common.ts:26-32 arrow(). `opts`: {stroke, sw?, dash?, of?, edge?} — `edge`
     is the edge this arrow draws (recorded in the chart's `edges`; a self-loop is not)."""
     edge = opts.get("edge")
-    o = {k: v for k, v in opts.items() if k != "edge"}
+    o: LineOpts = {"stroke": opts["stroke"]}
+    if "sw" in opts:
+        o["sw"] = opts["sw"]
+    if "dash" in opts:
+        o["dash"] = opts["dash"]
+    if "of" in opts:
+        o["of"] = opts["of"]
     if edge and edge["from"] != edge["to"]:
         c.edges.append({"from": edge["from"], "to": edge["to"], "points": [{"x": p["x"], "y": p["y"]} for p in points]})
     for i in range(1, len(points)):
@@ -99,7 +105,7 @@ def path_of(paths: dict[int, list[dict]], i: int, e: dict, positions: dict[str, 
     ]
 
 
-def place_plated(c: Canvas, text: str, cands: list[dict], fill: str, o: dict, also: Callable[[dict], bool] = lambda b: True) -> dict | None:
+def place_plated(c: Canvas, text: str, cands: list[dict], fill: str, o: TextOpts, also: Callable[[dict], bool] = lambda b: True) -> dict | None:
     """lib/semnet-common.ts:43-49 placePlated(): draws the label at the first candidate whose
     plate (2px wider than the text each side) is free, and that `also` accepts."""
     for k in cands:
@@ -138,7 +144,7 @@ def touches_any(b: dict, boxes: list[dict]) -> bool:
     return any(overlaps(b, h) for h in boxes)
 
 
-def place_edge_label(c: Canvas, text: str, p: list[dict], beside_at: Callable[[dict], list[dict]], fill: str, o: dict, heads: list[dict] | None = None) -> dict | None:
+def place_edge_label(c: Canvas, text: str, p: list[dict], beside_at: Callable[[dict], list[dict]], fill: str, o: TextOpts, heads: list[dict] | None = None) -> dict | None:
     """lib/semnet-common.ts:60-77 placeEdgeLabel(): the second stage of an edge label: beside
     the edge when there is room; otherwise on the edge itself, from the middle outwards."""
     heads = heads or []

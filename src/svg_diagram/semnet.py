@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 
 from .atoms import text_width
-from .charts_base import ChartBand, check_ids, check_text, common_chart_opts, fail, finite_num, num_text
+from .charts_base import ChartBand, StrokeOpts, check_ids, check_text, common_chart_opts, fail, finite_num, num_text
 from .semnet_analysis import analyze_critical_path
 from .semnet_causal import causal_texts
 from .semnet_common import arrow, direction, head_box, network_canvas, node_box, path_of, place_edge_label, straighten_of, validate_nodes
@@ -114,7 +114,7 @@ def _kind_tone(i: int) -> str:
     return ("accent", "danger", "muted", "text")[i % 4]
 
 
-def _edge_style(edge_type: str, ti: int) -> dict:
+def _edge_style(edge_type: str, ti: int) -> StrokeOpts:
     """How an edge type is drawn; the legend uses the same style."""
     stroke = "danger" if edge_type == "blocks" else _kind_tone(ti)
     if edge_type == "uses":

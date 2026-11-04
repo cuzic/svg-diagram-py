@@ -89,7 +89,9 @@ def layout_bpmn(band: dict, x: float, y: float, w: float, width_of, roles: dict,
         out = _layout_bpmn_at(band, x, y, w, width_of, roles, env, m, False)
         if out is not None:
             return out
-    return _layout_bpmn_at(band, x, y, w, width_of, roles, env, steps[-1], True)
+    result = _layout_bpmn_at(band, x, y, w, width_of, roles, env, steps[-1], True)
+    assert result is not None  # _layout_bpmn_at() only returns None via its "if not final: return None" bailout
+    return result
 
 
 def _layout_bpmn_at(band: dict, x: float, y: float, w: float, width_of, roles: dict, env: dict, metrics: dict, final: bool) -> dict | None:

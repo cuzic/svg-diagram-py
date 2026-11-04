@@ -177,5 +177,6 @@ def route_clear(o: dict) -> list[dict] | None:
         s = prev.get(s)
     path.reverse()
     end = pb[goal[best["k"] // 4]]
+    assert first is not None  # s starts non-None (best["k"], checked above) and the loop always runs at least once
     start = pa[src_port[first]]
     return [start["edge"], *path, end["edge"]]

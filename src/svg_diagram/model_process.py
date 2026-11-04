@@ -13,6 +13,7 @@ from .bowtie import bowtie_band, layout_bowtie, render_bowtie
 from .bpmn import bpmn_band, layout_bpmn, render_bpmn
 from .classes import classes_band, layout_classes_band, render_classes
 from .fta import fta_band, layout_fta, render_fta
+from .model_shared import Renderable
 from .states import flowchart_band, layout_states_band, render_states, states_band
 from .toc import cause_band, layout_cause_band, render_cause
 from .tokens import ROLES
@@ -116,7 +117,7 @@ class _Cause:
 
 
 class ProcessMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
 
     def bowtie(self, input: dict, *, x: float, y: float, width: float, max_node_w: float | str | None = None, id: str | None = None) -> None:
         """lib/dsl/diagrams.ts's bowtie(): a bow-tie diagram — threats on the left, each

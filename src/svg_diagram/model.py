@@ -44,7 +44,7 @@ from .model_networks import NetworksMixin
 from .model_plane import PlaneMixin
 from .model_process import ProcessMixin
 from .model_shapes import ShapesMixin
-from .model_shared import ArrowStyle, LineStyle, Tone
+from .model_shared import ArrowStyle, LineStyle, Renderable, Tone
 from .model_stats import StatsMixin
 from .tokens import ROLES, run_color_of, text_color_of
 
@@ -220,7 +220,7 @@ class Diagram(ShapesMixin, FlowShapesMixin, ProcessMixin, ChartsMixin, StatsMixi
         self.height = height
         self.boxes: list[Box] = []
         self.arrows: list[Arrow] = []
-        self._elements: list[object] = []
+        self._elements: list[Renderable] = []
         self._ids = count(1)
 
     # ---- box() -----------------------------------------------------------------------

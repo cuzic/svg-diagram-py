@@ -30,7 +30,7 @@ from .fta_analysis import SHARED_LIMIT, fta_var, minimal_cut_sets, single_points
 from .graph_layout import layout_tree
 from .tokens import PALETTE, color_of, tone_style
 from .tree_text import measure_node, node_runs
-from .wrap import wrap_text
+from .wrap import WrapMode, wrap_text
 
 FTA_KINDS = ["event", "basic", "undeveloped", "house", "condition"]
 FTA_GATES = ["and", "or", "vote", "inhibit"]
@@ -276,7 +276,7 @@ BADGE_GAP, BADGE_PAD_X, BADGE_H = 6, 10, 22
 STEM, GATE_W, GATE_H, MARK_W, MARK_H, COND_MARK_W, COND_MARK_H, COND_GAP, GAP, LEVEL_GAP = 10, 40, 36, 26, 26, 40, 24, 22, 24, 36
 
 
-def layout_fta(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: str, space: float = 1) -> dict:
+def layout_fta(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode, space: float = 1) -> dict:
     """lib/fta.ts:215-313 layoutFta()."""
     root = fta_resolve(band["root"])["root"]
     single = fta_single_points(root) if band.get("cutSets") else set()

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from .approx_width import approx_width_of
 from .lines import burndown_band, burnup_band, lines_band, strategy_canvas_band
+from .model_shared import Renderable
 from .plane import layout_plane, plane_band, render_plane
 from .quadrant import layout_quadrant, quadrant_band, render_quadrant
 from .tokens import ROLES
@@ -49,7 +50,7 @@ class _Quadrant:
 
 
 class PlaneMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
 
     def quadrant(self, opts: dict, *, x: float, y: float, width: float) -> None:
         """lib/dsl/figures.ts's quadrant(): a classification matrix (2x2, 3x3 or any N x M

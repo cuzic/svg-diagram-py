@@ -177,7 +177,7 @@ def text_lines(
     *,
     x: float,
     top: float,
-    size: int,
+    size: float,
     weight: int = 400,
     anchor: str = "start",
     fill: str,

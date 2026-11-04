@@ -195,13 +195,14 @@ def wrap_styled_atoms(atoms: list[_TextAtom], *, max_width: float, atom_width: C
                 at -= 1
             sep = _at(atoms, last_line_start - 1)
             moved = _at(prev, at)
+            next_atom = _at(prev, at + 1)
             gap = prev[at + 1 :] if at + 1 < len(prev) else []
             between = gap if gap else ([sep] if sep is not None and is_whitespace(sep.text) else [])
             if (
                 moved is not None
                 and at >= 2
                 and not moved.glue
-                and not (_at(prev, at + 1) and _at(prev, at + 1).glue)
+                and not (next_atom and next_atom.glue)
                 and id(moved) not in run_glued
                 and prev[at - 1].text not in CANNOT_END_LINE
                 and moved.text not in CANNOT_START_LINE

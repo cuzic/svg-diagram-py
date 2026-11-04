@@ -136,6 +136,7 @@ def vertical_columns(text: str, size: float, weight: float, width_of, *, limit: 
                     cells = stacked([{"token": c["token"], "len": c["len"]} for c in carry])
                     hung = False
             if not hangs and not fits(l):
+                assert limit is not None  # fits() always returns True when limit is None, so this block implies limit is not None
                 if cells and no_start(token) and not hung:
                     hung = True
                 elif limit is not None and l <= limit + 0.5 and cells:

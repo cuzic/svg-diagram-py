@@ -822,10 +822,10 @@ def render_cause(b: dict, day) -> str:
             if n.get("core"):
                 out.append(_core_badge(n, b["anchors"][i]["id"], b, day))
             continue
-        rect = render_box_rect(x=n["x"], y=n["y"], w=n["w"], h=n["h"], day=day, tone=n.get("tone"), dim=b.get("dim"), default_tone="plain")
+        rect = render_box_rect(x=n["x"], y=n["y"], w=n["w"], h=n["h"], day=day, tone=n.get("tone"), dim=bool(b.get("dim")), default_tone="plain")
         out.append(rect.replace('stroke-width="2.5"', f'stroke-width="{_CORE_STROKE}"') if n.get("core") else rect)
         if n.get("double"):
-            inner = render_box_rect(x=n["x"] + 4, y=n["y"] + 4, w=n["w"] - 8, h=n["h"] - 8, day=day, tone=n.get("tone"), dim=b.get("dim"), default_tone="plain")
+            inner = render_box_rect(x=n["x"] + 4, y=n["y"] + 4, w=n["w"] - 8, h=n["h"] - 8, day=day, tone=n.get("tone"), dim=bool(b.get("dim")), default_tone="plain")
             out.append(inner.replace('rx="8"', 'rx="5"'))
         if n.get("core"):
             out.append(_core_badge(n, b["anchors"][i]["id"], b, day))

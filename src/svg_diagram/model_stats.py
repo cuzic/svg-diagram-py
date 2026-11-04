@@ -12,12 +12,13 @@ from .catplot import cat_band
 from .clustermap import cluster_band
 from .distplot import dist_band
 from .model_charts import _Chart
+from .model_shared import Renderable
 from .multiplot import multi_band
 from .regplot import reg_band
 
 
 class StatsMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
 
     def catplot(self, data, *, x: float, y: float, width: float, opts: dict | None = None) -> None:
         """lib/dsl/charts-stats.ts's catplot(): seaborn's categorical plots from raw values —

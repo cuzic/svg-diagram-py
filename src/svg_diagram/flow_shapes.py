@@ -15,7 +15,7 @@ from .emblem_shapes import EMBLEM_FLEX, EMBLEM_SHAPES, EMBLEM_TEXT, emblem_heigh
 from .emit_common import emoji_span, js_round, round1
 from .tokens import PALETTE, TONES, color_of, resolve_box_style
 from .tree_text import katakana_width
-from .wrap import wrap_text
+from .wrap import WrapMode, wrap_text
 
 LINE = 1.35
 
@@ -31,11 +31,11 @@ def _node_of(item: dict) -> dict:
 class Texts:
     """lib/flow-shapes.ts:214-234 the Texts class."""
 
-    def __init__(self, out: dict, width_of, roles: dict, mode: str) -> None:
+    def __init__(self, out: dict, width_of, roles: dict, mode: WrapMode) -> None:
         self.out = out
         self.width_of = width_of
         self.roles = roles
-        self.mode = mode
+        self.mode: WrapMode = mode
 
     def wrap(self, text: str, max_w: float, weight: int = 700, size: float | None = None) -> dict:
         size = size if size is not None else self.roles["note"]
@@ -163,7 +163,7 @@ def value_chain_band(*, support: list[dict] | None = None, primary: list[dict], 
     return band
 
 
-def layout_flow_shape(b: dict, x: float, y: float, cw: float, width_of, roles: dict, mode: str) -> dict:
+def layout_flow_shape(b: dict, x: float, y: float, cw: float, width_of, roles: dict, mode: WrapMode) -> dict:
     """lib/flow-shapes.ts:195-210 layoutFlowShape()."""
     w = min(cw, b.get("width") or cw)
     ox = x + (cw - w) / 2

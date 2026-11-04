@@ -5,11 +5,19 @@ import it without a circular import back to model.py (which imports the mixins).
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Literal, Protocol
 
 Tone = Literal["plain", "accent", "danger", "muted", "new", "changed", "removed", "solid", "solid-danger"]
 ArrowStyle = Literal["start", "end", "both", "none"]
 LineStyle = Literal["solid", "dashed", "dotted"]
+
+
+class Renderable(Protocol):
+    """What every element of Diagram._elements has in common: each one's own dataclass (in
+    whichever model_*.py owns that domain) knows how to turn itself into SVG — see the
+    model.py module docstring for why this replaced a central dispatch function."""
+
+    def render(self) -> str: ...
 
 
 def _opts(*pairs: tuple[str, object]) -> dict:

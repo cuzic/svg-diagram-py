@@ -15,7 +15,7 @@ from typing import NoReturn
 
 from .atoms import split_atoms, text_width
 from .emit_common import js_num, js_round, round1
-from .wrap import wrap_atoms
+from .wrap import WrapMode, wrap_atoms
 
 
 def overlaps(a: dict, b: dict) -> bool:
@@ -343,7 +343,9 @@ class ChartBand:
 class Canvas:
     """lib/charts-base.ts:114-190 Canvas."""
 
-    def __init__(self, x: float, y: float, w: float, h: float, size: float, width_of, mode: str) -> None:
+    mode: WrapMode
+
+    def __init__(self, x: float, y: float, w: float, h: float, size: float, width_of, mode: WrapMode) -> None:
         self.x, self.y, self.w, self.h, self.size, self.width_of, self.mode = x, y, w, h, size, width_of, mode
         self.items: list[dict] = []
         self.boxes: list[dict] = []

@@ -275,7 +275,11 @@ def layout_treemap(s: dict, g: dict) -> dict:
             if op is not None:
                 rect_opts["op"] = op
             host = c.rect(q["x"], q["y"], q["w"], q["h"], rect_opts)
-            ink = "bg" if solid_tone else ink_on_shade(op)
+            if solid_tone:
+                ink = "bg"
+            else:
+                assert op is not None  # op is None exactly when solid_tone is truthy (see its own assignment above)
+                ink = ink_on_shade(op)
             on: dict = {"fill": solid_tone or "accent", "ink": ink}
             if op is not None:
                 on["op"] = op

@@ -91,11 +91,12 @@ def fit_failure(who: str, w: float, tried: list[dict], fix: str, not_tried: list
     """lib/fit-width.ts:70-78 fitFailure(): the message for a figure no attempt fitted."""
     not_tried = not_tried or []
     too_tall = height_budget is not None and any(t.get("fitsWidth", t["w"] <= w + 0.5) for t in tried)
-    lines = [
-        f"{who}: the figure does not fit {js_round(w)}px wide by {js_round(height_budget)}px tall (every attempt that fits the width is too tall)."
-        if too_tall
-        else f"{who}: the figure does not fit {js_round(w)}px."
-    ]
+    if too_tall:
+        assert height_budget is not None  # too_tall can only be True when height_budget is not None
+        first_line = f"{who}: the figure does not fit {js_round(w)}px wide by {js_round(height_budget)}px tall (every attempt that fits the width is too tall)."
+    else:
+        first_line = f"{who}: the figure does not fit {js_round(w)}px."
+    lines = [first_line]
     if tried:
         lines.append("  tried: " + "; ".join(f'{t["label"]} {t["w"]}px wide, {t["h"]}px tall' for t in tried))
     if not_tried:

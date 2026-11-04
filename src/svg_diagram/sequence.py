@@ -10,7 +10,7 @@ from __future__ import annotations
 from .atoms import split_atoms, text_width
 from .emit_common import snap4
 from .tokens import PALETTE, resolve_box_style, text_color_of
-from .wrap import wrap_atoms
+from .wrap import WrapMode, wrap_atoms
 
 LH = 1.4
 SEQ_HEAD_PAD_Y, SEQ_HEAD_PAD_X, SEQ_STEP_GAP, SEQ_LABEL_GAP, SEQ_SELF_W, SEQ_DIVIDER_H = 12, 12, 14, 10, 36, 36
@@ -20,7 +20,7 @@ def line_h(size: float) -> float:
     return size * LH
 
 
-def _wrap(text: str, size: float, weight: int, max_w: float, width_of, mode: str) -> list[str]:
+def _wrap(text: str, size: float, weight: int, max_w: float, width_of, mode: WrapMode) -> list[str]:
     return wrap_atoms(split_atoms(text), max_width=max(20, max_w), atom_width=lambda a: width_of(a, size, weight, "sans"), mode=mode)
 
 
@@ -51,7 +51,7 @@ def prepare_sequence(actors: list[dict], steps: list[dict], numbered: bool = Tru
     return out
 
 
-def layout_sequence(*, actors: list[dict], steps: list[dict], x: float, y: float, w: float, width_of, roles: dict, mode: str = "phrase", numbered: bool = True) -> dict:
+def layout_sequence(*, actors: list[dict], steps: list[dict], x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode = "phrase", numbered: bool = True) -> dict:
     """lib/seq-table.ts:59-135 layoutSequence()."""
     prepared_steps = prepare_sequence(actors, steps, numbered)
     n = len(actors)

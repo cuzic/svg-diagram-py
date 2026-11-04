@@ -13,7 +13,7 @@ from .cloud import layout_cloud_band, render_cloud
 from .emit_common import LH_EM, js_round
 from .figures import curve_points, pyramid_layer_geometry, render_curve, render_pyramid
 from .gantt import layout_gantt, render_gantt
-from .model_shared import Tone
+from .model_shared import Renderable, Tone
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .sequence import layout_sequence, render_sequence
 from .table import layout_table, render_table
@@ -246,7 +246,7 @@ class _WordArt:
 
 
 class ShapesMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
     width: float
 
     def pyramid(self, layers: list[str], *, x: float, y: float, width: float | None = None, layer_height: float = 76, apex_ratio: float = 0.3) -> None:

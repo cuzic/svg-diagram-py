@@ -18,7 +18,7 @@ def _width_of(atom: str, size=None, weight=None, font=None) -> float:
 
 ROWS = ["A店", "B店", "C店", "D店"]
 COLS = ["朝", "昼", "夜"]
-VALUES = [[3, 9, 4], [8, 2, 9], [4, 8, 3], [7, 3, 8]]
+VALUES: list[list[float]] = [[3, 9, 4], [8, 2, 9], [4, 8, 3], [7, 3, 8]]
 
 CASES = [
     {"opts": {}},

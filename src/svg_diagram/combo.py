@@ -346,36 +346,36 @@ def layout_combo(s: dict, g: dict) -> dict:
             for q in row_geo:
                 if not q:
                     continue
-                t = text_of(q["x"], q["v"])
+                txt = text_of(q["x"], q["v"])
                 up = q["v"] >= 0
                 if s["stack"]:
-                    fits = q["h"] >= size + 6 and c.tw(t, True) <= bw - 4
-                    if not fits or not c.place(t, [{"x": q["cx"], "y": c.mid(q["top"] + q["h"] / 2), "anchor": "middle"}], "text", {"bold": True, "of": q["key"]}):
-                        c.omitted.append(f"{q['x']['label']} {s['categories'][js_round((q['cx'] - plot_l) / slot - 0.5)]} {t}")
+                    fits = q["h"] >= size + 6 and c.tw(txt, True) <= bw - 4
+                    if not fits or not c.place(txt, [{"x": q["cx"], "y": c.mid(q["top"] + q["h"] / 2), "anchor": "middle"}], "text", {"bold": True, "of": q["key"]}):
+                        c.omitted.append(f"{q['x']['label']} {s['categories'][js_round((q['cx'] - plot_l) / slot - 0.5)]} {txt}")
                     continue
                 above = {"x": q["cx"], "y": q["top"] - 6, "anchor": "middle"}
                 below = {"x": q["cx"], "y": q["top"] + q["h"] + size + 4, "anchor": "middle"}
                 inside = {"x": q["cx"], "y": c.mid(q["top"] + q["h"] / 2), "anchor": "middle"}
 
                 def ok(cs: list[dict]) -> list[dict]:
-                    return [k for k in cs if in_plot(c.box_of(t, k["x"], k["y"], k["anchor"], True))]
+                    return [k for k in cs if in_plot(c.box_of(txt, k["x"], k["y"], k["anchor"], True))]
 
                 chosen = ok([above, below, inside]) if up else ok([below, above, inside])
-                if not c.place(t, chosen, "text", {"bold": True, "of": q["key"]}):
-                    c.omitted.append(f"{q['x']['label']} {s['categories'][js_round((q['cx'] - plot_l) / slot - 0.5)]} {t}")
+                if not c.place(txt, chosen, "text", {"bold": True, "of": q["key"]}):
+                    c.omitted.append(f"{q['x']['label']} {s['categories'][js_round((q['cx'] - plot_l) / slot - 0.5)]} {txt}")
         if s["stack"]:
             for i, v in enumerate(_totals(s)):
-                t = f"{num_text(v)}{_unit_of(s, 'left')}"
+                txt = f"{num_text(v)}{_unit_of(s, 'left')}"
                 top = y_l(v)
                 cx = plot_l + (i + 0.5) * slot
-                cs = [k for k in [{"x": cx, "y": top - 6, "anchor": "middle"}] if in_plot(c.box_of(t, k["x"], k["y"], k["anchor"], True))]
-                if not c.place(t, cs, "text", {"bold": True}):
-                    c.omitted.append(f"合計 {s['categories'][i]} {t}")
+                cs = [k for k in [{"x": cx, "y": top - 6, "anchor": "middle"}] if in_plot(c.box_of(txt, k["x"], k["y"], k["anchor"], True))]
+                if not c.place(txt, cs, "text", {"bold": True}):
+                    c.omitted.append(f"合計 {s['categories'][i]} {txt}")
         for L in line_geo:
             for p in L["pts"]:
                 if not p:
                     continue
-                t = text_of(L["x"], p["v"])
+                txt = text_of(L["x"], p["v"])
                 rr = 7
                 cands = [
                     {"x": p["x"], "y": p["y"] - rr - 3, "anchor": "middle"},
@@ -385,10 +385,10 @@ def layout_combo(s: dict, g: dict) -> dict:
                     {"x": p["x"] + rr, "y": p["y"] - rr - 3, "anchor": "start"},
                     {"x": p["x"] - rr, "y": p["y"] - rr - 3, "anchor": "end"},
                 ]
-                filtered = [k for k in cands if in_plot(c.box_of(t, k["x"], k["y"], k["anchor"], True))]
+                filtered = [k for k in cands if in_plot(c.box_of(txt, k["x"], k["y"], k["anchor"], True))]
                 tone_pick = "text" if L["x"]["tone"] == "muted" else L["x"]["tone"]
-                if not c.place(t, filtered, tone_pick, {"bold": True, "of": L["key"]}):
-                    c.omitted.append(f"{L['x']['label']} {s['categories'][p['i']]} {t}")
+                if not c.place(txt, filtered, tone_pick, {"bold": True, "of": L["key"]}):
+                    c.omitted.append(f"{L['x']['label']} {s['categories'][p['i']]} {txt}")
 
     for i, ls in enumerate(cats):
         c.lines(ls, plot_l + (i + 0.5) * slot, plot_b + math.ceil(size * 0.36) + size + 8, "middle", "text")

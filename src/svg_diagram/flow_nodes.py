@@ -12,6 +12,7 @@ import math
 from .atoms import text_width
 from .emit_common import js_round
 from .tree_text import measure_node
+from .wrap import WrapMode
 
 _PAD_X = 14  # tree.ts's box padding: a pill keeps its text this far from the straight part
 _DIAMOND_RATIO, _TEXT_PAD_X, _TEXT_PAD_Y, _MIN_TEXT_W = 1.6, 8, 6, 88
@@ -25,7 +26,7 @@ def _line_h(s: float) -> float:
     return js_round(s * 1.4)
 
 
-def diamond_lines(label: str, sub: str | None, max_w: float, icon_h: float, width_of, roles: dict, mode: str, floor: bool) -> dict:
+def diamond_lines(label: str, sub: str | None, max_w: float, icon_h: float, width_of, roles: dict, mode: WrapMode, floor: bool) -> dict:
     """lib/flow-nodes.ts:16-33 diamondLines(): the diamond that holds a text, as small as it
     can be. Several widths of text are tried and the narrowest diamond wins."""
     L, S = roles["body"], roles["note"]

@@ -18,7 +18,7 @@ from .charts_base import ChartBand
 from .combo import combo_band
 from .harvey import harvey_band
 from .heatmap import heatmap_band
-from .model_shared import _opts
+from .model_shared import Renderable, _opts
 from .radar import radar_band
 from .sankey import sankey_band
 from .stacked import mekko_band, stacked_bars_band
@@ -58,7 +58,7 @@ class _Chart:
 
 
 class ChartsMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
 
     def bars(
         self,

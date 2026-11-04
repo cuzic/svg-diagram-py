@@ -1,31 +1,12 @@
 {
-  "ambiguous_types": 7,
-  "completeness_score": 0.5396659707724426,
+  "ambiguous_types": 6,
+  "completeness_score": 0.5416666666666666,
   "error_count_by_file": {
-    "src/svg_diagram/bpmn.py": 1,
-    "src/svg_diagram/charts_base.py": 1,
-    "src/svg_diagram/classes.py": 1,
-    "src/svg_diagram/combo.py": 1,
-    "src/svg_diagram/emit.py": 1,
-    "src/svg_diagram/emit_boxes.py": 2,
-    "src/svg_diagram/fit_width.py": 1,
-    "src/svg_diagram/flow_nodes.py": 1,
-    "src/svg_diagram/flow_shapes.py": 1,
-    "src/svg_diagram/fta.py": 3,
-    "src/svg_diagram/model.py": 1,
     "src/svg_diagram/multiplot.py": 14,
-    "src/svg_diagram/orthogonal_route.py": 1,
     "src/svg_diagram/plane.py": 3,
-    "src/svg_diagram/quadrant.py": 4,
-    "src/svg_diagram/sequence.py": 1,
-    "src/svg_diagram/states.py": 1,
-    "src/svg_diagram/toc.py": 2,
-    "src/svg_diagram/treemap.py": 1,
-    "src/svg_diagram/wordart_vertical.py": 1,
-    "src/svg_diagram/wrap.py": 1,
-    "tests/test_clustermap.py": 1
+    "src/svg_diagram/quadrant.py": 4
   },
-  "error_count_total": 44,
-  "known_types": 517,
+  "error_count_total": 21,
+  "known_types": 520,
   "unknown_types": 434
 }

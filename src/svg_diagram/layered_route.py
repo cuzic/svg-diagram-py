@@ -39,7 +39,7 @@ def lane_step_of(space: float = 1) -> float:
     return js_round(LANE * space)
 
 
-def gap_for(n: int, chip: float = 0, space: float = 1) -> float:
+def gap_for(n: float, chip: float = 0, space: float = 1) -> float:
     """lib/layered-route.ts:18 gapFor(): the gap two layers need so that `n` direct arrows
     through it each get a lane (and a label chip beside them has room)."""
     return max(2 * stub_of(space) + lane_step_of(space) * max(0, n - 1) + js_round(16 * space), chip + stub_of(space) + 26)

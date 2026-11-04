@@ -19,6 +19,7 @@ from .flow_shapes import (
     value_chain_band,
     venn_band,
 )
+from .model_shared import Renderable
 from .tokens import ROLES
 
 
@@ -36,7 +37,7 @@ class _FlowShape:
 
 
 class FlowShapesMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
 
     def chevron(self, steps: list[dict], *, x: float, y: float, width: float, direction: str | None = None, first: str | None = None, gap: float | None = None, current: int | None = None) -> None:
         """lib/flow-shapes.ts's chevron(): process arrows. `steps`: [{label, sub?, id?, tone?}].

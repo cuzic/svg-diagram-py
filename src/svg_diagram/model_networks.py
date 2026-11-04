@@ -6,12 +6,13 @@ dependency_network, plus causal_loop (lib/semnet-causal.ts). All go through the 
 from __future__ import annotations
 
 from .model_charts import _Chart
+from .model_shared import Renderable
 from .semnet import dependency_band, pert_band
 from .semnet_causal import causal_band
 
 
 class NetworksMixin:
-    _elements: list[object]
+    _elements: list[Renderable]
 
     def pert(
         self, tasks: list[dict], *, x: float, y: float, width: float, direction: str | None = None, unit: str | None = None,

@@ -2,10 +2,9 @@
   "ambiguous_types": 6,
   "completeness_score": 0.5416666666666666,
   "error_count_by_file": {
-    "src/svg_diagram/plane.py": 3,
-    "src/svg_diagram/quadrant.py": 4
+    "src/svg_diagram/plane.py": 3
   },
-  "error_count_total": 7,
+  "error_count_total": 3,
   "known_types": 520,
   "unknown_types": 434
 }

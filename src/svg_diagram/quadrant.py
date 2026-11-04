@@ -21,7 +21,7 @@ from .atoms import text_width
 from .emit_common import emoji_span, escape_attr, js_num, js_round, round1
 from .layout_util import grid_columns
 from .tokens import PALETTE, color_of, tone_style
-from .wrap import wrap_text
+from .wrap import WrapMode, wrap_text
 
 QUADRANT_PRESETS: list[str] = ["bcg", "ge", "ansoff", "nineBox", "impactEffort", "risk", "stakeholder", "positioning", "eisenhower"]
 
@@ -133,7 +133,11 @@ def quadrant_band(opts: dict) -> dict:
         raise ValueError("quadrant(): a grid of one cell is not a matrix")
 
     def axis(k: str) -> dict:
-        a = {**(p.get(k) if p else {}), **_defined(opts.get(k))}
+        # JS's `{...p?.[k], ...}` spreads nothing when p is missing or lacks k (object spread
+        # of undefined is a no-op); Python's ** needs an actual mapping, so both cases fall
+        # back to {} explicitly (p truthy but missing k was the one case the previous
+        # `p.get(k) if p else {}` didn't cover).
+        a = {**((p or {}).get(k) or {}), **_defined(opts.get(k))}
         if not a.get("title"):
             raise ValueError(f"quadrant(): axis {k} needs a title ({k}: {{title: '市場成長率', low: '低', high: '高'}})")
         return a
@@ -375,7 +379,7 @@ class _Grow(Exception):
         self.why = why
 
 
-def layout_quadrant(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: str) -> dict:
+def layout_quadrant(band: dict, x: float, y: float, w: float, width_of, roles: dict, mode: WrapMode) -> dict:
     """lib/quadrant.ts:424-758 layoutQuadrant()."""
     size, t_size = roles["note"], roles["title"]
     line_n, line_t = size + 4, t_size + 5
@@ -436,8 +440,8 @@ def layout_quadrant(band: dict, x: float, y: float, w: float, width_of, roles: d
         hollow = gi >= 0 and _group_style(gi)["hollow"]
         tone = item.get("tone") or ("accent" if gi < 0 else _group_style(gi)["tone"])
         r = 8 if item.get("size") is None or mx <= 0 else max(_MIN_R, r_max * math.sqrt(item["size"] / mx))
-        lines = wrap(item["label"], size, 400, label_w)
-        units.append({"i": i, "item": item, "r": r, "cr": r * _HOLD[shape], "shape": shape, "tone": tone, "hollow": hollow, "lines": lines, "lw": widest(lines, size, 400), "lh": len(lines) * line_n, "col": 0, "row": 0})
+        wrapped = wrap(item["label"], size, 400, label_w)
+        units.append({"i": i, "item": item, "r": r, "cr": r * _HOLD[shape], "shape": shape, "tone": tone, "hollow": hollow, "lines": wrapped, "lw": widest(wrapped, size, 400), "lh": len(wrapped) * line_n, "col": 0, "row": 0})
     floored = [u["item"]["label"] for u in units if mx > 0 and u["item"].get("size") is not None and r_max * math.sqrt(u["item"]["size"] / mx) < _MIN_R - 0.5]
 
     # ---- cell-placed items: a row-wrapped flow per cell (each unit a bubble with its label below)

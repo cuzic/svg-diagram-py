@@ -428,5 +428,6 @@ def cat_band(who: str, data, opts: dict | None = None, kind: str | None = None) 
     """lib/charts-dsl.ts's catBand() + the catplot()/boxplot()/.../barplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_cat(who, data, opts, kind if kind is not None else "box")
-    alt = opts.get("alt") if opts.get("alt") is not None else cat_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else cat_alt(spec)
     return ChartBand(kind="catplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

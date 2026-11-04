@@ -268,5 +268,6 @@ def radar_band(axes: list[str], series: list[dict], opts: dict | None = None) ->
     """lib/charts-dsl.ts:71-74 radarBand() + lib/dsl/charts.ts's radar()."""
     opts = opts or {}
     spec = resolve_radar(axes, series, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else radar_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else radar_alt(spec)
     return ChartBand(kind="radar", spec=spec, alt=alt, **common_chart_opts("radar", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

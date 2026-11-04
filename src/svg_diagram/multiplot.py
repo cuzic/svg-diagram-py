@@ -454,5 +454,6 @@ def multi_band(who: str, mode: str, data, opts: dict | None = None) -> ChartBand
     wrappers."""
     opts = opts or {}
     spec = resolve_multi(who, mode, data, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else multi_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else multi_alt(spec)
     return ChartBand(kind="multiplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

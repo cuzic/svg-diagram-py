@@ -49,9 +49,11 @@ def resolve_heatmap(rows: list[str], cols: list[str], values: list[list[float | 
     levels = opts.get("levels") if opts.get("levels") is not None else 5
     if not (isinstance(levels, int) and not isinstance(levels, bool) and 3 <= levels <= 6):
         fail("heatmap", f"levels must be a whole number from 3 to 6 (got {levels})")
-    min_v = opts.get("min") if opts.get("min") is not None else min(real)
-    max_v = opts.get("max") if opts.get("max") is not None else max(real)
-    if opts.get("min") is None and opts.get("max") is None and max_v > min_v:
+    opt_min = opts.get("min")
+    opt_max = opts.get("max")
+    min_v = opt_min if opt_min is not None else min(real)
+    max_v = opt_max if opt_max is not None else max(real)
+    if opt_min is None and opt_max is None and max_v > min_v:
         step = nice_near((max_v - min_v) / levels)
 
         def lo(st: float) -> float:
@@ -137,9 +139,10 @@ def layout_heatmap(s: dict, g: dict) -> dict:
             if c.tw(l, s["rowHeader"]) > row_w - 4:
                 fail("heatmap", f'the row label "{s["rows"][i]}" is too long for its column {math.floor(row_w)}px wide (shorten it, or raise width)')
     row_need = max(len(ls) for ls in row_ls) * lh + 8
-    cell_h = s.get("cellH") if s.get("cellH") is not None else max(size + 16, 32, row_need)
-    if s.get("cellH") is not None and not (s["cellH"] >= max(size + 8, row_need)):
-        fail("heatmap", f'cellH {s["cellH"]} is too small for the {size}px text of its rows (at least {max(size + 8, row_need)})')
+    cell_h_opt = s.get("cellH")
+    cell_h = cell_h_opt if cell_h_opt is not None else max(size + 16, 32, row_need)
+    if cell_h_opt is not None and not (cell_h_opt >= max(size + 8, row_need)):
+        fail("heatmap", f"cellH {cell_h_opt} is too small for the {size}px text of its rows (at least {max(size + 8, row_need)})")
     texts = [[("–" if v is None else _cell_text(v, s)) for v in row] for row in s["values"]]
     widest = max(c.tw(t, True) for row in texts for t in row)
     if widest > cell_w - 8:
@@ -168,9 +171,10 @@ def layout_heatmap(s: dict, g: dict) -> dict:
             legend.append({"x": lx, "y": ly, **it})
             lx += w
         legend_h = ly + size + 14 + 8
-    c.h = g["height"] if g.get("height") is not None else head_h + len(s["rows"]) * cell_h + (legend_h + 6 if s["scale"] else 0) + 4
-    if g.get("height") is not None and g["height"] < head_h + len(s["rows"]) * cell_h + legend_h:
-        fail("heatmap", f'height {g["height"]} is too small for {len(s["rows"])} rows (need at least {head_h + len(s["rows"]) * cell_h + legend_h})')
+    height_opt = g.get("height")
+    c.h = height_opt if height_opt is not None else head_h + len(s["rows"]) * cell_h + (legend_h + 6 if s["scale"] else 0) + 4
+    if height_opt is not None and height_opt < head_h + len(s["rows"]) * cell_h + legend_h:
+        fail("heatmap", f"height {height_opt} is too small for {len(s['rows'])} rows (need at least {head_h + len(s['rows']) * cell_h + legend_h})")
 
     r1 = round1
 
@@ -210,5 +214,6 @@ def heatmap_band(rows: list[str], cols: list[str], values: list[list[float | Non
     """lib/charts-dsl.ts:61-64 heatmapBand() + lib/dsl/charts.ts:125-127 heatmap()."""
     opts = opts or {}
     spec = resolve_heatmap(rows, cols, values, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else heatmap_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else heatmap_alt(spec)
     return ChartBand(kind="heatmap", spec=spec, alt=alt, **common_chart_opts("heatmap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

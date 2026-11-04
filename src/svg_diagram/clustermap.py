@@ -173,5 +173,6 @@ def cluster_band(rows: list[str], cols: list[str], values: list[list[float]], op
     """lib/charts-dsl.ts's clusterBand() + the clustermap() DSL wrapper."""
     opts = opts or {}
     spec = resolve_cluster(rows, cols, values, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else cluster_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else cluster_alt(spec)
     return ChartBand(kind="clustermap", spec=spec, alt=alt, **common_chart_opts("clustermap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

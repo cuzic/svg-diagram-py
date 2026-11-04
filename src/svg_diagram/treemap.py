@@ -309,5 +309,6 @@ def treemap_band(tree, opts: dict | None = None) -> ChartBand:
 
     for n in spec["nodes"]:
         walk(n)
-    alt = opts.get("alt") if opts.get("alt") is not None else treemap_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else treemap_alt(spec)
     return ChartBand(kind="treemap", spec=spec, alt=alt, **common_chart_opts("treemap", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

@@ -292,5 +292,6 @@ def sankey_band(nodes: list, links: list[dict], opts: dict | None = None) -> Cha
     """lib/charts-dsl.ts:84-88 sankeyBand() + lib/dsl/charts.ts's sankey()."""
     opts = opts or {}
     spec = resolve_sankey(nodes, links, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else sankey_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else sankey_alt(spec)
     return ChartBand(kind="sankey", spec=spec, alt=alt, **common_chart_opts("sankey", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

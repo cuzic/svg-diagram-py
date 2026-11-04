@@ -398,5 +398,6 @@ def combo_band(categories: list[str], series: list[dict], opts: dict | None = No
     """lib/charts-dsl.ts:126-129 comboBand() + lib/dsl/charts.ts's combo()."""
     opts = opts or {}
     spec = resolve_combo(categories, series, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else combo_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else combo_alt(spec)
     return ChartBand(kind="combo", spec=spec, alt=alt, **common_chart_opts("combo", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

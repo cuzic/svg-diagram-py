@@ -190,5 +190,6 @@ def harvey_band(rows: list, cols: list[str], values: list[list], opts: dict | No
     """lib/charts-dsl.ts:131-134 harveyBand() + lib/dsl/charts.ts's harvey()."""
     opts = opts or {}
     spec = resolve_harvey(rows, cols, values, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else harvey_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else harvey_alt(spec)
     return ChartBand(kind="harvey", spec=spec, alt=alt, **common_chart_opts("harvey", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

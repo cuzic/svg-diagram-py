@@ -256,5 +256,6 @@ def reg_band(who: str, resid: bool, data: dict, opts: dict | None = None) -> Cha
     """lib/charts-dsl.ts's regBand() + the regplot()/residplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_reg(who, resid, data, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else reg_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else reg_alt(spec)
     return ChartBand(kind="regplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

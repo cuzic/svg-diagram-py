@@ -265,5 +265,6 @@ def bubble_band(points: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts:116-119 bubbleBand() + lib/dsl/charts.ts's bubble()."""
     opts = opts or {}
     spec = resolve_bubble(points, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else bubble_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else bubble_alt(spec)
     return ChartBand(kind="bubble", spec=spec, alt=alt, **common_chart_opts("bubble", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

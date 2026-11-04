@@ -9,9 +9,10 @@ Golden master: lib/semnet-analysis.ts (Node.js, svg-diagram).
 from __future__ import annotations
 
 import math
+from typing import NoReturn
 
 
-def _semnet_error(who: str, message: str) -> None:
+def _semnet_error(who: str, message: str) -> NoReturn:
     raise ValueError(f"{who}(): {message}")
 
 

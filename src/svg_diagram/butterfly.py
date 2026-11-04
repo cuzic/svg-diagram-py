@@ -148,5 +148,6 @@ def layout_butterfly(s: dict, g: dict) -> dict:
 def butterfly_band(rows: list[dict], opts: dict) -> ChartBand:
     """lib/charts-dsl.ts:121-124 butterflyBand() + lib/dsl/charts.ts's butterfly()."""
     spec = resolve_butterfly(rows, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else butterfly_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else butterfly_alt(spec)
     return ChartBand(kind="butterfly", spec=spec, alt=alt, **common_chart_opts("butterfly", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

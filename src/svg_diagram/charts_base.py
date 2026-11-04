@@ -11,6 +11,7 @@ import json
 import math
 import re
 from dataclasses import dataclass
+from typing import NoReturn
 
 from .atoms import split_atoms, text_width
 from .emit_common import js_num, js_round, round1
@@ -45,8 +46,10 @@ def seg_hits_rect(sg: dict, r: dict) -> bool:
     return t0 <= t1
 
 
-def fail(who: str, msg: str):
-    """lib/charts-base.ts:196 fail()."""
+def fail(who: str, msg: str) -> NoReturn:
+    """lib/charts-base.ts:196 fail(). Typed `NoReturn` so a type checker can narrow whatever
+    was being validated right after an `if not (...): fail(...)` guard, the way it already
+    narrows after a bare `raise`."""
     raise ValueError(f"{who}(): {msg}")
 
 

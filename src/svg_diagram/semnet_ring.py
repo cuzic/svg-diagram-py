@@ -7,6 +7,7 @@ Golden master: lib/semnet-ring.ts (Node.js, svg-diagram).
 from __future__ import annotations
 
 import math
+from typing import NoReturn
 
 from .charts_base import Canvas, seg_hits_rect
 from .emit_common import js_round
@@ -15,7 +16,7 @@ RING_MIN, RING_MAX = 2, 8
 _GAP = 36  # between neighbours: an arrow plus its sign
 
 
-def _ring_fail(msg: str) -> None:
+def _ring_fail(msg: str) -> NoReturn:
     raise ValueError(f"causalLoop({{layout: 'ring'}}): {msg}")
 
 

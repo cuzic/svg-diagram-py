@@ -291,5 +291,6 @@ def dist_band(who: str, data, opts: dict | None, kind: str) -> ChartBand:
     """lib/charts-dsl.ts's distBand() + the displot()/histplot()/.../rugplot() DSL wrappers."""
     opts = opts or {}
     spec = resolve_dist(who, data, opts, kind)
-    alt = opts.get("alt") if opts.get("alt") is not None else dist_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else dist_alt(spec)
     return ChartBand(kind="distplot", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

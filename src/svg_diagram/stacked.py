@@ -274,7 +274,8 @@ def layout_stacked(s: dict, g: dict) -> dict:
 def stacked_band(who: str, columns: list[dict], mode: str, opts: dict) -> ChartBand:
     """lib/charts-dsl.ts:66-69 stackedBand()."""
     spec = resolve_stacked(who, columns, mode, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else stacked_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else stacked_alt(spec)
     return ChartBand(kind="stacked", spec=spec, alt=alt, **common_chart_opts(who, id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))
 
 

@@ -201,5 +201,6 @@ def tornado_band(items: list[dict], opts: dict | None = None) -> ChartBand:
     """lib/charts-dsl.ts's tornadoBand() + lib/dsl/charts.ts's tornado()."""
     opts = opts or {}
     spec = resolve_tornado(items, opts)
-    alt = opts.get("alt") if opts.get("alt") is not None else tornado_alt(spec)
+    opt_alt = opts.get("alt")
+    alt = opt_alt if opt_alt is not None else tornado_alt(spec)
     return ChartBand(kind="tornado", spec=spec, alt=alt, **common_chart_opts("tornado", id=opts.get("id"), width=opts.get("width"), height=opts.get("height"), label_role=opts.get("labelRole"), reveal=opts.get("reveal"), until=opts.get("until")))

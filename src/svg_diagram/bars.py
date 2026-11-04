@@ -3,6 +3,14 @@ lib/emit-figures.ts's renderBars(), plus the bars() DSL constructor (lib/dsl/bar
 defaults + the structural validations that affect layout, not every `check()`-style type
 validation (same scope decision as flow_shapes.py's band constructors).
 
+`BarDatum`/`BarsBand` are dataclasses, not dicts: they are assembled once (by BarDatum's own
+__post_init__ and bars_band()) and read many times by layout_bars()'s internals, and neither
+ever crosses a JSON boundary (unlike `layout_bars()`'s own *return* value, which
+test_render_bars_matches_node sends to the Node CLI as JSON — that one stays a plain dict,
+see render_bars() below). A dataclass catches a missing/misnamed field at construction, at
+runtime, independent of whether a type checker ever ran; a dict only fails (if at all) far
+from the mistake, when something finally reads the missing key.
+
 NOT ported: rangeBars()/pareto()/histogram()/scatter() — convenience wrappers built on
 bars()/plane() that pull in lib/qc.ts/lib/qc-plane.ts (Sturges' rule, normal-curve fitting,
 least-squares regression, Pareto ordering) and plane() itself (not ported). Deferred, see
@@ -14,6 +22,7 @@ Golden master: lib/bars.ts + lib/dsl/bars.ts + lib/emit-figures.ts (Node.js, svg
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 from .atoms import text_width
 from .charts_base import inset_or_need
@@ -29,12 +38,74 @@ CUM_TICKS = [0, 20, 40, 60, 80, 100]
 LINE_TONE: dict[str, str] = {"accent": "accent", "danger": "danger", "muted": "muted", "text": "text"}
 
 
-def _size_of(band: dict, roles: dict) -> float:
-    return roles[band.get("labelRole") or "note"]
+@dataclass(frozen=True)
+class BarDatum:
+    """One row of bars()'s `data` — lib/bars.ts's BarDatum. Validates lib/dsl/bars.ts:43-92's
+    per-item rules (exactly one of value/range; range lo>=0 and lo<hi; value>=0) the moment
+    one is built, instead of in a loop inside bars_band() once all of them already exist."""
+
+    label: str
+    value: float | None = None
+    range: tuple[float, float] | list[float] | None = None
+    id: str | None = None
+    tone: str | None = None
+    series: str | None = None
+    replaces: str | None = None
+    reveal: object = None
+    until: object = None
+
+    def __post_init__(self) -> None:
+        if (self.value is None) == (self.range is None):
+            raise ValueError(f'bars(): "{self.label}" needs exactly one of value and range')
+        if self.range is not None:
+            lo, hi = self.range
+            if lo < 0:
+                raise ValueError(f'bars(): range for "{self.label}" starts below 0 ({lo}); the axis of bars() starts at 0')
+            if not (lo < hi):
+                raise ValueError(f'bars(): range for "{self.label}" needs lo < hi (got [{lo}, {hi}]); a single value is a plain bar')
+        elif self.value is not None and self.value < 0:
+            raise ValueError(f'bars(): value for "{self.label}" must be >= 0 (got {self.value})')
 
 
-def _bar_h(band: dict, s: float) -> float:
-    return max(BAR, s + 14) if band.get("labelRole") else BAR
+@dataclass(frozen=True)
+class BarsBand:
+    """lib/bars.ts's BarsBand, built once by bars_band() and read throughout
+    layout_bars()'s internals. `reveal`/`until` are never set by bars_band() itself (this
+    port's bands never set spotlight stages — see render_bars()'s module note) but stay as
+    fields so layout_bars()'s own handling of them (faithfully translated from Node) has
+    something to read."""
+
+    data: list[BarDatum]
+    max_value: float
+    dir: str = "h"
+    stack: bool = False
+    unit: str | None = None
+    height: float | None = None
+    id: str | None = None
+    plot_inset: tuple[float, float] | None = None
+    labels: str | None = None
+    axis: bool | None = None
+    grid: bool | None = None
+    baseline: bool | None = None
+    bar_ratio: float | None = None
+    label_role: str | None = None
+    hide_zero: bool = False
+    lines: list[dict] | None = None
+    vlines: list[dict] | None = None
+    curve: dict | None = None
+    cumulative: dict | None = None
+    edges: list[str] | None = None
+    value_format: object = None
+    reveal: object = None
+    until: object = None
+
+
+def _size_of(band: BarsBand, roles: dict) -> float:
+    return roles[band.label_role or "note"]
+
+
+def _bar_h(band: BarsBand, s: float) -> float:
+    return max(BAR, s + 14) if band.label_role else BAR
 
 
 def _value_num(v: float, f) -> str:
@@ -50,51 +121,51 @@ def _value_num(v: float, f) -> str:
     return fmt(v)
 
 
-def bar_span(d: dict) -> dict:
+def bar_span(d: BarDatum) -> dict:
     """lib/bars.ts:34 barSpan()."""
-    if d.get("range") is not None:
-        return {"lo": d["range"][0], "hi": d["range"][1]}
-    return {"lo": 0, "hi": d.get("value") or 0}
+    if d.range is not None:
+        return {"lo": d.range[0], "hi": d.range[1]}
+    return {"lo": 0, "hi": d.value or 0}
 
 
-def span_text(d: dict, fmt_opt, unit: str | None) -> str:
+def span_text(d: BarDatum, fmt_opt, unit: str | None) -> str:
     """lib/bars.ts:36-39 spanText()."""
     span = bar_span(d)
-    if d.get("range") is not None:
+    if d.range is not None:
         return f"{_value_num(span['lo'], fmt_opt)}〜{_value_num(span['hi'], fmt_opt)}{unit or ''}"
     return f"{_value_num(span['hi'], fmt_opt)}{unit or ''}"
 
 
-def _value_text(d: dict, band: dict) -> str:
-    return span_text(d, band.get("valueFormat"), band.get("unit"))
+def _value_text(d: BarDatum, band: BarsBand) -> str:
+    return span_text(d, band.value_format, band.unit)
 
 
-def _flags(band: dict) -> dict:
-    labels = band.get("labels") or "all"
-    axis = band.get("axis") is not False
+def _flags(band: BarsBand) -> dict:
+    labels = band.labels or "all"
+    axis = band.axis is not False
     return {
         "showValues": labels == "all",
         "showCats": labels != "none",
         "axis": axis,
-        "grid": band.get("grid") if band.get("grid") is not None else (axis and band.get("cumulative") is None),
-        "baseline": band.get("baseline") is not False,
+        "grid": band.grid if band.grid is not None else (axis and band.cumulative is None),
+        "baseline": band.baseline is not False,
         "labels": labels,
     }
 
 
-def _segment_of(d: dict, band: dict, labels: str) -> str:
+def _segment_of(d: BarDatum, band: BarsBand, labels: str) -> str:
     if labels == "all":
-        return f"{d['label']} {_value_text(d, band)}"
+        return f"{d.label} {_value_text(d, band)}"
     if labels == "category":
-        return d["label"]
+        return d.label
     return ""
 
 
-def _series(d: dict) -> str:
-    return d.get("tone") or SERIES[d.get("series") or "a"]
+def _series(d: BarDatum) -> str:
+    return d.tone or SERIES[d.series or "a"]
 
 
-def cumulative_of(data: list[dict]) -> list[float]:
+def cumulative_of(data: list[BarDatum]) -> list[float]:
     """lib/bars.ts:149-153 cumulativeOf()."""
     total = sum(bar_span(d)["hi"] for d in data)
     run = 0.0
@@ -109,19 +180,19 @@ def _cum_text(pct: float) -> str:
     return f"{js_num(js_round(pct * 10) / 10)}%"
 
 
-def slots_of(data: list[dict]) -> dict:
+def slots_of(data: list[BarDatum]) -> dict:
     """lib/bars.ts:174-184 slotsOf()."""
     at: dict[str, int] = {}
     slots: list[int] = []
     count = 0
     for d in data:
-        slot = at.get(d["replaces"]) if d.get("replaces") is not None else None
+        slot = at.get(d.replaces) if d.replaces is not None else None
         mine = slot if slot is not None else count
         if slot is None:
             count += 1
         slots.append(mine)
-        if d.get("id"):
-            at[d["id"]] = mine
+        if d.id:
+            at[d.id] = mine
     return {"slots": slots, "count": count}
 
 
@@ -145,29 +216,29 @@ def _put_text(out: dict, s: float, text: str, x: float, y: float, anchor: str, f
     out["labelBoxes"].append(box)
 
 
-def _add_bar(out: dict, d: dict, r: dict) -> dict:
+def _add_bar(out: dict, d: BarDatum, r: dict) -> dict:
     """lib/bars.ts:166-171 addBar()."""
     bar = dict(r)
     bar["fill"] = _series(d)
-    if d.get("id") is not None:
-        bar["id"] = d["id"]
-    if d.get("reveal") is not None:
-        bar["reveal"] = d["reveal"]
-    if d.get("until") is not None:
-        bar["until"] = d["until"]
+    if d.id is not None:
+        bar["id"] = d.id
+    if d.reveal is not None:
+        bar["reveal"] = d.reveal
+    if d.until is not None:
+        bar["until"] = d.until
     out["bars"].append(bar)
-    if d.get("id"):
-        out["anchors"].append({**bar, "id": d["id"]})
+    if d.id:
+        out["anchors"].append({**bar, "id": d.id})
     return bar
 
 
-def _vline_rows(band: dict, plot_l: float, plot_r: float, plot_t: float, s: float, width_of, values: list[dict]) -> dict:
+def _vline_rows(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, s: float, width_of, values: list[dict]) -> dict:
     """lib/bars.ts:79-93 vlineRows()."""
-    count = slots_of(band["data"])["count"]
+    count = slots_of(band.data)["count"]
     slot = (plot_r - plot_l) / count
     placed: list[dict] = []
     at_list: list[dict | None] = []
-    for l in band.get("vlines") or []:
+    for l in band.vlines or []:
         if not l.get("label"):
             at_list.append(None)
             continue
@@ -195,22 +266,22 @@ def _vline_rows(band: dict, plot_l: float, plot_r: float, plot_t: float, s: floa
     return {"rows": rows, "at": at_list}
 
 
-def _vertical_values(band: dict, plot_l: float, plot_r: float, plot_t: float, plot_b: float, s: float, width_of, slots: list[int], slot: float, bw: float, y_of) -> list[dict | None]:
+def _vertical_values(band: BarsBand, plot_l: float, plot_r: float, plot_t: float, plot_b: float, s: float, width_of, slots: list[int], slot: float, bw: float, y_of) -> list[dict | None]:
     """lib/bars.ts:98-133 verticalValues()."""
     cum_segs: list[dict] = []
-    if band.get("cumulative") is not None:
+    if band.cumulative is not None:
         pts = [{"x": plot_l, "y": plot_b}]
-        for k, p in enumerate(cumulative_of(band["data"])):
+        for k, p in enumerate(cumulative_of(band.data)):
             pts.append({"x": plot_l + (k + 1) * slot, "y": plot_b - p / 100 * (plot_b - plot_t)})
         for k in range(len(pts) - 1):
             cum_segs.append({"x1": pts[k]["x"], "y1": pts[k]["y"], "x2": pts[k + 1]["x"], "y2": pts[k + 1]["y"]})
-        guide = band["cumulative"].get("guide")
+        guide = band.cumulative.get("guide")
         if guide is not None:
             gy = plot_b - guide / 100 * (plot_b - plot_t)
             cum_segs.append({"x1": plot_l, "y1": gy, "x2": plot_r, "y2": gy})
-    for l in band.get("lines") or []:
+    for l in band.lines or []:
         cum_segs.append({"x1": plot_l, "y1": y_of(l["at"]), "x2": plot_r, "y2": y_of(l["at"])})
-    vx = [plot_l + l["at"] * slot for l in (band.get("vlines") or [])]
+    vx = [plot_l + l["at"] * slot for l in (band.vlines or [])]
 
     def dodge(cx: float, tw: float, lo: float, hi: float) -> float:
         def cuts(c: float) -> bool:
@@ -236,15 +307,15 @@ def _vertical_values(band: dict, plot_l: float, plot_r: float, plot_t: float, pl
         return r if r is not None else cx
 
     out: list[dict | None] = []
-    for i, d in enumerate(band["data"]):
+    for i, d in enumerate(band.data):
         span = bar_span(d)
         lo, hi = span["lo"], span["hi"]
-        if band.get("hideZero") and hi == 0:
+        if band.hide_zero and hi == 0:
             out.append(None)
             continue
-        bh = (hi - lo) / band["max"] * (plot_b - plot_t)
+        bh = (hi - lo) / band.max_value * (plot_b - plot_t)
         bx = plot_l + slots[i] * slot + (slot - bw) / 2
-        r_y = plot_b - hi / band["max"] * (plot_b - plot_t)
+        r_y = plot_b - hi / band.max_value * (plot_b - plot_t)
         tw = text_width(width_of, _value_text(d, band), s, 700)
         cx = dodge(bx + bw / 2, tw, bx, bx + bw)
         cx_out = dodge(bx + bw / 2, tw, plot_l + slots[i] * slot, plot_l + (slots[i] + 1) * slot)
@@ -275,51 +346,51 @@ def _vertical_values(band: dict, plot_l: float, plot_r: float, plot_t: float, pl
     return out
 
 
-def layout_bars(band: dict, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def layout_bars(band: BarsBand, x: float, y: float, w: float, width_of, roles: dict) -> dict:
     """lib/bars.ts:186-188 layoutBars()."""
-    if band.get("dir") == "v":
+    if band.dir == "v":
         return _layout_vertical(band, x, y, w, width_of, roles)
     return _layout_horizontal(band, x, y, w, width_of, roles)
 
 
-def _layout_horizontal(band: dict, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def _layout_horizontal(band: BarsBand, x: float, y: float, w: float, width_of, roles: dict) -> dict:
     """lib/bars.ts:190-244 layoutHorizontal()."""
     f = _flags(band)
     s = _size_of(band, roles)
     barh = _bar_h(band, s)
-    slots_info = slots_of(band["data"])
+    slots_info = slots_of(band.data)
     slots, count = slots_info["slots"], slots_info["count"]
-    rows = 1 if band.get("stack") else count
-    bh = barh if band.get("barRatio") is None or band.get("stack") else (barh + GAP) * band["barRatio"]
-    gp = GAP if band.get("barRatio") is None or band.get("stack") else barh + GAP - bh
+    rows = 1 if band.stack else count
+    bh = barh if band.bar_ratio is None or band.stack else (barh + GAP) * band.bar_ratio
+    gp = GAP if band.bar_ratio is None or band.stack else barh + GAP - bh
     tick_h = s + TICK + 8 if f["axis"] else 0
-    ticks = ticks_of({"max": band["max"]}, "bars") if f["axis"] else []
-    label_w = 0 if band.get("stack") or not f["showCats"] else max(text_width(width_of, d["label"], s, 400) for d in band["data"]) + 12
-    value_w = 0 if band.get("stack") or not f["showValues"] else max(text_width(width_of, _value_text(d, band), s, 700) for d in band["data"]) + 12
-    tick_pad_l = text_width(width_of, ticks[0]["label"], s, 400) / 2 if band.get("stack") and f["axis"] else 0
-    tick_pad_r = text_width(width_of, ticks[-1]["label"], s, 400) / 2 if band.get("stack") and f["axis"] else 0
-    inset_l, inset_r = inset_or_need("bars()", band.get("plotInset"), label_w + tick_pad_l, value_w + tick_pad_r)
+    ticks = ticks_of({"max": band.max_value}, "bars") if f["axis"] else []
+    label_w = 0 if band.stack or not f["showCats"] else max(text_width(width_of, d.label, s, 400) for d in band.data) + 12
+    value_w = 0 if band.stack or not f["showValues"] else max(text_width(width_of, _value_text(d, band), s, 700) for d in band.data) + 12
+    tick_pad_l = text_width(width_of, ticks[0]["label"], s, 400) / 2 if band.stack and f["axis"] else 0
+    tick_pad_r = text_width(width_of, ticks[-1]["label"], s, 400) / 2 if band.stack and f["axis"] else 0
+    inset_l, inset_r = inset_or_need("bars()", band.plot_inset, label_w + tick_pad_l, value_w + tick_pad_r)
     plot_l, plot_r = x + inset_l, x + w - inset_r
     plot_w = plot_r - plot_l
     if plot_w < (80 if (f["axis"] or f["labels"] != "none") else 20):
         raise ValueError("bars(): the figure is too narrow for its labels")
-    segs = [_segment_of(d, band, f["labels"]) for d in band["data"]]
-    has_outside = bool(band.get("stack")) and any(segs[i] and bar_span(d)["hi"] / band["max"] * plot_w < text_width(width_of, segs[i], s, 700) + 12 for i, d in enumerate(band["data"]))
+    segs = [_segment_of(d, band, f["labels"]) for d in band.data]
+    has_outside = bool(band.stack) and any(segs[i] and bar_span(d)["hi"] / band.max_value * plot_w < text_width(width_of, segs[i], s, 700) + 12 for i, d in enumerate(band.data))
     outside_h = s + 6 if has_outside else 0
     need_h = rows * bh + max(0, rows - 1) * gp + (tick_h + 8 if f["axis"] else 0) + outside_h
-    if band.get("height") is not None and band["height"] < need_h:
-        raise ValueError(f"bars(): height {band['height']} is too small for its content (need at least {need_h})")
-    h = band.get("height") if band.get("height") is not None else need_h
-    out: dict = {"type": "bars", "x": x, "y": y, "w": w, "h": h, "dir": "h", "stack": bool(band.get("stack")), "bars": [], "ticks": [], "texts": [], "labelBoxes": [], "anchors": []}
-    if band.get("id") is not None:
-        out["id"] = band["id"]
-    if band.get("reveal") is not None:
-        out["reveal"] = band["reveal"]
-    if band.get("until") is not None:
-        out["until"] = band["until"]
+    if band.height is not None and band.height < need_h:
+        raise ValueError(f"bars(): height {band.height} is too small for its content (need at least {need_h})")
+    h = band.height if band.height is not None else need_h
+    out: dict = {"type": "bars", "x": x, "y": y, "w": w, "h": h, "dir": "h", "stack": bool(band.stack), "bars": [], "ticks": [], "texts": [], "labelBoxes": [], "anchors": []}
+    if band.id is not None:
+        out["id"] = band.id
+    if band.reveal is not None:
+        out["reveal"] = band.reveal
+    if band.until is not None:
+        out["until"] = band.until
     axis_y = y + rows * bh + max(0, rows - 1) * gp
     for t in ticks:
-        tx = plot_l + t["at"] / band["max"] * plot_w
+        tx = plot_l + t["at"] / band.max_value * plot_w
         if f["grid"] and (f["baseline"] or t["at"] != 0):
             out["ticks"].append({"x1": tx, "y1": y, "x2": tx, "y2": axis_y + TICK})
         else:
@@ -327,11 +398,11 @@ def _layout_horizontal(band: dict, x: float, y: float, w: float, width_of, roles
         _put_text(out, s, t["label"], tx, axis_y + outside_h + TICK + s + 2, "middle", "muted", width_of)
     if f["baseline"] and not (f["axis"] and f["grid"]):
         out["ticks"].append({"x1": plot_l, "y1": y, "x2": plot_l, "y2": axis_y})
-    if band.get("stack"):
+    if band.stack:
         at = plot_l
-        for i, d in enumerate(band["data"]):
-            raw_w = bar_span(d)["hi"] / band["max"] * plot_w
-            bw = max(0, raw_w - (STACK_GAP if i < len(band["data"]) - 1 else 0))
+        for i, d in enumerate(band.data):
+            raw_w = bar_span(d)["hi"] / band.max_value * plot_w
+            bw = max(0, raw_w - (STACK_GAP if i < len(band.data) - 1 else 0))
             r = _add_bar(out, d, {"x": at, "y": y, "w": bw, "h": barh})
             bar = len(out["bars"]) - 1
             text = segs[i]
@@ -342,16 +413,16 @@ def _layout_horizontal(band: dict, x: float, y: float, w: float, width_of, roles
                 _put_text(out, s, text, r["x"] + r["w"] / 2, r["y"] + barh + s + 4, "middle", r["fill"], width_of, True, None, bar)
             at += raw_w
     else:
-        for i, d in enumerate(band["data"]):
+        for i, d in enumerate(band.data):
             span = bar_span(d)
             lo, hi = span["lo"], span["hi"]
             by = y + slots[i] * (bh + gp)
-            x0 = plot_l + lo / band["max"] * plot_w
-            bw = (hi - lo) / band["max"] * plot_w
+            x0 = plot_l + lo / band.max_value * plot_w
+            bw = (hi - lo) / band.max_value * plot_w
             r = _add_bar(out, d, {"x": x0, "y": by, "w": bw, "h": bh})
             bar = len(out["bars"]) - 1
             if f["showCats"]:
-                _put_text(out, s, d["label"], plot_l - 8, by + bh / 2 + s * 0.36, "end", "text", width_of, False, None, bar)
+                _put_text(out, s, d.label, plot_l - 8, by + bh / 2 + s * 0.36, "end", "text", width_of, False, None, bar)
             if not f["showValues"]:
                 continue
             text = _value_text(d, band)
@@ -365,46 +436,46 @@ def _layout_horizontal(band: dict, x: float, y: float, w: float, width_of, roles
     return out
 
 
-def _layout_vertical(band: dict, x: float, y: float, w: float, width_of, roles: dict) -> dict:
+def _layout_vertical(band: BarsBand, x: float, y: float, w: float, width_of, roles: dict) -> dict:
     """lib/bars.ts:246-317 layoutVertical()."""
     f = _flags(band)
     s = _size_of(band, roles)
-    h = band.get("height") if band.get("height") is not None else 280
-    ticks = ticks_of({"max": band["max"]}, "bars") if f["axis"] else []
-    if f["axis"] and band.get("cumulative") is not None and band["max"] - ticks[-1]["at"] > band["max"] * 0.08:
-        ticks.append({"at": band["max"], "label": fmt(band["max"])})
+    h = band.height if band.height is not None else 280
+    ticks = ticks_of({"max": band.max_value}, "bars") if f["axis"] else []
+    if f["axis"] and band.cumulative is not None and band.max_value - ticks[-1]["at"] > band.max_value * 0.08:
+        ticks.append({"at": band.max_value, "label": fmt(band.max_value)})
     tick_w = max([0.0] + [text_width(width_of, t["label"], s, 400) for t in ticks])
-    cum_w = (max(text_width(width_of, f"{p}%", s, 400) for p in CUM_TICKS) + TICK + 10) if band.get("cumulative") is not None else 0
+    cum_w = (max(text_width(width_of, f"{p}%", s, 400) for p in CUM_TICKS) + TICK + 10) if band.cumulative is not None else 0
 
     def edge_half(i: int) -> float:
-        edges = band.get("edges")
+        edges = band.edges
         if not edges:
             return 0
         idx = i
         return text_width(width_of, edges[idx] if 0 <= idx < len(edges) else "", s, 400) / 2
 
-    edges = band.get("edges")
+    edges = band.edges
     plot_l = max(x + (tick_w + TICK + 10 if f["axis"] else 4), x + edge_half(0))
-    plot_r = min(x + w - (cum_w if band.get("cumulative") is not None else 8), x + w - edge_half(len(edges) - 1 if edges else 0) - 2)
-    slots_info = slots_of(band["data"])
+    plot_r = min(x + w - (cum_w if band.cumulative is not None else 8), x + w - edge_half(len(edges) - 1 if edges else 0) - 2)
+    slots_info = slots_of(band.data)
     slots, count = slots_info["slots"], slots_info["count"]
     slot = (plot_r - plot_l) / count
-    bw = min(64, slot * 0.62) if band.get("barRatio") is None else slot * band["barRatio"]
-    top_labels = any(l.get("label") for l in [*(band.get("lines") or []), *(band.get("vlines") or [])])
-    plot_b = y + h - s * 1.4 - 14 if f["showCats"] or band.get("edges") else y + h - 4
+    bw = min(64, slot * 0.62) if band.bar_ratio is None else slot * band.bar_ratio
+    top_labels = any(l.get("label") for l in [*(band.lines or []), *(band.vlines or [])])
+    plot_b = y + h - s * 1.4 - 14 if f["showCats"] or band.edges else y + h - 4
 
     def plot_t_of(rows: int) -> float:
-        return y + (s + 8 if (f["axis"] or f["showValues"] or top_labels or band.get("cumulative") is not None) else 4) + max(0, rows - 1) * (s + 4)
+        return y + (s + 8 if (f["axis"] or f["showValues"] or top_labels or band.cumulative is not None) else 4) + max(0, rows - 1) * (s + 4)
 
     def rows_at(rows: int) -> dict:
         plot_t = plot_t_of(rows)
 
         def y_of(v: float) -> float:
-            return plot_b - v / band["max"] * (plot_b - plot_t)
+            return plot_b - v / band.max_value * (plot_b - plot_t)
 
         values = (
             [p["box"] for p in _vertical_values(band, plot_l, plot_r, plot_t, plot_b, s, width_of, slots, slot, bw, y_of) if p]
-            if f["showValues"] and not band.get("stack")
+            if f["showValues"] and not band.stack
             else []
         )
         return _vline_rows(band, plot_l, plot_r, plot_t, s, width_of, values)
@@ -427,16 +498,16 @@ def _layout_vertical(band: dict, x: float, y: float, w: float, width_of, roles: 
     plot_t = plot_t_of(rows)
     if plot_r - plot_l < (80 if (f["axis"] or f["labels"] != "none") else 20) or plot_b - plot_t < (80 if (f["axis"] or f["showValues"]) else 20):
         raise ValueError("bars(): the figure is too small; raise width / height")
-    out: dict = {"type": "bars", "x": x, "y": y, "w": w, "h": h, "dir": "v", "stack": bool(band.get("stack")), "bars": [], "ticks": [], "texts": [], "labelBoxes": [], "anchors": []}
-    if band.get("id") is not None:
-        out["id"] = band["id"]
-    if band.get("reveal") is not None:
-        out["reveal"] = band["reveal"]
-    if band.get("until") is not None:
-        out["until"] = band["until"]
+    out: dict = {"type": "bars", "x": x, "y": y, "w": w, "h": h, "dir": "v", "stack": bool(band.stack), "bars": [], "ticks": [], "texts": [], "labelBoxes": [], "anchors": []}
+    if band.id is not None:
+        out["id"] = band.id
+    if band.reveal is not None:
+        out["reveal"] = band.reveal
+    if band.until is not None:
+        out["until"] = band.until
 
     def y_of(v: float) -> float:
-        return plot_b - v / band["max"] * (plot_b - plot_t)
+        return plot_b - v / band.max_value * (plot_b - plot_t)
 
     for t in ticks:
         ty = y_of(t["at"])
@@ -444,13 +515,13 @@ def _layout_vertical(band: dict, x: float, y: float, w: float, width_of, roles: 
             out["ticks"].append({"x1": plot_l - TICK, "y1": ty, "x2": plot_r, "y2": ty})
         else:
             out["ticks"].append({"x1": plot_l - TICK, "y1": ty, "x2": plot_l, "y2": ty})
-        _put_text(out, s, t["label"], plot_l - TICK - 4, ty + (s * 5 / 14 if band.get("labelRole") else 5), "end", "muted", width_of)
-    if band.get("stack"):
+        _put_text(out, s, t["label"], plot_l - TICK - 4, ty + (s * 5 / 14 if band.label_role else 5), "end", "muted", width_of)
+    if band.stack:
         bw2 = min(72, (plot_r - plot_l) * 0.35)
         bx = (plot_l + plot_r - bw2) / 2
         bottom = plot_b
-        for i, d in enumerate(band["data"]):
-            raw_h = bar_span(d)["hi"] / band["max"] * (plot_b - plot_t)
+        for i, d in enumerate(band.data):
+            raw_h = bar_span(d)["hi"] / band.max_value * (plot_b - plot_t)
             bh = max(0, raw_h - (STACK_GAP if i > 0 else 0))
             r = {"x": bx, "y": bottom - raw_h, "w": bw2, "h": bh}
             _add_bar(out, d, r)
@@ -464,15 +535,15 @@ def _layout_vertical(band: dict, x: float, y: float, w: float, width_of, roles: 
             bottom -= raw_h
     else:
         values = _vertical_values(band, plot_l, plot_r, plot_t, plot_b, s, width_of, slots, slot, bw, y_of) if f["showValues"] else []
-        for i, d in enumerate(band["data"]):
+        for i, d in enumerate(band.data):
             span = bar_span(d)
             lo, hi = span["lo"], span["hi"]
-            bh = (hi - lo) / band["max"] * (plot_b - plot_t)
+            bh = (hi - lo) / band.max_value * (plot_b - plot_t)
             bx = plot_l + slots[i] * slot + (slot - bw) / 2
-            r = _add_bar(out, d, {"x": bx, "y": plot_b - hi / band["max"] * (plot_b - plot_t), "w": bw, "h": bh})
+            r = _add_bar(out, d, {"x": bx, "y": plot_b - hi / band.max_value * (plot_b - plot_t), "w": bw, "h": bh})
             bar = len(out["bars"]) - 1
-            if f["showCats"] and not band.get("edges"):
-                _put_text(out, s, d["label"], bx + bw / 2, plot_b + s + 10, "middle", "text", width_of, False, None, bar)
+            if f["showCats"] and not band.edges:
+                _put_text(out, s, d.label, bx + bw / 2, plot_b + s + 10, "middle", "text", width_of, False, None, bar)
             pick = values[i] if i < len(values) else None
             if not pick:
                 continue
@@ -489,18 +560,18 @@ def _layout_vertical(band: dict, x: float, y: float, w: float, width_of, roles: 
     return out
 
 
-def _overlays(out: dict, band: dict, g: dict) -> None:
+def _overlays(out: dict, band: BarsBand, g: dict) -> None:
     """lib/bars.ts:320-368 overlays()."""
     plot_l, plot_r, plot_t, plot_b, s, width_of, y_of, vrows = g["plotL"], g["plotR"], g["plotT"], g["plotB"], g["S"], g["widthOf"], g["yOf"], g["vrows"]
     ink: dict = {"lines": [], "polylines": [], "dots": []}
-    count = slots_of(band["data"])["count"]
+    count = slots_of(band.data)["count"]
     slot = (plot_r - plot_l) / count
 
     def x_of(at: float) -> float:
         return plot_l + at * slot
 
     hy: list[float] = []
-    for l in sorted(band.get("lines") or [], key=lambda l: -l["at"]):
+    for l in sorted(band.lines or [], key=lambda l: -l["at"]):
         ly = y_of(l["at"])
         fill = LINE_TONE[l.get("tone") or "danger"]
         ink["lines"].append({"x1": plot_l, "y1": ly, "x2": plot_r, "y2": ly, "fill": fill, "dashed": l.get("dashed") is not False})
@@ -512,7 +583,7 @@ def _overlays(out: dict, band: dict, g: dict) -> None:
             _put_text(out, s, l["label"], plot_r - 4, ly - 5, "end", fill, width_of, True)
         else:
             _put_text(out, s, l["label"], plot_l + 4, ly - 5, "start", fill, width_of, True)
-    for i, l in enumerate(band.get("vlines") or []):
+    for i, l in enumerate(band.vlines or []):
         lx = x_of(l["at"])
         fill = LINE_TONE[l.get("tone") or "danger"]
         at = vrows["at"][i]
@@ -521,15 +592,15 @@ def _overlays(out: dict, band: dict, g: dict) -> None:
             ink["lines"].append({"x1": lx, "y1": plot_t - 4 - at["row"] * (s + 4), "x2": lx, "y2": plot_t - 4, "fill": fill, "dashed": l.get("dashed") is not False, "soft": True})
         if l.get("label") and at:
             _put_text(out, s, l["label"], at["x"], plot_t - 8 - at["row"] * (s + 4), at["anchor"], fill, width_of, True)
-    if band.get("edges"):
-        for i, e in enumerate(band["edges"]):
+    if band.edges:
+        for i, e in enumerate(band.edges):
             if e:
                 _put_text(out, s, e, x_of(i), plot_b + s + 10, "middle", "text", width_of)
-    if band.get("curve"):
-        curve = band["curve"]
+    if band.curve:
+        curve = band.curve
         ink["polylines"].append({"pts": [{"x": x_of(sx), "y": y_of(v)} for sx, v in curve["through"]], "fill": LINE_TONE[curve.get("tone") or "text"], "dashed": curve.get("dashed") is True, "soft": True})
-    if band.get("cumulative") is not None:
-        cum = cumulative_of(band["data"])
+    if band.cumulative is not None:
+        cum = cumulative_of(band.data)
 
         def y_pct(p: float) -> float:
             return plot_b - p / 100 * (plot_b - plot_t)
@@ -537,8 +608,8 @@ def _overlays(out: dict, band: dict, g: dict) -> None:
         ink["lines"].append({"x1": plot_r, "y1": plot_t, "x2": plot_r, "y2": plot_b, "fill": "border", "dashed": False})
         for p in CUM_TICKS:
             ink["lines"].append({"x1": plot_r, "y1": y_pct(p), "x2": plot_r + TICK, "y2": y_pct(p), "fill": "border", "dashed": False})
-            _put_text(out, s, f"{p}%", plot_r + TICK + 4, y_pct(p) + (s * 5 / 14 if band.get("labelRole") else 5), "start", "muted", width_of)
-        guide = band["cumulative"].get("guide")
+            _put_text(out, s, f"{p}%", plot_r + TICK + 4, y_pct(p) + (s * 5 / 14 if band.label_role else 5), "start", "muted", width_of)
+        guide = band.cumulative.get("guide")
         if guide is not None:
             ink["lines"].append({"x1": plot_l, "y1": y_pct(guide), "x2": plot_r, "y2": y_pct(guide), "fill": "muted", "dashed": True})
         pts = [{"x": plot_l, "y": plot_b}] + [{"x": x_of(i + 1), "y": y_pct(p)} for i, p in enumerate(cum)]
@@ -573,53 +644,38 @@ def _overlays(out: dict, band: dict, g: dict) -> None:
 # ---------------------------------------------------------------------------------------------------------------------------
 
 
-def bars_band(data: list[dict], *, unit: str | None = None, direction: str | None = None, stack: bool = False, height: float | None = None, id: str | None = None, max_value: float | None = None, plot_inset: tuple[float, float] | None = None, labels: str | None = None, axis: bool | None = None, grid: bool | None = None, baseline: bool | None = None, bar_ratio: float | None = None, label_role: str | None = None, hide_zero: bool = False, lines: list[dict] | None = None, vlines: list[dict] | None = None, curve: dict | None = None, cumulative: dict | None = None, edges: list[str] | None = None, value_format=None) -> dict:
+def bars_band(data: list[dict], *, unit: str | None = None, direction: str | None = None, stack: bool = False, height: float | None = None, id: str | None = None, max_value: float | None = None, plot_inset: tuple[float, float] | None = None, labels: str | None = None, axis: bool | None = None, grid: bool | None = None, baseline: bool | None = None, bar_ratio: float | None = None, label_role: str | None = None, hide_zero: bool = False, lines: list[dict] | None = None, vlines: list[dict] | None = None, curve: dict | None = None, cumulative: dict | None = None, edges: list[str] | None = None, value_format=None) -> BarsBand:
     """lib/dsl/bars.ts:43-92 bars(). `direction` is Node's `dir` ('h'/'v'); `max_value` is
     Node's `max` — both renamed here to avoid shadowing the `dir`/`max` builtins this function
-    calls (the band dict's keys are still Node's own "dir"/"max")."""
+    calls. Per-item validation ("needs exactly one of value and range", etc.) now lives in
+    BarDatum.__post_init__, run as each item is built below; this function only validates the
+    cross-item invariant (the total/extent against `max`) that needs every item already built."""
     if not data:
         raise ValueError("bars(data) needs at least one value")
-    for d in data:
-        if (d.get("value") is None) == (d.get("range") is None):
-            raise ValueError(f"bars(): \"{d['label']}\" needs exactly one of value and range")
-        if d.get("range") is not None:
-            lo, hi = d["range"]
-            if lo < 0:
-                raise ValueError(f"bars(): range for \"{d['label']}\" starts below 0 ({lo}); the axis of bars() starts at 0")
-            if not (lo < hi):
-                raise ValueError(f"bars(): range for \"{d['label']}\" needs lo < hi (got [{lo}, {hi}]); a single value is a plain bar")
-        else:
-            if d.get("value", 0) < 0:
-                raise ValueError(f"bars(): value for \"{d['label']}\" must be >= 0 (got {d.get('value')})")
-    extent = sum(bar_span(d)["hi"] for d in data) if stack else max(bar_span(d)["hi"] for d in data)
+    items = [d if isinstance(d, BarDatum) else BarDatum(**d) for d in data]
+    extent = sum(bar_span(d)["hi"] for d in items) if stack else max(bar_span(d)["hi"] for d in items)
     m = max_value if max_value is not None else extent
     if not (m > 0):
         raise ValueError(f"bars(): max must be a finite number > 0 (got {m})")
     if extent > m:
         raise ValueError(f"bars(): {'stack total' if stack else 'a value'} ({extent}) exceeds max ({m})")
-    band: dict = {"type": "bars", "data": list(data), "max": m, "dir": direction or "h", "stack": stack}
-    if unit is not None:
-        band["unit"] = unit
-    if height is not None:
-        band["height"] = height
-    if id is not None:
-        band["id"] = id
-    for k, v in (
-        ("plotInset", plot_inset), ("labels", labels), ("axis", axis), ("grid", grid), ("baseline", baseline),
-        ("barRatio", bar_ratio), ("labelRole", label_role), ("lines", lines), ("vlines", vlines), ("curve", curve),
-        ("cumulative", cumulative), ("edges", edges), ("valueFormat", value_format),
-    ):
-        if v is not None:
-            band[k] = v
-    if hide_zero:
-        band["hideZero"] = True
-    return band
+    return BarsBand(
+        data=items, max_value=m, dir=direction or "h", stack=stack, unit=unit, height=height, id=id,
+        plot_inset=plot_inset, labels=labels, axis=axis, grid=grid, baseline=baseline, bar_ratio=bar_ratio,
+        label_role=label_role, hide_zero=hide_zero, lines=lines, vlines=vlines, curve=curve,
+        cumulative=cumulative, edges=edges, value_format=value_format,
+    )
 
 
 # ---------------------------------------------------------------------------------------------------------------------------
 # lib/emit-figures.ts's renderBars() (spotlight dim/stage filtering not ported — this port's
 # bands never set `dim`/`reveal` stages, so every bar/text is always visible, same scope
 # decision as flow_shapes.py's render_flow_shape())
+#
+# `b` here is LaidOutBars, layout_bars()'s *return* value — unlike BarsBand/BarDatum above,
+# this one stays a plain dict on purpose: test_render_bars_matches_node sends it straight
+# over the golden CLI's JSON-lines protocol (`node_golden.call({"kind": "renderBars",
+# "band": laid})`), so it genuinely is a JSON-boundary value, not just an internal one.
 # ---------------------------------------------------------------------------------------------------------------------------
 
 

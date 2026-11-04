@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .approx_width import approx_width_of
-from .bars import bars_band, layout_bars, render_bars
+from .bars import BarsBand, bars_band, layout_bars, render_bars
 from .bubble import bubble_band
 from .butterfly import butterfly_band
 from .charts import layout_chart, render_chart
@@ -32,7 +32,7 @@ class _Bars:
     x: float
     y: float
     w: float
-    band: dict
+    band: BarsBand
     day: int | str = 1
 
     def render(self) -> str:

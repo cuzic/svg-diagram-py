@@ -52794,6 +52794,9 @@
   "x": 0,
   "y": 0
  },
+ "{\"chartKind\": \"treemap\", \"kind\": \"layoutChart\", \"opts\": {\"strict\": true}, \"tree\": {\"children\": [{\"label\": \"X\", \"value\": 1}, {\"label\": \"Y\", \"value\": 1}, {\"label\": \"Z\", \"value\": 1}], \"label\": \"root\"}, \"w\": 50, \"x\": 0, \"y\": 0}": {
+  "__error__": "treemap(): 1 label does not fit (root 3): raise width / height, or drop strict"
+ },
  "{\"chartKind\": \"treemap\", \"kind\": \"layoutChart\", \"opts\": {}, \"tree\": [{\"label\": \"\\u5317\\u7c73\", \"value\": 40}, {\"label\": \"\\u6b27\\u5dde\", \"value\": 30}, {\"label\": \"\\u30a2\\u30b8\\u30a2\", \"value\": 20}, {\"label\": \"\\u305d\\u306e\\u4ed6\", \"value\": 10}], \"w\": 500, \"x\": 0, \"y\": 0}": {
   "alt": "ツリーマップ（全体 100）: 北米 40、欧州 30、アジア 20、その他 10",
   "anchors": [],

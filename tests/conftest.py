@@ -9,7 +9,9 @@ Set SVG_DIAGRAM_GOLDEN_RECORD to a file path to additionally dump every
 the request's canonical (sort_keys=True) JSON encoding. This is how the
 static fixtures consumed by a Node-less checkout of this test suite are
 produced; see svg-diagram-py's golden fixture docs for the regeneration
-command.
+command. A request Node.js itself rejects is recorded as
+{"__error__": "<message>"} so that a static replay can reproduce the same
+RuntimeError.
 """
 
 from __future__ import annotations
@@ -51,6 +53,8 @@ class NodeGolden:
             raise RuntimeError(f"golden/emit_cli.ts produced no output for {req!r} (stderr: {err})")
         resp = json.loads(line)
         if not resp["ok"]:
+            if self._record_path is not None:
+                self._record[json.dumps(req, sort_keys=True)] = {"__error__": resp["error"]}
             raise RuntimeError(f"golden/emit_cli.ts error for {req!r}: {resp['error']}")
         result = resp["result"]
         if self._record_path is not None:

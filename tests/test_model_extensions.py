@@ -102,6 +102,10 @@ def test_legend():
     svg = d.render_svg()
     _assert_well_formed_xml(svg)
     assert "通常" in svg and "強調" in svg and "依存" in svg
+    # regression: a legend()-only diagram (no top-level .arrow()) must still define the
+    # <marker> its "line" item's arrowhead references.
+    assert 'marker-end="url(#dsl-arrow)"' in svg
+    assert '<marker id="dsl-arrow"' in svg
 
 
 def test_row_equal_distribution():

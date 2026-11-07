@@ -15,3 +15,7 @@ def test_sequence_renders():
     svg = d.render_svg()
     minidom.parseString(svg)
     assert "ユーザー" in svg and "サーバー" in svg and "リクエスト" in svg
+    # regression: a sequence()-only diagram (no top-level .arrow()) must still define the
+    # <marker> its message arrows reference, or marker-end points at a nonexistent id.
+    assert 'marker-end="url(#dsl-arrow)"' in svg
+    assert '<marker id="dsl-arrow"' in svg

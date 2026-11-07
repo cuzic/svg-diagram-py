@@ -406,7 +406,11 @@ class Diagram(ShapesMixin, FlowShapesMixin, ProcessMixin, ChartsMixin, StatsMixi
         body = "\n\n  ".join(el.render() for el in self._elements)
         connects = [render_connect(points=self._route(a), arrow=a.arrow, line=a.line, tone=a.tone, label=a.label, chip=a.chip, label_at=a.label_at) for a in self.arrows]
         connect_svg = "\n\n  ".join(connects)
-        has_arrow = any(a.arrow != "none" for a in self.arrows)
+        # Checking self.arrows alone misses any element (sequence() messages, swimlane()
+        # steps, legend() line items, ...) that draws its own marker-end/marker-start via
+        # arrow_markers() — mirrors TS's usesArrows() (lib/emit.ts) without needing to
+        # enumerate every element kind that can embed an arrow.
+        has_arrow = 'url(#dsl-arrow)"' in body or 'url(#dsl-arrow)"' in connect_svg
         given_height = self.height
         height = self._auto_height() if isinstance(given_height, str) else given_height
         return emit_svg(width=self.width, height=height, body=body, connect_svg=connect_svg, has_arrow=has_arrow)

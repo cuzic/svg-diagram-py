@@ -171,10 +171,12 @@ def render_people(*, x: float, y: float, size: float, icons: list[dict], texts: 
         return f'<path d="{PERSON_PATH}" transform="translate({tx} {ty}) scale({_n4(s)})" {fill}/>'
 
     icons_svg = "\n  ".join(icon(i) for i in icons)
-    texts_svg = "".join(
-        f'\n  <text x="{js_round(t["x"])}" y="{js_round(t["y"])}" font-size="{t["size"]}"{" font-weight=\"700\"" if t.get("bold") else ""} fill="{text_color_of(t.get("tone"), day)}">{emoji_span(t["text"])}</text>'
-        for t in texts
-    )
+
+    def text_line(t: dict) -> str:
+        bold_attr = ' font-weight="700"' if t.get("bold") else ""
+        return f'\n  <text x="{js_round(t["x"])}" y="{js_round(t["y"])}" font-size="{t["size"]}"{bold_attr} fill="{text_color_of(t.get("tone"), day)}">{emoji_span(t["text"])}</text>'
+
+    texts_svg = "".join(text_line(t) for t in texts)
     return f'<g role="img" aria-label="{escape_attr(alt)}">\n  {icons_svg}\n  </g>{texts_svg}'
 
 

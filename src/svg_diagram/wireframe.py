@@ -1001,7 +1001,7 @@ def layout_wireframe(band: dict, x: float, y: float, w: float, width_of: WidthOf
     """lib/wireframe.ts:796-806 layoutWireframe()."""
     ctx = _mk_ctx(width_of, wrap_mode, band.get("skeleton"))
     has_notes = bool(band.get("notes"))
-    note_w = band.get("noteW", 264)
+    note_w = _d(band.get("noteW"), 264)
     gap = 28
     sw = w - note_w - gap if has_notes else w
     scr = _layout_screen({"title": band.get("title"), "tag": band.get("tag"), "tagTone": band.get("tagTone"), "root": band["root"], "overlays": band.get("overlays"), "h": band.get("h"), "frame": band.get("frame"), "skeleton": band.get("skeleton")}, ctx, x, y, sw, 440)
@@ -1020,8 +1020,8 @@ def layout_screens(band: dict, x: float, y: float, w: float, width_of: WidthOf, 
         bottom = r["bottom"] + (32 if _draw_marks_legend(ctx, band.get("marks"), x, r["bottom"] + 4) else 0)
         rows = band["matrix"]["rows"]
         return {"type": "screens", "id": band.get("id"), "title": rows[0]["label"] if rows else None, "x": x, "y": y, "w": w, "h": bottom - y, "prims": ctx["prims"], "anchors": r["anchors"]}
-    gap = band.get("gap", 64)
-    row_gap = band.get("rowGap", 56)
+    gap = _d(band.get("gap"), 64)
+    row_gap = _d(band.get("rowGap"), 56)
     items = band["items"]
     explicit = any(it.get("at") for it in items)
     cols = band.get("cols")
@@ -1040,7 +1040,7 @@ def layout_screens(band: dict, x: float, y: float, w: float, width_of: WidthOf, 
         for c in in_row:
             it, col = c["it"], c["col"]
             h_for_it = row_fit if it.get("h", band.get("h")) == "fit" else it.get("h")
-            scr = _layout_screen({**it, "h": h_for_it, "skeleton": it.get("skeleton", band.get("skeleton"))}, ctx, x + col * (cw + gap), cy, cw, band.get("h", 320))
+            scr = _layout_screen({**it, "h": h_for_it, "skeleton": it.get("skeleton", band.get("skeleton"))}, ctx, x + col * (cw + gap), cy, cw, _d(band.get("h"), 320))
             if it.get("id"):
                 anchors.append({"id": it["id"], "x": scr["frame"]["x"], "y": scr["top"], "w": scr["frame"]["w"], "h": scr["bottom"] - scr["top"]})
             row_bottom = max(row_bottom, scr["bottom"])

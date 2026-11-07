@@ -35,8 +35,8 @@ from typing import Callable, Literal
 from .approx_width import approx_width_of
 from .emit import emit_svg
 from .emit_boxes import render_banner, render_box_rect, render_caption, render_connect, render_group_rect, render_raw, render_status, render_step_badge, render_stamp, render_tag
-from .emit_common import text_lines
-from .layout_util import BOX_PAD_X, BOX_PAD_Y, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
+from .emit_common import LH_EM, text_lines
+from .layout_util import BOX_PAD_X, BOX_PAD_Y, LEGEND_ROW_H, STAMP_PAD_X, STEP_INDENT, TAG_H, TAG_PAD_X, grid_child_geometry, row_child_geometry
 from .legend import render_legend_item
 from .model_charts import ChartsMixin
 from .model_flow_shapes import FlowShapesMixin
@@ -97,6 +97,9 @@ class Box:
             out += render_stamp(x=self.x, y=self.y, w=self.width, h=self.height, stamp=self.stamp, stamp_w=stamp_w, note_size=ROLES["note"])
         return out
 
+    def bottom(self) -> float:
+        return self.y + self.height
+
 
 @dataclass
 class Arrow:
@@ -121,6 +124,9 @@ class _Caption:
 
     def render(self) -> str:
         return render_caption(x=self.x, y=self.y, w=self.w, text=self.text, size=ROLES["title"], align=self.align, tone=self.tone)
+
+    def bottom(self) -> float:
+        return self.y + ROLES["title"] * LH_EM
 
 
 @dataclass
@@ -150,6 +156,9 @@ class _Group:
             out += "\n\n  " + title_svg
         return out
 
+    def bottom(self) -> float:
+        return self.y + self.h
+
 
 @dataclass
 class _Banner:
@@ -163,6 +172,9 @@ class _Banner:
     def render(self) -> str:
         return render_banner(x=self.x, y=self.y, w=self.w, h=self.h, lines=self.lines, size=ROLES["title"], tone=self.tone)
 
+    def bottom(self) -> float:
+        return self.y + self.h
+
 
 @dataclass
 class _Legend:
@@ -170,6 +182,9 @@ class _Legend:
 
     def render(self) -> str:
         return "\n  ".join(render_legend_item(note_size=ROLES["note"], **item) for item in self.items)
+
+    def bottom(self) -> float:
+        return max((item["y"] + LEGEND_ROW_H for item in self.items), default=0.0)
 
 
 @dataclass
@@ -182,6 +197,9 @@ class _Raw:
 
     def render(self) -> str:
         return render_raw(x=self.x, y=self.y, w=self.w, h=self.h, day=1, draw=self.draw)
+
+    def bottom(self) -> float:
+        return self.y + self.h
 
 
 @dataclass
@@ -198,6 +216,9 @@ class _Status:
         text_y = self.y + self.height / 2 + self.size * 0.38
         return render_status(x=self.x, y=self.y, w=self.width, h=self.height, text_y=text_y, text=self.text, status=self.status, size=self.size)
 
+    def bottom(self) -> float:
+        return self.y + self.height
+
 
 def _edge_point(box: Box, side: str) -> dict:
     cx, cy = box.x + box.width / 2, box.y + box.height / 2
@@ -210,11 +231,21 @@ def _edge_point(box: Box, side: str) -> dict:
     }[side]
 
 
-class Diagram(ShapesMixin, FlowShapesMixin, ProcessMixin, ChartsMixin, StatsMixin, NetworksMixin, PlaneMixin):
-    """spec section 4: ``Diagram(width, height)``, ``.box(...)``, ``.arrow(start, end)``, ``.save(path)``."""
+AUTO_HEIGHT_MARGIN = 24  # this port's own convention (not a port of anything in lib/): room below the lowest element's content
 
-    def __init__(self, width: float, height: float):
-        if width <= 0 or height <= 0:
+
+class Diagram(ShapesMixin, FlowShapesMixin, ProcessMixin, ChartsMixin, StatsMixin, NetworksMixin, PlaneMixin):
+    """spec section 4: ``Diagram(width, height)``, ``.box(...)``, ``.arrow(start, end)``, ``.save(path)``.
+
+    ``height="auto"`` (this port's own addition, not a Node option — box()/row()/grid()'s
+    absolute-coordinate API has no auto-layout to size a canvas from in the first place)
+    sizes the canvas to the lowest element's content instead of a number fixed up front,
+    via each element's own ``bottom()`` (see model_shared.py's Renderable docstring)."""
+
+    def __init__(self, width: float, height: float | Literal["auto"]):
+        if isinstance(height, str) and height != "auto":
+            raise ValueError(f"Diagram(width, height): height must be a positive number or 'auto' (got {height!r})")
+        if width <= 0 or (height != "auto" and height <= 0):
             raise ValueError(f"Diagram(width, height) must both be positive (got {width}, {height})")
         self.width = width
         self.height = height
@@ -376,7 +407,15 @@ class Diagram(ShapesMixin, FlowShapesMixin, ProcessMixin, ChartsMixin, StatsMixi
         connects = [render_connect(points=self._route(a), arrow=a.arrow, line=a.line, tone=a.tone, label=a.label, chip=a.chip, label_at=a.label_at) for a in self.arrows]
         connect_svg = "\n\n  ".join(connects)
         has_arrow = any(a.arrow != "none" for a in self.arrows)
-        return emit_svg(width=self.width, height=self.height, body=body, connect_svg=connect_svg, has_arrow=has_arrow)
+        given_height = self.height
+        height = self._auto_height() if isinstance(given_height, str) else given_height
+        return emit_svg(width=self.width, height=height, body=body, connect_svg=connect_svg, has_arrow=has_arrow)
+
+    def _auto_height(self) -> float:
+        """`Diagram(width, height="auto")`: the canvas just tall enough for every element's
+        own content (each element's `bottom()`, plus `AUTO_HEIGHT_MARGIN` below the
+        lowest one) — this port's own convention, not a Node option."""
+        return max((el.bottom() for el in self._elements), default=0.0) + AUTO_HEIGHT_MARGIN
 
     def save(self, path: str) -> None:
         """spec section 4: `.save()` picks the format from the extension — `.svg` or `.html`."""

@@ -31,6 +31,10 @@ class _Plane:
         laid = layout_plane(self.band, self.x, self.y, self.w, approx_width_of, ROLES)
         return render_plane(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_plane(self.band, self.x, self.y, self.w, approx_width_of, ROLES)
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Quadrant:
@@ -47,6 +51,10 @@ class _Quadrant:
     def render(self) -> str:
         laid = layout_quadrant(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
         return render_quadrant(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_quadrant(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
 
 
 class PlaneMixin:

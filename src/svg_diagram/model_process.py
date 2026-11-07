@@ -34,6 +34,10 @@ class _Bowtie:
         laid = layout_bowtie(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
         return render_bowtie(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_bowtie(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Fta:
@@ -49,6 +53,10 @@ class _Fta:
     def render(self) -> str:
         laid = layout_fta(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
         return render_fta(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_fta(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
 
 
 @dataclass
@@ -66,6 +74,10 @@ class _Bpmn:
         laid = layout_bpmn(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
         return render_bpmn(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_bpmn(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Classes:
@@ -81,6 +93,10 @@ class _Classes:
     def render(self) -> str:
         laid = layout_classes_band(self.band, self.x, self.y, self.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
         return render_classes(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_classes_band(self.band, self.x, self.y, self.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
+        return laid.get("y", self.y) + laid["h"]
 
 
 @dataclass
@@ -99,6 +115,10 @@ class _States:
         laid = layout_states_band(self.band, self.x, self.y, self.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
         return render_states(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_states_band(self.band, self.x, self.y, self.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Cause:
@@ -114,6 +134,10 @@ class _Cause:
     def render(self) -> str:
         laid = layout_cause_band(self.band, self.x, self.y, self.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
         return render_cause(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_cause_band(self.band, self.x, self.y, self.w, approx_width_of, ROLES, {"wrap": "phrase", "keepWords": False})
+        return laid.get("y", self.y) + laid["h"]
 
 
 class ProcessMixin:

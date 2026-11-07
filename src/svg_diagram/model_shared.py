@@ -15,9 +15,17 @@ LineStyle = Literal["solid", "dashed", "dotted"]
 class Renderable(Protocol):
     """What every element of Diagram._elements has in common: each one's own dataclass (in
     whichever model_*.py owns that domain) knows how to turn itself into SVG — see the
-    model.py module docstring for why this replaced a central dispatch function."""
+    model.py module docstring for why this replaced a central dispatch function.
+
+    `bottom()` is this port's own addition (not a port of anything in lib/, same as the
+    rest of model.py): the lowest y-coordinate the element's content reaches, used by
+    `Diagram(width, height="auto")` to size the canvas to its content. For a band whose
+    own layout_X() computes a height from content, `bottom()` repeats that same call
+    (cheap, and keeps render() and bottom() independent — no caching between them, same
+    as render() itself recomputing layout fresh on every call)."""
 
     def render(self) -> str: ...
+    def bottom(self) -> float: ...
 
 
 def _opts(*pairs: tuple[str, object]) -> dict:

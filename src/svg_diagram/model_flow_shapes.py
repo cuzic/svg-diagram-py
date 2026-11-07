@@ -35,6 +35,10 @@ class _FlowShape:
         laid = layout_flow_shape(self.band, self.x, self.y, self.cw, approx_width_of, ROLES, "phrase")
         return render_flow_shape(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_flow_shape(self.band, self.x, self.y, self.cw, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
+
 
 class FlowShapesMixin:
     _elements: list[Renderable]

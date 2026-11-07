@@ -40,6 +40,10 @@ class _Bars:
         laid = layout_bars(self.band, self.x, self.y, self.w, approx_width_of, ROLES)
         return render_bars(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_bars(self.band, self.x, self.y, self.w, approx_width_of, ROLES)
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Chart:
@@ -55,6 +59,10 @@ class _Chart:
     def render(self) -> str:
         laid = layout_chart(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
         return render_chart(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_chart(self.band, self.x, self.y, self.w, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
 
 
 class ChartsMixin:

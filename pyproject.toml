@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Tomoya Kawanishi", email = "tomoya.kaw@gmail.com" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = []
 
 [dependency-groups]
@@ -22,5 +22,5 @@ build-backend = "uv_build"
 
 [tool.pyright]
 include = ["src", "tests"]
-pythonVersion = "3.12"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"

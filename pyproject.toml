@@ -3,6 +3,7 @@ name = "svg-diagram"
 version = "0.1.0"
 description = "Python port of svg-diagram's drawing layer (box/connect/svg emission), with Node.js as the golden master for visual style"
 readme = "README.md"
+license = "MIT"
 authors = [
     { name = "Tomoya Kawanishi", email = "tomoya.kaw@gmail.com" }
 ]

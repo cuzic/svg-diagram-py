@@ -16,7 +16,8 @@
 //   out: {"ok": true, "result": "<rect .../>"}
 
 import {createInterface} from 'node:readline';
-import {renderBoxRect, renderConnect, renderStamp, renderTag, renderStepBadge, renderRaw, renderLegend, renderStatus} from '../../lib/emit-boxes.ts';
+import {renderBoxRect, renderConnect, renderStamp, renderTag, renderStepBadge, renderRaw, renderLegend, renderStatus, renderBox, renderSwimlane} from '../../lib/emit-boxes.ts';
+import {layoutSwimlaneBand} from '../../lib/swimlane.ts';
 import {escapeXml, escapeAttr, snap4, textLines, emojiSpan, arrowPath} from '../../lib/emit-common.ts';
 import {toneEnv, runColorOf} from '../../lib/tokens.ts';
 import {emitSvg} from '../../lib/emit.ts';
@@ -221,6 +222,20 @@ function handle(req: Req): unknown {
     }
     case 'renderGantt':
       return renderGantt(req.band as never, (req.day ?? 1) as never);
+    case 'layoutSwimlaneBand': {
+      const reqSteps = (req.steps as object[]).map(st => ({...st, type: 'box' as const}));
+      const band = {
+        type: 'swimlane', lanes: req.lanes, steps: reqSteps, cols: req.cols, phases: req.phases,
+        boundaries: req.boundaries, labelW: req.labelW, colGap: req.colGap, fit: req.fit,
+        id: undefined, reveal: undefined, until: undefined,
+      } as never;
+      const {frame, steps} = layoutSwimlaneBand(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, roles, (req.wrap ?? 'phrase') as never);
+      return {frame, steps};
+    }
+    case 'renderSwimlane':
+      return renderSwimlane(req.band as never, (req.day ?? 1) as never, roles);
+    case 'renderBox':
+      return renderBox(req.band as never, (req.day ?? 1) as never, tones, roles);
     case 'layoutCloudBand': {
       const band = {a: req.a, b: req.b, c: req.c, d: req.d, d2: req.d2, maxNodeW: req.maxNodeW, assumptions: req.assumptions, conflictLabel: req.conflictLabel, id: undefined, reveal: undefined, until: undefined} as never;
       const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: false};

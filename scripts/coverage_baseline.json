@@ -16,9 +16,9 @@
       "percent_covered": 100.0
     },
     "src/svg_diagram/badge.py": {
-      "missing_lines": 3,
+      "missing_lines": 0,
       "num_statements": 46,
-      "percent_covered": 93.47826086956522
+      "percent_covered": 100.0
     },
     "src/svg_diagram/bars.py": {
       "missing_lines": 65,
@@ -151,9 +151,9 @@
       "percent_covered": 100.0
     },
     "src/svg_diagram/gantt.py": {
-      "missing_lines": 42,
+      "missing_lines": 41,
       "num_statements": 287,
-      "percent_covered": 85.36585365853658
+      "percent_covered": 85.71428571428571
     },
     "src/svg_diagram/graph_layout.py": {
       "missing_lines": 43,
@@ -166,9 +166,9 @@
       "percent_covered": 92.15686274509804
     },
     "src/svg_diagram/heatmap.py": {
-      "missing_lines": 14,
+      "missing_lines": 11,
       "num_statements": 172,
-      "percent_covered": 91.86046511627907
+      "percent_covered": 93.6046511627907
     },
     "src/svg_diagram/layered_route.py": {
       "missing_lines": 43,
@@ -176,9 +176,9 @@
       "percent_covered": 94.01114206128133
     },
     "src/svg_diagram/layout_util.py": {
-      "missing_lines": 13,
+      "missing_lines": 12,
       "num_statements": 158,
-      "percent_covered": 91.77215189873418
+      "percent_covered": 92.40506329113924
     },
     "src/svg_diagram/legend.py": {
       "missing_lines": 2,
@@ -197,17 +197,17 @@
     },
     "src/svg_diagram/model.py": {
       "missing_lines": 13,
-      "num_statements": 234,
-      "percent_covered": 94.44444444444444
+      "num_statements": 255,
+      "percent_covered": 94.90196078431373
     },
     "src/svg_diagram/model_charts.py": {
       "missing_lines": 0,
-      "num_statements": 92,
+      "num_statements": 98,
       "percent_covered": 100.0
     },
     "src/svg_diagram/model_flow_shapes.py": {
       "missing_lines": 0,
-      "num_statements": 39,
+      "num_statements": 42,
       "percent_covered": 100.0
     },
     "src/svg_diagram/model_networks.py": {
@@ -216,19 +216,19 @@
       "percent_covered": 100.0
     },
     "src/svg_diagram/model_plane.py": {
-      "missing_lines": 0,
-      "num_statements": 48,
-      "percent_covered": 100.0
+      "missing_lines": 2,
+      "num_statements": 54,
+      "percent_covered": 96.29629629629629
     },
     "src/svg_diagram/model_process.py": {
-      "missing_lines": 0,
-      "num_statements": 94,
-      "percent_covered": 100.0
+      "missing_lines": 4,
+      "num_statements": 112,
+      "percent_covered": 96.42857142857143
     },
     "src/svg_diagram/model_shapes.py": {
-      "missing_lines": 1,
-      "num_statements": 236,
-      "percent_covered": 99.57627118644068
+      "missing_lines": 14,
+      "num_statements": 348,
+      "percent_covered": 95.97701149425288
     },
     "src/svg_diagram/model_shared.py": {
       "missing_lines": 0,
@@ -252,8 +252,8 @@
     },
     "src/svg_diagram/people_dots.py": {
       "missing_lines": 7,
-      "num_statements": 140,
-      "percent_covered": 95.0
+      "num_statements": 143,
+      "percent_covered": 95.1048951048951
     },
     "src/svg_diagram/plane.py": {
       "missing_lines": 96,
@@ -355,6 +355,11 @@
       "num_statements": 261,
       "percent_covered": 96.55172413793103
     },
+    "src/svg_diagram/swimlane.py": {
+      "missing_lines": 24,
+      "num_statements": 221,
+      "percent_covered": 89.14027149321267
+    },
     "src/svg_diagram/table.py": {
       "missing_lines": 17,
       "num_statements": 165,
@@ -410,6 +415,11 @@
       "num_statements": 242,
       "percent_covered": 89.6694214876033
     },
+    "src/svg_diagram/wireframe.py": {
+      "missing_lines": 85,
+      "num_statements": 824,
+      "percent_covered": 89.68446601941747
+    },
     "src/svg_diagram/wordart.py": {
       "missing_lines": 26,
       "num_statements": 287,
@@ -431,6 +441,6 @@
       "percent_covered": 85.80246913580247
     }
   },
-  "missing_lines_total": 1499,
-  "percent_covered": 90.99212787693047
+  "missing_lines_total": 1619,
+  "percent_covered": 90.93251190142817
 }

@@ -6,12 +6,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
         with:
           enable-cache: true
-      - run: uv sync
-      - run: uv run pytest -q
-      - run: uv run python scripts/type_safety_report.py
-      - run: uv run python scripts/coverage_report.py
+      - run: uv sync --python ${{ matrix.python-version }}
+      - run: uv run --python ${{ matrix.python-version }} pytest -q
+      - run: uv run --python ${{ matrix.python-version }} python scripts/type_safety_report.py
+        if: matrix.python-version == '3.12'
+      - run: uv run --python ${{ matrix.python-version }} python scripts/coverage_report.py
+        if: matrix.python-version == '3.12'

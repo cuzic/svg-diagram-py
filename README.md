@@ -21,10 +21,14 @@ band(図種)ごとの移植状況は [BANDS.md](BANDS.md) を参照。
   由来と再生成手順は [golden/README.md](golden/README.md) を参照)。
 - レイアウト(自動配置・交差削減)も、ボックス座標が確定していれば呼べる
   範囲(tree/mindmap/states/classes/pert/causalLoop/cause等の layered
-  routing 系を含む)は移植済み。facet()・wireframe()/screens()・
-  swimlane() は、Node側が共有する副作用ありの合成レイアウトエンジン
-  (`LayoutCtx`)に依存しており、本移植の絶対座標APIとはアーキテクチャが
-  不一致のため対象外([BANDS.md](BANDS.md)に判断根拠)。
+  routing 系、swimlane()、wireframe()/screens())は移植済み。facet() は、
+  Node側が共有する副作用ありの合成レイアウトエンジン(`LayoutCtx`)に
+  依存しており、本移植の絶対座標APIとはアーキテクチャが不一致のため
+  対象外([BANDS.md](BANDS.md)に判断根拠)。
+- **`Diagram(width, height="auto")`**(この移植だけの新規機能、Node側に
+  対応する機能はない): キャンバスの高さを、全要素の内容から自動で決める。
+  box()/row()/grid()の絶対座標APIにはそもそも自動レイアウトのパイプ
+  ラインが無いため、高さを手で決める以外の方法がなかった(2026-11)。
 - **box() の表現力拡張**(tag/stamp/step badge/frame:false/raw())、
   **caption()/group()/banner()**、**legend()**(swatch/line/AND/back/blocks、
   FTA・hex色・strong/doubleは対象外)を追加(2026-11-02)。
@@ -69,11 +73,17 @@ golden テストは Node.js を起動せず、`golden/fixtures/` に録音済み
   固有の設定ファイルから読む仕組み(Node.js自身もアイコンデータを同梱していない)
   なので見送った。
 - `connect()`の`weight: 'strong'`・`line: 'double'`、`legend()`のFTA/hex色
-  swatch・strong/double。
-- `facet()`・`wireframe()`/`screens()`・`swimlane()`: Node側が
-  box()/row()/group()/connect()等と状態を共有する合成レイアウトエンジン
-  (`LayoutCtx`)に依存しており、本移植の絶対座標APIとはアーキテクチャが
-  不一致のため対象外。
+  swatch・strong/double。swimlane()のステップを他bandからconnect()で
+  参照する機能(`opts.flows`・`opts.laneOrder`)も同じ理由(共有アンカー
+  レジストリが前提)で対象外。
+- `facet()`: Node側が box()/row()/group()等と状態を共有する合成レイアウト
+  エンジン(`LayoutCtx`)に依存しており、本移植の絶対座標APIとはアーキ
+  テクチャが不一致のため対象外。
+- `wireframe()`/`screens()`は本体(col/row/card + 20種類のウィジェット、
+  dialog/toast、state matrix)を移植済みだが、`wireframe-parts.ts`
+  (states/fusion/compare/region/robot/battery/signal/insight/breadcrumb/
+  toggle/checkbox/radio/slider——監視・ロボット運用ダッシュボード向けの
+  専用拡張)は対象外。
 - `math()`(TeX組版、MathJax依存)・`image()`: 優先度低、または
   stdlib-onlyの方針と衝突するため見送り。
 

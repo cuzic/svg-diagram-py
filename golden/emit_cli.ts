@@ -18,6 +18,7 @@
 import {createInterface} from 'node:readline';
 import {renderBoxRect, renderConnect, renderStamp, renderTag, renderStepBadge, renderRaw, renderLegend, renderStatus, renderBox, renderSwimlane} from '../../lib/emit-boxes.ts';
 import {layoutSwimlaneBand} from '../../lib/swimlane.ts';
+import {layoutWireframe, layoutScreens} from '../../lib/wireframe.ts';
 import {escapeXml, escapeAttr, snap4, textLines, emojiSpan, arrowPath} from '../../lib/emit-common.ts';
 import {toneEnv, runColorOf} from '../../lib/tokens.ts';
 import {emitSvg} from '../../lib/emit.ts';
@@ -48,7 +49,7 @@ import {statesWords} from '../../lib/states-words.ts';
 import {statesProblems} from '../../lib/verify-base.ts';
 import {renderTree} from '../../lib/emit-figures.ts';
 import {layoutTable, layoutSequence} from '../../lib/seq-table.ts';
-import {renderTable, renderSequence} from '../../lib/emit-tables.ts';
+import {renderTable, renderSequence, renderPrims} from '../../lib/emit-tables.ts';
 import {chevronBand, funnelBand, cycleBand, vennBand, concentricBand, emblemBand, valueChainBand, layoutFlowShape} from '../../lib/flow-shapes.ts';
 import {renderFlowShape} from '../../lib/emit-figures.ts';
 import {wordartBand, layoutWordArt} from '../../lib/wordart.ts';
@@ -236,6 +237,23 @@ function handle(req: Req): unknown {
       return renderSwimlane(req.band as never, (req.day ?? 1) as never, roles);
     case 'renderBox':
       return renderBox(req.band as never, (req.day ?? 1) as never, tones, roles);
+    case 'layoutWireframe': {
+      const band = {
+        type: 'wireframe', root: req.root, title: req.title, tag: req.tag, tagTone: req.tagTone, h: req.h, frame: req.frame,
+        skeleton: req.skeleton, overlays: req.overlays, notes: req.notes, noteW: req.noteW, marks: req.marks,
+        id: undefined, reveal: undefined, until: undefined,
+      } as never;
+      return layoutWireframe(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, tones, (req.wrap ?? 'phrase') as never);
+    }
+    case 'layoutScreens': {
+      const band = {
+        type: 'screens', items: req.items ?? [], cols: req.cols, gap: req.gap, rowGap: req.rowGap, h: req.h,
+        skeleton: req.skeleton, matrix: req.matrix, marks: req.marks, id: undefined,
+      } as never;
+      return layoutScreens(band, req.x as number, req.y as number, req.w as number, peopleWidthOf, tones, (req.wrap ?? 'phrase') as never);
+    }
+    case 'renderPrims':
+      return renderPrims(req.band as never, (req.day ?? 1) as never);
     case 'layoutCloudBand': {
       const band = {a: req.a, b: req.b, c: req.c, d: req.d, d2: req.d2, maxNodeW: req.maxNodeW, assumptions: req.assumptions, conflictLabel: req.conflictLabel, id: undefined, reveal: undefined, until: undefined} as never;
       const env = {wrap: (req.wrap ?? 'phrase') as never, keepWords: false};

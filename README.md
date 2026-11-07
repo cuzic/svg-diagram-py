@@ -2,8 +2,11 @@
 
 svg-diagram を、Python しか実行できないAIサンドボックス(ChatGPT Code
 Interpreter / Gemini code execution / Microsoft 365 Copilot Code
-Interpreter)から使えるようにするための移植。詳細な設計根拠は
-`/home/cuzic/.claude/plans/adaptive-popping-wadler.md` を参照。
+Interpreter)から使えるようにするための移植。
+
+[svg-diagram](https://github.com/cuzic/svg-diagram)(TypeScript版、本家)の
+モノレポ内で開発され、Python移植だけを独立リポジトリとして切り出したもの。
+band(図種)ごとの移植状況は [BANDS.md](BANDS.md) を参照。
 
 ## スコープ
 
@@ -13,11 +16,15 @@ Interpreter)から使えるようにするための移植。詳細な設計根�
   これに対応するものはない。
 - **描画スタイル(色・線幅・角丸・矢印・フォント宣言・エスケープ)は
   Node.js版からバイト同一で移植**し、`tests/test_golden_*.py` で
-  `golden/emit_cli.ts` 経由のNode.js実行結果と文字列完全一致を検証する。
-- 自動レイアウト・交差削減・100以上の専用図種(flowchart / bpmn / charts /
-  wardley 等)は対象外。ただし **row()/grid() の子要素の幅配分アルゴリズムは
-  「テキスト計測不要の純粋算術」なのでNode.jsとバイト同一に移植済み**
-  (`layout_util.py`)。
+  Node.js実行結果と文字列完全一致を検証する(このリポジトリには比較対象の
+  Node.jsソースが無いため、録音済みの期待値を `golden/fixtures/` から読む。
+  由来と再生成手順は [golden/README.md](golden/README.md) を参照)。
+- レイアウト(自動配置・交差削減)も、ボックス座標が確定していれば呼べる
+  範囲(tree/mindmap/states/classes/pert/causalLoop/cause等の layered
+  routing 系を含む)は移植済み。facet()・wireframe()/screens()・
+  swimlane() は、Node側が共有する副作用ありの合成レイアウトエンジン
+  (`LayoutCtx`)に依存しており、本移植の絶対座標APIとはアーキテクチャが
+  不一致のため対象外([BANDS.md](BANDS.md)に判断根拠)。
 - **box() の表現力拡張**(tag/stamp/step badge/frame:false/raw())、
   **caption()/group()/banner()**、**legend()**(swatch/line/AND/back/blocks、
   FTA・hex色・strong/doubleは対象外)を追加(2026-11-02)。
@@ -28,21 +35,16 @@ Interpreter)から使えるようにするための移植。詳細な設計根�
   はNode.jsの実際のHarfBuzz計測とは一致しない近似値 ——
   Python標準ライブラリのみで動かす(Geminiの「独自ライブラリインストール
   不可」制約への対応)ことを優先した意図的なトレードオフ。
-- 次段階として cause()(TOCのCRT/FRT)・cloud()(対立解消図)・mindmap()/
-  tree() を「配置も含めて同じロジックで移植」する作業が計画されている
-  (規模・リスクが大きく異なるため cloud → mindmap → cause の順で、
-  cause は別の計画として起票予定)。
 
 ## 開発
 
 ```sh
-uv run pytest        # 全テスト(golden比較 + Python単体テスト)
+uv run pytest        # 全テスト(golden比較 + Python単体テスト、Node.js不要)
 uv run python -c "from svg_diagram import Diagram; ..."
 ```
 
-`tests/` の golden テストは Node.js(>=22.18、型ストリッピング必須)を
-`golden/emit_cli.ts` 経由でサブプロセス実行する。Node非依存のテストだけ
-走らせたい場合は `uv run pytest -k "not golden and not run_color_of"`。
+golden テストは Node.js を起動せず、`golden/fixtures/` に録音済みの
+期待値と比較する(詳細は [golden/README.md](golden/README.md))。
 
 ## ファイル対応
 
@@ -65,7 +67,15 @@ uv run python -c "from svg_diagram import Diagram; ..."
 
 - `box({icon})`: アイコングリフは `svg-diagram.icons.json` というプロジェクト
   固有の設定ファイルから読む仕組み(Node.js自身もアイコンデータを同梱していない)
-  なので、今回は見送った。
+  なので見送った。
 - `connect()`の`weight: 'strong'`・`line: 'double'`、`legend()`のFTA/hex色
   swatch・strong/double。
-- cause()/cloud()/mindmap()/tree() 本体(次段階で着手予定)。
+- `facet()`・`wireframe()`/`screens()`・`swimlane()`: Node側が
+  box()/row()/group()/connect()等と状態を共有する合成レイアウトエンジン
+  (`LayoutCtx`)に依存しており、本移植の絶対座標APIとはアーキテクチャが
+  不一致のため対象外。
+- `math()`(TeX組版、MathJax依存)・`image()`: 優先度低、または
+  stdlib-onlyの方針と衝突するため見送り。
+
+詳細な理由と、他の40以上のband(図種)それぞれの移植状況は
+[BANDS.md](BANDS.md) を参照。

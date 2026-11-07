@@ -16,10 +16,14 @@ from .gantt import layout_gantt, render_gantt
 from .model_shared import Renderable, Tone
 from .people_dots import layout_dots, layout_people, render_dots, render_people
 from .sequence import layout_sequence, render_sequence
+from .swimlane import layout_swimlane_band
+from .swimlane import render_box as render_swimlane_step
+from .swimlane import render_swimlane
 from .table import layout_table, render_table
 from .timeline import layout_timeline, render_timeline
 from .tokens import PALETTE, ROLES, best_text_color, blend_luminance
 from .tree import layout_tree_band, render_tree
+from .wireframe import layout_screens, layout_wireframe, render_prims
 from .wordart import layout_word_art, render_word_art, word_art_band
 from .wrap import wrap_text
 
@@ -54,6 +58,9 @@ class _Pyramid:
             laid_layers.append({"points": geom["points"], "opacity": geom["opacity"], "textColor": text_color, "lines": lines, "textYs": text_ys, "cx": cx})
         return render_pyramid(laid_layers, day=day, title_size=ROLES["title"])
 
+    def bottom(self) -> float:
+        return self.y + len(self.layers) * self.layer_height
+
 
 @dataclass
 class _Curve:
@@ -75,6 +82,9 @@ class _Curve:
         axis_bottom = self.y + self.height - axis_bottom_gap
         points = curve_points(raw_points=self.points, axis_x=axis_x, axis_right=axis_right, axis_top=axis_top, axis_bottom=axis_bottom)
         return render_curve(axis_x=axis_x, axis_right=axis_right, axis_top=axis_top, axis_bottom=axis_bottom, points=points, day=self.day, y_top_label=self.y_top_label, y_bottom_label=self.y_bottom_label, x_label=self.x_label)
+
+    def bottom(self) -> float:
+        return self.y + self.height
 
 
 @dataclass
@@ -100,6 +110,10 @@ class _People:
         laid = layout_people(cols=self.cols, size=self.size, gap=self.gap, total=self.total, count=self.count, count2=self.count2, x=self.x, y=self.y, cw=self.cw, width_of=approx_width_of, align=self.align, side=self.side, roles=ROLES)
         return render_people(x=laid["x"], y=laid["y"], size=laid["size"], icons=laid["icons"], texts=laid["texts"], tone=self.tone, tone2=self.tone2, rest=self.rest, alt=self.alt, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_people(cols=self.cols, size=self.size, gap=self.gap, total=self.total, count=self.count, count2=self.count2, x=self.x, y=self.y, cw=self.cw, width_of=approx_width_of, align=self.align, side=self.side, roles=ROLES)
+        return laid["y"] + laid["h"]
+
 
 @dataclass
 class _Dots:
@@ -122,6 +136,10 @@ class _Dots:
         laid = layout_dots(r=self.r, dots=self.dots, zones=self.zones, min_val=self.min_val, max_val=self.max_val, x=self.x, y=self.y, cw=self.cw, width_of=approx_width_of, width=self.width, low_label=self.low_label, high_label=self.high_label, height=self.height, roles=ROLES)
         return render_dots(axis=laid["axis"], zones=laid["zones"], dots=laid["dots"], texts=laid["texts"], r=self.r, alt=self.alt, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_dots(r=self.r, dots=self.dots, zones=self.zones, min_val=self.min_val, max_val=self.max_val, x=self.x, y=self.y, cw=self.cw, width_of=approx_width_of, width=self.width, low_label=self.low_label, high_label=self.high_label, height=self.height, roles=ROLES)
+        return laid["y"] + laid["h"]
+
 
 @dataclass
 class _Timeline:
@@ -141,6 +159,10 @@ class _Timeline:
         laid = layout_timeline(now=self.now, deadline=self.deadline, marks=self.marks, from_=self.from_, to=self.to, span=self.span, remaining=self.remaining, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES)
         return render_timeline(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_timeline(now=self.now, deadline=self.deadline, marks=self.marks, from_=self.from_, to=self.to, span=self.span, remaining=self.remaining, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES)
+        return laid["y"] + laid["h"]
+
 
 @dataclass
 class _Gantt:
@@ -159,6 +181,10 @@ class _Gantt:
         laid = layout_gantt(rows=self.rows, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, from_=self.from_, to=self.to, today=self.today, today_label=self.today_label, extend_to_today=self.extend_to_today)
         return render_gantt(laid, day=self.day)
 
+    def bottom(self) -> float:
+        laid = layout_gantt(rows=self.rows, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, from_=self.from_, to=self.to, today=self.today, today_label=self.today_label, extend_to_today=self.extend_to_today)
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Cloud:
@@ -174,6 +200,10 @@ class _Cloud:
     def render(self) -> str:
         laid = layout_cloud_band(boxes=self.boxes, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, max_node_w=self.max_node_w, assumptions=self.assumptions, conflict_label=self.conflict_label)
         return render_cloud(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_cloud_band(boxes=self.boxes, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, max_node_w=self.max_node_w, assumptions=self.assumptions, conflict_label=self.conflict_label)
+        return laid.get("y", self.y) + laid["h"]
 
 
 @dataclass
@@ -193,6 +223,10 @@ class _Tree:
     def render(self) -> str:
         laid = layout_tree_band(self.root, self.x, self.y, self.w, approx_width_of, ROLES, dir_opt=self.dir_opt, max_node_w=self.max_node_w, balanced=self.balanced, layout_mode=self.layout_mode, sides=self.sides, edges_opt=self.edges_opt)
         return render_tree(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_tree_band(self.root, self.x, self.y, self.w, approx_width_of, ROLES, dir_opt=self.dir_opt, max_node_w=self.max_node_w, balanced=self.balanced, layout_mode=self.layout_mode, sides=self.sides, edges_opt=self.edges_opt)
+        return laid.get("y", self.y) + laid["h"]
 
 
 @dataclass
@@ -216,6 +250,10 @@ class _Table:
         laid = layout_table(columns=self.columns, rows=self.rows, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, width=self.width, title=self.title, dense=self.dense, header=self.header, row_header=self.row_header, header_h=self.header_h, cell_h=self.cell_h, row_curve=self.row_curve)
         return render_table(laid, day=self.day, roles=ROLES)
 
+    def bottom(self) -> float:
+        laid = layout_table(columns=self.columns, rows=self.rows, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, width=self.width, title=self.title, dense=self.dense, header=self.header, row_header=self.row_header, header_h=self.header_h, cell_h=self.cell_h, row_curve=self.row_curve)
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _Sequence:
@@ -231,6 +269,10 @@ class _Sequence:
         laid = layout_sequence(actors=self.actors, steps=self.steps, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, numbered=self.numbered)
         return render_sequence(laid, day=self.day, roles=ROLES)
 
+    def bottom(self) -> float:
+        laid = layout_sequence(actors=self.actors, steps=self.steps, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, numbered=self.numbered)
+        return laid.get("y", self.y) + laid["h"]
+
 
 @dataclass
 class _WordArt:
@@ -243,6 +285,96 @@ class _WordArt:
     def render(self) -> str:
         laid = layout_word_art(self.band, self.x, self.y, self.cw, approx_width_of, ROLES, "phrase")
         return render_word_art(laid, day=self.day)
+
+    def bottom(self) -> float:
+        laid = layout_word_art(self.band, self.x, self.y, self.cw, approx_width_of, ROLES, "phrase")
+        return laid.get("y", self.y) + laid["h"]
+
+
+@dataclass
+class _Swimlane:
+    x: float
+    y: float
+    w: float
+    lanes: list[dict]
+    steps: list[dict]
+    cols: int
+    phases: list[dict] | None = None
+    boundaries: list[dict] | None = None
+    label_w: float | None = None
+    col_gap: float | None = None
+    fit: str | None = None
+    day: int | str = 1
+
+    def _layout(self) -> dict:
+        return layout_swimlane_band(lanes=self.lanes, steps=self.steps, cols=self.cols, x=self.x, y=self.y, w=self.w, width_of=approx_width_of, roles=ROLES, phases=self.phases, boundaries=self.boundaries, label_w=self.label_w, col_gap=self.col_gap, fit=self.fit)
+
+    def render(self) -> str:
+        laid = self._layout()
+        parts = [render_swimlane(laid["frame"], day=self.day, roles=ROLES)]
+        parts += [render_swimlane_step(step, day=self.day, roles=ROLES) for step in laid["steps"]]
+        return "\n\n  ".join(parts)
+
+    def bottom(self) -> float:
+        frame = self._layout()["frame"]
+        return frame["y"] + frame["h"]
+
+
+@dataclass
+class _Wireframe:
+    x: float
+    y: float
+    w: float
+    root: dict
+    title: str | None = None
+    tag: str | None = None
+    tag_tone: str | None = None
+    h: float | str | None = None
+    frame: str | None = None
+    skeleton: bool = False
+    overlays: dict | list[dict] | None = None
+    notes: list | None = None
+    note_w: float | None = None
+    marks: dict | None = None
+    day: int | str = 1
+
+    def _layout(self) -> dict:
+        band = {"root": self.root, "title": self.title, "tag": self.tag, "tagTone": self.tag_tone, "h": self.h, "frame": self.frame, "skeleton": self.skeleton, "overlays": self.overlays, "notes": self.notes, "noteW": self.note_w, "marks": self.marks}
+        return layout_wireframe(band, self.x, self.y, self.w, approx_width_of, "phrase")
+
+    def render(self) -> str:
+        return render_prims(self._layout(), day=self.day)
+
+    def bottom(self) -> float:
+        laid = self._layout()
+        return laid["y"] + laid["h"]
+
+
+@dataclass
+class _Screens:
+    x: float
+    y: float
+    w: float
+    items: list[dict] | None = None
+    cols: int | None = None
+    gap: float | None = None
+    row_gap: float | None = None
+    h: float | str | None = None
+    skeleton: bool = False
+    matrix: dict | None = None
+    marks: dict | None = None
+    day: int | str = 1
+
+    def _layout(self) -> dict:
+        band = {"items": self.items or [], "cols": self.cols, "gap": self.gap, "rowGap": self.row_gap, "h": self.h, "skeleton": self.skeleton, "matrix": self.matrix, "marks": self.marks}
+        return layout_screens(band, self.x, self.y, self.w, approx_width_of, "phrase")
+
+    def render(self) -> str:
+        return render_prims(self._layout(), day=self.day)
+
+    def bottom(self) -> float:
+        laid = self._layout()
+        return laid["y"] + laid["h"]
 
 
 class ShapesMixin:
@@ -466,3 +598,76 @@ class ShapesMixin:
         packing/zone formula (layout_dots) IS byte-identical to Node (golden-tested live); only
         label text widths use this port's approximation."""
         self._elements.append(_Dots(x=x, y=y, cw=width, r=r, dots=dots, zones=zones or [], min_val=min, max_val=max, width=width, low_label=low_label, high_label=high_label, height=height, alt=alt))
+
+    def swimlane(
+        self,
+        lanes: list[dict],
+        steps: list[dict],
+        *,
+        x: float,
+        y: float,
+        width: float,
+        cols: int,
+        phases: list[dict] | None = None,
+        boundaries: list[dict] | None = None,
+        label_w: float | None = None,
+        col_gap: float | None = None,
+        fit: str | None = None,
+    ) -> None:
+        """lib/swimlane.ts's layoutSwimlaneBand(): lanes (rows) x time (columns), steps
+        placed in lanes. `lanes`: [{id, label, tone?}]. `steps`: [{lane, col, span, title?,
+        body?, ...any box() field}] — each already carries its own `col`/`span` (this
+        port's `swimlane()` does not assign them, unlike Node's; see swimlane.py's module
+        docstring). `boundaries`: [{after, label?}]. `phases`: [{label, from, to}]. The
+        layout formula IS byte-identical to Node (golden-tested live); only text widths
+        use this port's approximation. connect()-ing another band to a step is not
+        supported (see swimlane.py's module docstring)."""
+        self._elements.append(_Swimlane(x=x, y=y, w=width, lanes=lanes, steps=steps, cols=cols, phases=phases, boundaries=boundaries, label_w=label_w, col_gap=col_gap, fit=fit))
+
+    def wireframe(
+        self,
+        root: dict,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        title: str | None = None,
+        tag: str | None = None,
+        tag_tone: str | None = None,
+        height: float | str | None = None,
+        frame: str | None = None,
+        skeleton: bool = False,
+        overlays: dict | list[dict] | None = None,
+        notes: list | None = None,
+        note_width: float | None = None,
+        marks: dict | None = None,
+    ) -> None:
+        """lib/wireframe.ts's layoutWireframe(): a low-fidelity UI screen. `root`: a node
+        tree, each node a plain dict with a `t` key (e.g. `{"t": "col", "children": [...]}`
+        — see wireframe.py's module docstring for the full vocabulary). `height`: px, or
+        `'fit'` for as tall as the content. The layout formula IS byte-identical to Node
+        (golden-tested live); only text widths use this port's approximation.
+        wireframe-parts.ts's `state`/fusion/compare/region/robot/... are not supported."""
+        self._elements.append(_Wireframe(x=x, y=y, w=width, root=root, title=title, tag=tag, tag_tone=tag_tone, h=height, frame=frame, skeleton=skeleton, overlays=overlays, notes=notes, note_w=note_width, marks=marks))
+
+    def screens(
+        self,
+        items: list[dict] | None = None,
+        *,
+        x: float,
+        y: float,
+        width: float,
+        cols: int | None = None,
+        gap: float | None = None,
+        row_gap: float | None = None,
+        height: float | str | None = None,
+        skeleton: bool = False,
+        matrix: dict | None = None,
+        marks: dict | None = None,
+    ) -> None:
+        """lib/wireframe.ts's layoutScreens(): several wireframe() screens in a grid
+        (`items`: [{title?, root, at?: [row, col], ...WfScreen fields}]), or a state
+        matrix (`matrix`: {cols, rows: [{label, note?, cells}]} — each cell a node tree,
+        `'na'`/`{na: reason}`, or `None`/`'todo'`). The layout formula IS byte-identical to
+        Node (golden-tested live); only text widths use this port's approximation."""
+        self._elements.append(_Screens(x=x, y=y, w=width, items=items, cols=cols, gap=gap, row_gap=row_gap, h=height, skeleton=skeleton, matrix=matrix, marks=marks))
